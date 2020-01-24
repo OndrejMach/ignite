@@ -1,0 +1,60 @@
+group 'ignite'
+//version '1.0-SNAPSHOT'
+version='1.0'
+
+apply plugin: 'scala'
+
+sourceCompatibility = 1.8
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':ignite-common')
+    compile project(':hotspot')
+    compile project(':inflight')
+    compile project(':rcse')
+
+}
+
+
+
+
+//def mainProjects = [':Common',':FirewallLogReader',':MTXCDRReader',':HackedPBX', ':MLClassifier', ':MLModelTraining', ':CDRcsvToParquet']
+
+subprojects.each { subproject -> evaluationDependsOn(subproject.path)}
+/*
+task allJar(type: Jar, dependsOn: subprojects.assemble) {
+    manifest.attributes("Main-Class": 'com.openbean.bd.pbxfraud.FraudDetection')
+    baseName = 'FraudDetection'
+    version = version + "_" + new Date().format('yyyyMMdd')
+    def propertyFile = file "Application/src/main/resources/About.properties"
+    def props = new Properties()
+    propertyFile.withReader { props.load(it) }
+    println "Before setProperty:"
+    println props.getProperty('releaseDate')
+    props.setProperty('version', version)
+    props.setProperty('releaseDate', new Date().format('yyyy-MM-dd-HH:mm:ss'))
+    propertyFile.withWriter {
+        props.store(it, null)
+    }
+
+    subprojects.each { subproject ->
+        from subproject.configurations.archives.allArtifacts.files.collect {
+            zipTree(it)
+        }
+    }
+
+
+}
+
+ */

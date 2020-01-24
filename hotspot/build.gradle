@@ -1,0 +1,17 @@
+group 'ignite'
+version '1.0-SNAPSHOT'
+
+
+apply plugin: 'scala'
+
+sourceCompatibility = 1.8
+
+repositories {
+    jcenter()
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile project(":ignite-common")
+}

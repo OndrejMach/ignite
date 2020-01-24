@@ -1,0 +1,6 @@
+rootProject.name = 'ignite'
+include 'ignite-common'
+include 'hotspot'
+include 'inflight'
+include 'rcse'
+
