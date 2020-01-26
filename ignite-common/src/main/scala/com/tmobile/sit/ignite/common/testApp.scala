@@ -3,7 +3,8 @@ package com.tmobile.sit.ignite.common
 import org.apache.spark.sql.SparkSession
 
 object testApp extends App {
-  val sparkSession = SparkSession.builder()
+  val sparkSession =
+    SparkSession.builder()
     //.appName("Test FWLog Reader")
     .master("local[*]")
     .config("spark.executor.instances", "4")
