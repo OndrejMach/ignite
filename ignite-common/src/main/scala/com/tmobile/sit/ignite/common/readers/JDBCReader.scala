@@ -8,6 +8,7 @@ class JDBCReader(url: String, table: String, properties: Properties)(implicit sp
   def read() : DataFrame = {
     sparkSession
       .read
+      //  .schema(???)
       .jdbc(url, table, properties)
   }
 }

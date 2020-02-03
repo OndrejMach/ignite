@@ -10,7 +10,7 @@ trait AccessFileReader extends Logger{
 }
 
 ///Users/ondrej.machacek/Downloads/List_Of_Managers.accdb
-class ListOfManagersReader(path: String, columnNames: Seq[String])(implicit sparkSession: SparkSession) extends Reader {
+class MSAccessReader(path: String, tableName: String, columnNames: Seq[String])(implicit sparkSession: SparkSession) extends Reader {
   private val conn = DriverManager.getConnection(s"jdbc:ucanaccess://${path}")
 
   private def resultSetToDataFrame(resultSet: ResultSet, schema: Seq[String])(implicit sparkSession: SparkSession): DataFrame = {
@@ -30,12 +30,12 @@ class ListOfManagersReader(path: String, columnNames: Seq[String])(implicit spar
 
 
   val read: DataFrame = {
-    logger.info(s"Getting data from file ${path}")
+    logger.info(s"Getting data from file ${path}, table: ${tableName}")
     val st = conn.createStatement
-    val rs = st.executeQuery("SELECT * FROM Managers")
+    val rs = st.executeQuery(s"SELECT * FROM ${tableName}")
 
-    val schema = Seq("Code", "City", "Manager")
-    logger.info(s"converting resultset into dataframe with schema ${schema}")
+    //val schema = Seq("Code", "City", "Manager")
+    logger.info(s"converting resultset into dataframe with schema ${columnNames.mkString(",")}")
     resultSetToDataFrame(rs, columnNames)
   }
 }

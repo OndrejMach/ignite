@@ -35,3 +35,11 @@ dependencies {
 
     compile group: 'com.crealytics', name: 'spark-excel_2.11', version: '0.12.0'
 }
+/*
+jar {
+    manifest {
+        attributes 'Main-Class': 'blog.shadow.HelloWorld'
+    }
+}
+
+ */
