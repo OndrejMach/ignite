@@ -3,29 +3,35 @@ package com.tmobile.sit.ignite.common.readers
 import java.sql.{DriverManager, ResultSet}
 
 import com.tmobile.sit.ignite.common.Logger
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-trait AccessFileReader extends Logger{
-  def getData() : DataFrame
+trait AccessFileReader extends Logger {
+  def getData(): DataFrame
 }
 
 ///Users/ondrej.machacek/Downloads/List_Of_Managers.accdb
-class MSAccessReader(path: String, tableName: String, columnNames: Seq[String])(implicit sparkSession: SparkSession) extends Reader {
+class MSAccessReader(path: String, tableName: String)(implicit sparkSession: SparkSession) extends Reader {
   private val conn = DriverManager.getConnection(s"jdbc:ucanaccess://${path}")
 
-  private def resultSetToDataFrame(resultSet: ResultSet, schema: Seq[String])(implicit sparkSession: SparkSession): DataFrame = {
+  private def resultSetToDataFrame(resultSet: ResultSet)(implicit sparkSession: SparkSession): DataFrame = {
 
     val columnCount = resultSet.getMetaData.getColumnCount
+    val columnNames = for {i <- 1 to columnCount} yield resultSet.getMetaData.getColumnName(i)
+
     val resultSetAsList: List[Seq[String]] = new Iterator[Seq[String]] {
       override def hasNext: Boolean = resultSet.next()
 
       override def next(): Seq[String] = {
-        for {i<-1 to columnCount} yield {resultSet.getString(i)}
+        for {i <- 1 to columnCount} yield {
+          resultSet.getString(i)
+        }
       } //{
     }.toStream.toList
 
     import sparkSession.implicits._
-    resultSetAsList.toDF("values").select((0 until columnCount).map(i => $"values".getItem(i).as(schema(i))): _*)
+
+    resultSetAsList.toDF("values").select((0 until columnCount).map(i => $"values".getItem(i).as(columnNames(i))): _*)
   }
 
 
@@ -35,8 +41,9 @@ class MSAccessReader(path: String, tableName: String, columnNames: Seq[String])(
     val rs = st.executeQuery(s"SELECT * FROM ${tableName}")
 
     //val schema = Seq("Code", "City", "Manager")
-    logger.info(s"converting resultset into dataframe with schema ${columnNames.mkString(",")}")
-    resultSetToDataFrame(rs, columnNames)
+    logger.info(s"converting resultset to dataframe")
+    resultSetToDataFrame(rs)
+
   }
 }
 

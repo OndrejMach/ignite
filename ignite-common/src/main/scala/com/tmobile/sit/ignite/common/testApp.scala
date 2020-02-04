@@ -24,7 +24,7 @@ object testApp extends App {
 
   //readData.printSchema()
 
-  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv", "|",true)
+  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv","/tmp/badRecordsPath", "|",true)
   val dataCsv = csvReader.read()
   dataCsv.printSchema()
 
@@ -88,12 +88,12 @@ object testApp extends App {
     StructField("201912", IntegerType, nullable = true)
   ))
 
-  val excelReader = new ExcelReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/ALNR-fuer-Reporting.xls", "'Preise'!A3", peopleSchema)
+  val excelReader = new ExcelReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/ALNR-fuer-Reporting.xls", "'Preise'","!A3", Some(peopleSchema))
   val dataExcel = excelReader.read()
   dataExcel.printSchema()
   dataExcel.show(false)
 
-  val mdbReader = new MSAccessReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/E200803032_201904.mdb", "AWH", Seq("buchmonat","kundenzahl","Gesamtsumme","NAME","vorname","plz","ort","strasse","hnr","kdnr","debnr","rufnr","alnr","anz_verb","s_id","Me","Menge","summe","summe_je_Kunde"))
+  val mdbReader = new MSAccessReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/E200803032_201904.mdb", "AWH")
   val mdbData = mdbReader.read
   mdbData.printSchema()
 }

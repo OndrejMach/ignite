@@ -5,22 +5,26 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 //import org.apache.spark.sql.types.StructType
 
-class ExcelReader(path: String, sheetName: String = "sheetName", schema: StructType)(implicit sparkSession: SparkSession) extends Reader {
-  //split re
+class ExcelReader(path: String, sheetName: String = "A1", cellRange: String = "", schema: Option[StructType] = None, dateFormat: String = "yyyy-mm-dd hh:mm:ss")(implicit sparkSession: SparkSession) extends Reader {
   override def read(): DataFrame = {
-   logger.info(s"Reading excel file from path ${path}")
-    sparkSession.read.excel(
-      useHeader = true, // Required
-      dataAddress = sheetName, // Optional, default: "A1"'My Sheet'!B3:C35
-      treatEmptyValuesAsNulls = true,  // Optional, default: true
-      inferSchema = true,  // Optional, default: false
-      //addColorColumns = true,  // Optional, default: false
-      //timestampFormat = "MM-dd-yyyy HH:mm:ss",  // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
-      //maxRowsInMemory = 20, // Optional, default None. If set, uses a streaming reader which can help with big files
-      excerptSize = 10 // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
-      //workbookPassword = "pass"  // Optional, default None. Requires unlimited strength JCE for older JVMs
-    )
-      .schema(schema) // Optional, default: Either inferred schema, or all columns are Strings
+    logger.info(s"Reading excel file from path ${path}, sheet-cellRange: ${sheetName}-${cellRange}")
+    val dfReader = sparkSession.read
+      .format("com.crealytics.spark.excel")
+      .option("dataAddress", s"${sheetName}${cellRange}") // Optional, default: "A1"
+      .option("useHeader", "true") // Required
+      .option("treatEmptyValuesAsNulls", "true") // Optional, default: true
+      .option("timestampFormat", dateFormat) // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
+
+    val withSchema = if (schema.isDefined) {
+      dfReader
+        .schema(schema.get)
+        .option("inferSchema", "false")
+    } else {
+      logger.warn("Schema not defined, trying to infer one")
+      dfReader.option("inferSchema", "true")
+    }
+
+    withSchema
       .load(path)
   }
 }
