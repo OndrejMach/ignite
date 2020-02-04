@@ -1,6 +1,7 @@
 package com.tmobile.sit.ignite.common
 
 import com.tmobile.sit.ignite.common.readers.{CSVReader, ExcelReader, MSAccessReader}
+import com.tmobile.sit.ignite.common.writers.CSVWriter
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 
@@ -24,11 +25,16 @@ object testApp extends App {
 
   //readData.printSchema()
 
-  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv","/tmp/badRecordsPath", "|","utf-8", true)
+  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv","/tmp/badRecordsPath", true,"|","utf-8")
   val dataCsv = csvReader.read()
   dataCsv.printSchema()
 
-//ALNR	Artikel	200801	201112	201212	201312	201412	201512	201601	201602	201603	201604	201605	201606	201607	201608	201609	201610	201611	201612	201701	201702	201703	201704	201705	201706	201707	201708	201709	201710	201711	201712	201801	201802	201803	201804	201805	201806	201807	201808	201809	201810	201811	201812	201901	201902	201903	201904	201905	201906	201907	201908	201909	201910	201911	201912
+  val writer = new CSVWriter("/Users/ondrejmachacek/tmp/test.csv", data = dataCsv)
+  writer.writeData()
+
+
+
+  //ALNR	Artikel	200801	201112	201212	201312	201412	201512	201601	201602	201603	201604	201605	201606	201607	201608	201609	201610	201611	201612	201701	201702	201703	201704	201705	201706	201707	201708	201709	201710	201711	201712	201801	201802	201803	201804	201805	201806	201807	201808	201809	201810	201811	201812	201901	201902	201903	201904	201905	201906	201907	201908	201909	201910	201911	201912
   val peopleSchema = StructType(Array(
     StructField("ALNR", IntegerType, nullable = true),
     StructField("Artikel", StringType, nullable = true),
