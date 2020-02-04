@@ -5,7 +5,7 @@ import org.apache.spark.sql.types.StructType
 
 //case class myCSV(id: Int, name: String)
 
-class CSVReader(path: String, badRecordsPath: String, delimiter: String = ",", header: Boolean, schema: Option[StructType] = None)(implicit sparkSession: SparkSession) extends Reader {
+class CSVReader(path: String, badRecordsPath: String,header: Boolean, delimiter: String = ",", encoding: String = "UTF-8", schema: Option[StructType] = None)(implicit sparkSession: SparkSession) extends Reader {
   private def getCsvData(path: String): DataFrame = {
     logger.info(s"Reading CSV from path ${path}, bad records will be stored in ${badRecordsPath}")
     val reader = sparkSession
@@ -13,6 +13,7 @@ class CSVReader(path: String, badRecordsPath: String, delimiter: String = ",", h
       .option("badRecordsPath", badRecordsPath)
       .option("header", if (header) "true" else "false")
       .option("delimiter", delimiter)
+      .option("encoding",encoding )
 
     val schemaUpdated = if (schema.isDefined) {
       reader.schema(schema.get)
