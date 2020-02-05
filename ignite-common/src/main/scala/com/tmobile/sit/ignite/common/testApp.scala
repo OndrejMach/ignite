@@ -25,7 +25,7 @@ object testApp extends App {
 
   //readData.printSchema()
 
-  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv","/tmp/badRecordsPath", true,"|","utf-8")
+  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv",true,delimiter =  "|",encoding="utf-8")
   val dataCsv = csvReader.read()
   dataCsv.printSchema()
 

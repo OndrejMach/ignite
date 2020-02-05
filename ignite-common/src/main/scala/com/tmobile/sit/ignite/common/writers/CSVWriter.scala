@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 class CSVWriter(path: String, data: DataFrame,
                 delimiter: String = ",", writeHeader: Boolean = true,
                 quote: String = "\"", escape: String = "\\",
-                quoteMode: String = "MINIMAL" )(implicit sparkSession: SparkSession) extends Writer {
+                encoding: String = "UTF-8", quoteMode: String = "MINIMAL" )(implicit sparkSession: SparkSession) extends Writer {
 
   private def merge(srcPath: String, dstPath: String): Unit = {
     logger.info(s"Merging spark output ${srcPath} into a single file ${dstPath}")
@@ -30,6 +30,7 @@ class CSVWriter(path: String, data: DataFrame,
       .option("quote", quote )
       .option("escape", escape)
       .option("quoteMode",quoteMode )
+      .option("encoding", encoding)
       .csv(path+"_tmp")
 
     merge(path+"_tmp", path)
