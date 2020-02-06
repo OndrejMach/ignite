@@ -16,7 +16,7 @@ class CSVReader(path: String,
                (implicit sparkSession: SparkSession) extends Reader {
 
   private def getCsvData(path: String): DataFrame = {
-    logger.info(s"Reading CSV from path ${path}, bad records will be stored in ${badRecordsPath}")
+    logger.info(s"Reading CSV from path ${path}")
     val reader = sparkSession
       .read
       .option("header", if (header) "true" else "false")
@@ -35,7 +35,7 @@ class CSVReader(path: String,
       invalidHandling.schema(schema.get)
     } else {
       logger.warn("Schema file not defined, trying to infer one")
-      invalidHandling.option("inferSchema", "true")
+      invalidHandling.option("inferschema", "true")
     }
 
     schemaUpdated.csv(path)

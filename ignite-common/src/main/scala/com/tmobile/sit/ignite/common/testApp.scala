@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.common
 
-import com.tmobile.sit.ignite.common.readers.{CSVReader, ExcelReader, MSAccessReader}
+import com.tmobile.sit.ignite.common.readers.{CSVReader, ExcelReader, MSAccessReader, Reader}
 import com.tmobile.sit.ignite.common.writers.CSVWriter
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
@@ -25,7 +25,7 @@ object testApp extends App {
 
   //readData.printSchema()
 
-  val csvReader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv",true,delimiter =  "|",encoding="utf-8")
+  val csvReader: Reader = new CSVReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/rcse/TMD_HcsRcsDwh_m4sxvmvsm6hd_20190617.csv",true,delimiter =  "|",encoding="utf-8")
   val dataCsv = csvReader.read()
   dataCsv.printSchema()
 
@@ -94,12 +94,13 @@ object testApp extends App {
     StructField("201912", IntegerType, nullable = true)
   ))
 
-  val excelReader = new ExcelReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/ALNR-fuer-Reporting.xls", "'Preise'","!A3", Some(peopleSchema))
-  val dataExcel = excelReader.read()
-  dataExcel.printSchema()
-  dataExcel.show(false)
+  //val excelReader = new ExcelReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/ALNR-fuer-Reporting.xls", "'Preise'","!A3", Some(peopleSchema))
+  //val dataExcel = excelReader.read()
+  //dataExcel.printSchema()
+  //dataExcel.show(false)
 
   val mdbReader = new MSAccessReader("/Users/ondrejmachacek/data/EWHMigration//data/input/ewhr/work/csmdp/E200803032_201904.mdb", "AWH")
   val mdbData = mdbReader.read
   mdbData.printSchema()
+  mdbData.show(false)
 }

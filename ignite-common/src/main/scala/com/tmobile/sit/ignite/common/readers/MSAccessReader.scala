@@ -3,7 +3,6 @@ package com.tmobile.sit.ignite.common.readers
 import java.sql.{DriverManager, ResultSet}
 
 import com.tmobile.sit.ignite.common.Logger
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait AccessFileReader extends Logger {
