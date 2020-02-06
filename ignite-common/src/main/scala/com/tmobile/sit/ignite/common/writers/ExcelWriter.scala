@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.common.writers
 
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
-class ExcelWriter(filename: String,  data: DataFrame, sheetName: String = "A1", cellRange: String = "" ) extends Writer {
+class ExcelWriter(filename: String,  data: DataFrame, sheetName: String = "", cellRange: String = "A1" ) extends Writer {
   override def writeData(): Unit = {
     logger.info(s"Writing data to ${filename}, sheet: ${sheetName}")
     data
