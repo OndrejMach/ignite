@@ -5,7 +5,12 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 //import org.apache.spark.sql.types.StructType
 
-class ExcelReader(path: String, sheetName: String = "", cellRange: String = "A1", schema: Option[StructType] = None, dateFormat: String = "yyyy-mm-dd hh:mm:ss")(implicit sparkSession: SparkSession) extends Reader {
+class ExcelReader(path: String,
+                  sheetName: String = "",
+                  cellRange: String = "!A1",
+                  schema: Option[StructType] = None,
+                  dateFormat: String = "yyyy-mm-dd hh:mm:ss")
+                 (implicit sparkSession: SparkSession) extends Reader {
   override def read(): DataFrame = {
     logger.info(s"Reading excel file from path ${path}, sheet-cellRange: ${sheetName}-${cellRange}")
     val dfReader = sparkSession.read
