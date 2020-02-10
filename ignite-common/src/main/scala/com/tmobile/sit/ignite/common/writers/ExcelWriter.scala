@@ -2,8 +2,8 @@ package com.tmobile.sit.ignite.common.writers
 
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
-class ExcelWriter(filename: String,  data: DataFrame, sheetName: String = "", cellRange: String = "A1" ) extends Writer {
-  override def writeData(): Unit = {
+class ExcelWriter(filename: String,  sheetName: String = "", cellRange: String = "A1" ) extends Writer {
+  override def writeData(data: DataFrame): Unit = {
     logger.info(s"Writing data to ${filename}, sheet: ${sheetName}")
     data
       .coalesce(1)
