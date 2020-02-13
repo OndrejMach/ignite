@@ -5,7 +5,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
-class CSVWriter(path: String, data: DataFrame,
+class CSVWriter(path: String,
                 delimiter: String = ",", writeHeader: Boolean = true,
                 quote: String = "\"", escape: String = "\\",
                 encoding: String = "UTF-8", quoteMode: String = "MINIMAL" )(implicit sparkSession: SparkSession) extends Writer {
@@ -19,7 +19,7 @@ class CSVWriter(path: String, data: DataFrame,
   }
 
 
-  def writeData() : Unit = {
+  def writeData(data: DataFrame) : Unit = {
     logger.info(s"Writing data to ${path} " )
     data
       .coalesce(1)
