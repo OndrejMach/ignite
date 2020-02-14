@@ -1,6 +1,8 @@
 plugins {
     id 'java'
+    id "com.digithurst.gradle.truststore" version "1.1.0"
 }
+
 apply plugin: 'scala'
 group 'ignite'
 version '1.0'
@@ -8,12 +10,18 @@ version '1.0'
 sourceCompatibility = 1.8
 
 repositories {
-    jcenter()
-    mavenLocal()
-    mavenCentral()
+    maven {
+        credentials {
+            username NEXUS3_USERNAME
+            password NEXUS3_PASSWORD
+        }
+        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+    }
+
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile 'ignite:ignite_common:1.0'
     compile project(":ignite-common")
+
 }
