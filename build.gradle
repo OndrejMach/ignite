@@ -3,6 +3,22 @@ group 'ignite'
 version='1.0'
 
 apply plugin: 'scala'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    zip64 true
+}
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+    }
+}
 
 sourceCompatibility = 1.8
 
