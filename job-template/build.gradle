@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    compile 'ignite:ignite_common:1.0'
+    compile 'spark_common:spark_common:1.1'
     compile project(":ignite-common")
 
 }
