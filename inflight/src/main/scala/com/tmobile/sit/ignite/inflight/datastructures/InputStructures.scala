@@ -177,6 +177,7 @@ wlif_date_time_received          timestamp    null="0000-00-00 00:00:00"
   )
 
   )
+
   case class Oooid(
                     wlif_sequence: Option[Int],
                     wlif_method: Option[String],
@@ -231,28 +232,74 @@ wlif_out_volume                  decimal(18,8) null=""
 wlif_termination_cause           string        null=""
  */
 
-  case class Radius(
-                     wlif_session_id: Option[String],
-                     wlif_user: Option[String],
-                     wlif_username: Option[String],
-                     wlif_realm_code: Option[String],
-                     wlif_account_type: Option[String],
-                     wlif_prefix: Option[String],
-                     wlan_hotspot_ident_code: Option[String],
-                     wlif_xid_pac: Option[Int],
-                     wlif_aircraft_code: Option[String],
-                     wlif_flight_id: Option[Int],
-                     wlif_airline_code: Option[String],
-                     wlif_flight_number: Option[String],
-                     wlif_airport_code_origin: Option[String],
-                     wlif_airport_code_destination: Option[String],
-                     wlif_session_start: Option[Timestamp],
-                     wlif_session_stop: Option[Timestamp],
-                     wlif_session_time: Option[Int],
-                     wlif_in_volume: Option[Double],
-                     wlif_out_volume: Option[Double],
-                     wlif_termination_cause: Option[String]
+  val radiusStructure = StructType (
+    Seq(
+      StructField("wlif_session_id", StringType, true),
+      StructField("wlif_user", StringType, true),
+      StructField("wlif_username", StringType, true),
+      StructField("wlif_realm_code", StringType, true),
+      StructField("wlif_account_type", StringType, true),
+      StructField("wlif_prefix", StringType, true),
+      StructField("wlan_hotspot_ident_code", StringType, true),
+      StructField("wlif_xid_pac", IntegerType, true),
+      StructField("wlif_aircraft_code", StringType, true),
+      StructField("wlif_flight_id", IntegerType, true),
+      StructField("wlif_airline_code", StringType, true),
+      StructField("wlif_flight_number", StringType, true),
+      StructField("wlif_airport_code_origin", StringType, true),
+      StructField("wlif_airport_code_destination", StringType, true),
+      StructField("wlif_session_start", TimestampType, true),
+      StructField("wlif_session_stop", TimestampType, true),
+      StructField("wlif_session_time", IntegerType, true),
+      StructField("wlif_in_volume", DoubleType, true),
+      StructField("wlif_out_volume", DoubleType, true),
+      StructField("wlif_termination_cause", StringType, true)
 
-                   )
+    )
+  )
 
+  /*
+ wlif_flight_id                  int
+wlif_flightleg_status           string        null=""
+wlif_airline_code               string        null=""
+wlif_aircraft_code              string        null=""
+wlif_flight_number              string        null=""
+wlif_airport_code_origin        string        null=""
+wlif_airport_code_destination   string        null=""
+wlif_date_time_opened           timestamp     null=""
+wlif_method_opened              string        null=""
+wlif_date_time_closed           timestamp     null=""
+wlif_method_closed              string        null=""
+wlif_xid_pac                    int
+wlif_num_users                  int           null=""
+wlif_num_sessions               int           null=""
+wlif_session_time               int           null=""
+wlif_session_volume_out         decimal(18,8) null=""
+wlif_session_volume_in          decimal(18,8) null=""
+wlif_active_sessions            int           null=""
+entry_id                        int
+load_date                       timestamp
+  */
+  val flightLegStructure = StructType (
+    Seq(
+      StructField("wlif_flight_id", IntegerType, true),
+      StructField("wlif_flightleg_status", StringType, true),
+      StructField("wlif_airline_code", StringType, true),
+      StructField("wlif_aircraft_code", StringType, true),
+      StructField("wlif_flight_number", StringType, true),
+      StructField("wlif_airport_code_origin", StringType, true),
+      StructField("wlif_airport_code_destination", StringType, true),
+      StructField("wlif_date_time_opened", TimestampType, true),
+      StructField("wlif_method_opened", StringType, true),
+      StructField("wlif_date_time_closed", TimestampType, true),
+      StructField("wlif_method_closed", StringType, true),
+      StructField("wlif_xid_pac", IntegerType, true),
+      StructField("wlif_num_users", IntegerType, true),
+      StructField("wlif_num_sessions", IntegerType, true),
+      StructField("wlif_session_time", IntegerType, true),
+      StructField("wlif_session_volume_out", DoubleType, true),
+      StructField("wlif_session_volume_in", DoubleType, true),
+      StructField("wlif_active_sessions", IntegerType, true)
+    )
+  )
 }

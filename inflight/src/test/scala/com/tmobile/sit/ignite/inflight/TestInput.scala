@@ -94,6 +94,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
 
   "Oooid preprocessing" should "clean oooid input" in {
     import spark.implicits._
+
     val csvReader = CSVReader("src/test/resources/data/G_2020-02-12_03-35-07_oooi.csv",
       header = false,
       schema = Some(InputStructures.oooidStructure),
@@ -110,5 +111,41 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
     val preprocessed = stage.processOooid(df, loadDate=loadDate).filter("wlif_sequence = '9842350'")
 
     assertDataFrameEquals(preprocessed.toDF(), ReferenceData.stagedOooi(loadDate).toDF())
+  }
+
+  "Radius preprocessing" should "clean Radius input" in {
+    import spark.implicits._
+    //G_2020-02-12_03-35-07_radius.csv
+    val csvReader = CSVReader("src/test/resources/data/G_2020-02-12_03-35-07_radius.csv",
+      header = false,
+      schema = Some(InputStructures.radiusStructure),
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-dd HH:mm:ss" )
+
+    val df = csvReader.read()
+
+    val stage = new StageProcess()
+
+    val loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())
+    val radius = stage.processRadius(df,loadDate = loadDate )
+
+    assert(radius.take(1), ReferenceData.radiusStage(loadDate))
+  }
+
+  "FlightLeg processing" should "clean FlightLeg input" in {
+    val csvReader = CSVReader("src/test/resources/data/G_2020-02-12_03-35-07_flightleg.csv",
+      header = false,
+      schema = Some(InputStructures.flightLegStructure),
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-dd HH:mm:ss" )
+
+    val df = csvReader.read()
+
+    val stage = new StageProcess()
+
+    val loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())
+    val flightLeg = stage.processFlightLeg(df,loadDate = loadDate )
+
+    assert(flightLeg.take(1), ReferenceData.flightLegStage(loadDate))
   }
 }
