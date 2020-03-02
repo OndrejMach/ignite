@@ -3,16 +3,16 @@ package com.tmobile.sit.ignite.inflight.processing
 import java.sql.Timestamp
 import java.time.{LocalDate, LocalDateTime}
 
-import com.tmobile.sit.ignite.inflight.datastructures.InputStructures
-import com.tmobile.sit.ignite.inflight.datastructures.StageStructures
+import com.tmobile.sit.ignite.inflight.datastructures.InputTypes
+import com.tmobile.sit.ignite.inflight.datastructures.StageTypes
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions.lit
 
 class StageProcess(implicit sparkSession: SparkSession) {
-  def processAircraft(aircraftData: Dataset[InputStructures.Aircraft]): Dataset[StageStructures.Aircraft] = {
+  def processAircraft(aircraftData: Dataset[InputTypes.Aircraft]): Dataset[StageTypes.Aircraft] = {
     import sparkSession.implicits._
     aircraftData.map(i =>
-      StageStructures.Aircraft(
+      StageTypes.Aircraft(
         wlif_aircraft_code = i.tailsign.getOrElse(""),
         wlif_aircraft_desc = if (i.name.isDefined && !i.name.get.isEmpty && i.name.get.compareTo("\u00A0") == 0) i.name.get.trim /*.substring(0,100) */ else "N/A",
         wlif_manufacturer = i.manufacturer.getOrElse("").trim() /*.substring(1,100)*/ ,
@@ -29,16 +29,10 @@ class StageProcess(implicit sparkSession: SparkSession) {
     )
   }
 
-  /*
-  out->wlif_airline_code        = in->airline_icao;
-*out->wlif_airline_desc       = (in->airline_name == nullptr) ? "N/A" : *in->airline_name;
-out->wlif_airline_iata        = in->airline_iata;
-out->wlif_airline_logo_file   = in->airline_logo_file;
-   */
-  def processAirline(airlineInput: Dataset[InputStructures.Airline]): Dataset[StageStructures.Airline] = {
+  def processAirline(airlineInput: Dataset[InputTypes.Airline]): Dataset[StageTypes.Airline] = {
     import sparkSession.implicits._
 
-    airlineInput.map(i => StageStructures.Airline(
+    airlineInput.map(i => StageTypes.Airline(
       wlif_airline_code = i.airline_icao,
       wlif_airline_desc = i.airline_name.getOrElse("N/A"),
       wlif_airline_iata = i.airline_iata,
@@ -47,20 +41,10 @@ out->wlif_airline_logo_file   = in->airline_logo_file;
     )
   }
 
-  /*
-  out->wlif_airport_code           = in->airport_icao;
-  *out->wlif_airport_desc          = (in->airport_name == nullptr || trim(*in->airport_name).empty()) ? "N/A" : trim(*in->airport_name);
-  out->wlif_iata                   = in->airport_iata;
-  out->wlif_city                   = in->airport_city;
-  out->wlif_country                = in->airport_country;
-  out->wlif_latitude               = in->airport_latitude;
-  out->wlif_longitude              = in->airport_longitude;
-  out->wlif_coverage               = in->airport_coverage;
-   */
-  def processAirport(airportInput: Dataset[InputStructures.Airport]): Dataset[StageStructures.Airport] = {
+  def processAirport(airportInput: Dataset[InputTypes.Airport]): Dataset[StageTypes.Airport] = {
     import sparkSession.implicits._
 
-    airportInput.map(i => StageStructures.Airport(
+    airportInput.map(i => StageTypes.Airport(
       wlif_airport_code = i.airport_icao,
       wlif_airport_desc = if (!i.airport_name.isDefined || i.airport_name.get.trim.isEmpty) "N/A" else i.airport_name.get.trim,
       wlif_iata = i.airport_iata,
@@ -71,45 +55,22 @@ out->wlif_airline_logo_file   = in->airline_logo_file;
       wlif_coverage = i.airport_coverage
     ))
   }
-
-  /*
-  out->wlif_realm_code    = in->realm_prefix;
-  out->wlif_realm_desc    = in->realm_prefix;
-  out->wlif_account_type  = in->account_type;
-   */
-  def preprocessReal(realmInput: Dataset[InputStructures.Realm]): Dataset[StageStructures.Realm] = {
+  def preprocessReal(realmInput: Dataset[InputTypes.Realm]): Dataset[StageTypes.Realm] = {
     import sparkSession.implicits._
 
-    realmInput.map(i => StageStructures.Realm(
+    realmInput.map(i => StageTypes.Realm(
       wlif_realm_code = i.realm_prefix,
       wlif_realm_desc = i.realm_prefix,
       wlif_account_type = i.account_type
     ))
   }
 
-  /*
-  out->wlif_sequence               = in->wlif_sequence;
- *out->wlif_method                = trim(*in->wlif_method).substr(0,100);
- out->wlif_flight_id              = in->wlif_flight_id;
- *out->wlif_auid                  = trim(*in->wlif_auid).substr(0,100);
- out->wlif_xid_pac                = in->wlif_xid_pac;
- out->wlif_airline_code           = in->wlif_airline_code;
- out->wlif_aircraft_code          = in->wlif_aircraft_code;
- out->wlif_flight_number          = in->wlif_flight_number;
- out->wlif_airport_code_origin    = in->wlif_airport_code_origin;
- out->wlif_airport_code_destination = in->wlif_airport_code_destination;
- out->wlif_date_time_event        = in->wlif_date_time_event;
- out->wlif_date_time_received     = in->wlif_date_time_received;
- *out->entry_id                   = run_id;
- *out->load_date                  = load_date;
-   */
-
-  def processOooid(oooidInput: Dataset[InputStructures.Oooid], runId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())): Dataset[StageStructures.Oooi] = {
+  def processOooid(oooidInput: Dataset[InputTypes.Oooid], runId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())): Dataset[StageTypes.Oooi] = {
     import sparkSession.implicits._
 
 
     oooidInput.map(
-      i => StageStructures.Oooi(
+      i => StageTypes.Oooi(
         wlif_sequence = i.wlif_sequence,
         wlif_method = i.wlif_method,
         wlif_flight_id = i.wlif_flight_id,
@@ -127,20 +88,20 @@ out->wlif_airline_logo_file   = in->airline_logo_file;
     )
   }
 
-  def processRadius(inputRadius: DataFrame, entryId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())): Dataset[StageStructures.Radius] = {
+  def processRadius(inputRadius: DataFrame, entryId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())): Dataset[StageTypes.Radius] = {
     import sparkSession.implicits._
     inputRadius
       .withColumn("entry_id", lit(entryId))
       .withColumn("load_date", lit(loadDate))
-      .as[StageStructures.Radius]
+      .as[StageTypes.Radius]
   }
 
-  def processFlightLeg(inputFlightLeg: DataFrame, entryId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())) : Dataset[StageStructures.FlightLeg] = {
+  def processFlightLeg(inputFlightLeg: DataFrame, entryId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())) : Dataset[StageTypes.FlightLeg] = {
     import sparkSession.implicits._
     inputFlightLeg
       .withColumn("entry_id", lit(entryId))
       .withColumn("load_date", lit(loadDate))
-      .as[StageStructures.FlightLeg]
+      .as[StageTypes.FlightLeg]
   }
 
 

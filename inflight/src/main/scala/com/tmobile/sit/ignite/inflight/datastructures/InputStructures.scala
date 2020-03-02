@@ -1,26 +1,9 @@
 package com.tmobile.sit.ignite.inflight.datastructures
 
-import java.sql.Timestamp
-
-import com.tmobile.sit.ignite.inflight.datastructures.InputStructures.Aircraft
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType, TimestampType}
+import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType, TimestampType}
 
 object InputStructures {
 
-  /*
-tailsign                string
-manufacturer            string       null=""
-ac_type                 string       null=""
-serial_number           string       null=""
-year_of_manufacture     int          null="0000"
-name                    string       enc="utf8"
-airline                 string       null=""
-icao_type               string       null=""
-iata_type               string       null=""
-gcs_equipped            string       null=""
-xid                     int
-hotspot_id              string       null=""
- */
   val aircraftStruct = StructType(
     Seq(
       StructField("tailsign", StringType, true),
@@ -37,52 +20,13 @@ hotspot_id              string       null=""
       StructField("hotspot_id", StringType, true)
     )
   )
-
-  case class Aircraft(tailsign: Option[String],
-                      manufacturer: Option[String],
-                      ac_type: Option[String],
-                      serial_number: Option[String],
-                      year_of_manufacture: Option[Int],
-                      name: Option[String],
-                      airline: Option[String],
-                      icao_type: Option[String],
-                      iata_type: Option[String],
-                      gcs_equipped: Option[String],
-                      xid: Option[Int],
-                      hotspot_id: Option[String])
-
-  /*
-airline_name                string
-airline_icao                string
-airline_iata                string       null=""
-airline_logo_file           string       null=""
- */
   val airlineStructure = StructType(Seq(
     StructField("airline_name", StringType, true),
     StructField("airline_icao", StringType, true),
     StructField("airline_iata", StringType, true),
     StructField("airline_logo_file", StringType, true)
   )
-
   )
-
-  case class Airline(airline_name: Option[String],
-                     airline_icao: Option[String],
-                     airline_iata: Option[String],
-                     airline_logo_file: Option[String]
-                    )
-
-  /*
-airport_icao                string
-airport_iata                string        null=""
-airport_name                string
-airport_city                string        null=""
-airport_country             string        null=""
-airport_latitude            decimal(18,8) null=""
-airport_longitude           decimal(18,8) null=""
-airport_coverage            string        null=""
- */
-
   val airportStructure = StructType(Seq(
     StructField("airport_icao", StringType, true),
     StructField("airport_iata", StringType, true),
@@ -93,74 +37,7 @@ airport_coverage            string        null=""
     StructField("airport_longitude", DoubleType, true),
     StructField("airport_coverage", StringType, true)
   )
-
   )
-
-  case class Airport(airport_icao: Option[String],
-                     airport_iata: Option[String],
-                     airport_name: Option[String],
-                     airport_city: Option[String],
-                     airport_country: Option[String],
-                     airport_latitude: Option[Double],
-                     airport_longitude: Option[Double],
-                     airport_coverage: Option[String]
-                    )
-
-  /*
-wlif_flight_id                   int
-wlif_flightleg_status            string        null=""
-wlif_airline_code                string        null=""
-wlif_aircraft_code               string        null=""
-wlif_flight_number               string        null=""
-wlif_airport_code_origin         string        null=""
-wlif_airport_code_destination    string        null=""
-wlif_date_time_opened            timestamp     null="0000-00-00 00:00:00"
-wlif_method_opened               string        null=""
-wlif_date_time_closed            timestamp     null="0000-00-00 00:00:00"
-wlif_method_closed               string        null=""
-wlif_xid_pac                     int
-wlif_num_users                   int           null="\N"
-wlif_num_sessions                int           null="\N"
-wlif_session_time                int           null="\N"
-wlif_session_volume_out          decimal(18,8) null="\N"
-wlif_session_volume_in           decimal(18,8) null="\N"
-wlif_active_sessions             int           null="\N"
- */
-  case class AirportLeg(wlif_flight_id: Option[Int],
-                        wlif_flightleg_status: Option[String],
-                        wlif_airline_code: Option[String],
-                        wlif_aircraft_code: Option[String],
-                        wlif_flight_number: Option[String],
-                        wlif_airport_code_origin: Option[String],
-                        wlif_airport_code_destination: Option[String],
-                        wlif_date_time_opened: Option[Timestamp],
-                        wlif_method_opened: Option[String],
-                        wlif_date_time_closed: Option[Timestamp],
-                        wlif_method_closed: Option[String],
-                        wlif_xid_pac: Option[Int],
-                        wlif_num_users: Option[Int],
-                        wlif_num_sessions: Option[Int],
-                        wlif_session_time: Option[Int],
-                        wlif_session_volume_out: Option[Double],
-                        wlif_session_volume_in: Option[Double],
-                        wlif_active_sessions: Option[Int]
-                       )
-
-  /*
-wlif_sequence                    int
-wlif_method                      string       null=""
-wlif_flight_id                   int          null="\\N"
-wlif_auid                        string       null=""
-wlif_xid_pac                     int
-wlif_airline_code                string       null=""
-wlif_aircraft_code               string       null=""
-wlif_flight_number               string       null=""
-wlif_airport_code_origin         string       null=""
-wlif_airport_code_destination    string       null=""
-wlif_date_time_event             timestamp    null="0000-00-00 00:00:00"
-wlif_date_time_received          timestamp    null="0000-00-00 00:00:00"
- */
-
   val oooidStructure = StructType(Seq(
     StructField("wlif_sequence", IntegerType, true),
     StructField("wlif_method", StringType, true),
@@ -175,64 +52,13 @@ wlif_date_time_received          timestamp    null="0000-00-00 00:00:00"
     StructField("wlif_date_time_event", TimestampType, true),
     StructField("wlif_date_time_received", TimestampType, true)
   )
-
   )
-
-  case class Oooid(
-                    wlif_sequence: Option[Int],
-                    wlif_method: Option[String],
-                    wlif_flight_id: Option[Int],
-                    wlif_auid: Option[String],
-                    wlif_xid_pac: Option[Int],
-                    wlif_airline_code: Option[String],
-                    wlif_aircraft_code: Option[String],
-                    wlif_flight_number: Option[String],
-                    wlif_airport_code_origin: Option[String],
-                    wlif_airport_code_destination: Option[String],
-                    wlif_date_time_event: Option[Timestamp],
-                    wlif_date_time_received: Option[Timestamp]
-                  )
-
-  /*
-realm_prefix                string
-account_type                string      null=""
- */
-
   val realmStructure = StructType(Seq(
     StructField("realm_prefix", StringType, true),
     StructField("account_type", StringType, true)
   )
   )
-
-  case class Realm(
-                    realm_prefix: Option[String],
-                    account_type: Option[String]
-                  )
-
-  /*
-wlif_session_id                  string
-wlif_user                        string        null=""
-wlif_username                    string        null=""
-wlif_realm_code                  string        null=""
-wlif_account_type                string        null=""
-wlif_prefix                      string        null=""
-wlan_hotspot_ident_code          string        null=""
-wlif_xid_pac                     int
-wlif_aircraft_code               string        null=""
-wlif_flight_id                   int           null=""
-wlif_airline_code                string        null=""
-wlif_flight_number               string        null=""
-wlif_airport_code_origin         string        null=""
-wlif_airport_code_destination    string        null=""
-wlif_session_start               timestamp     null=""
-wlif_session_stop                timestamp     null=""
-wlif_session_time                int           null=""
-wlif_in_volume                   decimal(18,8) null=""
-wlif_out_volume                  decimal(18,8) null=""
-wlif_termination_cause           string        null=""
- */
-
-  val radiusStructure = StructType (
+  val radiusStructure = StructType(
     Seq(
       StructField("wlif_session_id", StringType, true),
       StructField("wlif_user", StringType, true),
@@ -258,29 +84,7 @@ wlif_termination_cause           string        null=""
     )
   )
 
-  /*
- wlif_flight_id                  int
-wlif_flightleg_status           string        null=""
-wlif_airline_code               string        null=""
-wlif_aircraft_code              string        null=""
-wlif_flight_number              string        null=""
-wlif_airport_code_origin        string        null=""
-wlif_airport_code_destination   string        null=""
-wlif_date_time_opened           timestamp     null=""
-wlif_method_opened              string        null=""
-wlif_date_time_closed           timestamp     null=""
-wlif_method_closed              string        null=""
-wlif_xid_pac                    int
-wlif_num_users                  int           null=""
-wlif_num_sessions               int           null=""
-wlif_session_time               int           null=""
-wlif_session_volume_out         decimal(18,8) null=""
-wlif_session_volume_in          decimal(18,8) null=""
-wlif_active_sessions            int           null=""
-entry_id                        int
-load_date                       timestamp
-  */
-  val flightLegStructure = StructType (
+  val flightLegStructure = StructType(
     Seq(
       StructField("wlif_flight_id", IntegerType, true),
       StructField("wlif_flightleg_status", StringType, true),
@@ -302,4 +106,72 @@ load_date                       timestamp
       StructField("wlif_active_sessions", IntegerType, true)
     )
   )
+
+  val orderdbStructure = StructType(Seq(
+    StructField("ta_id", StringType, true),
+    StructField("ta_request_date", DateType, true),
+    StructField("ta_request_datetime", TimestampType, true),
+    StructField("ta_request_hour", StringType, true),
+    StructField("paytid", StringType, true),
+    StructField("error_code", StringType, true),
+    StructField("email", StringType, true),
+    StructField("amount", DoubleType, true),
+    StructField("currency", StringType, true),
+    StructField("result_code", StringType, true),
+    StructField("cancellation", StringType, true),
+    StructField("card_institute", StringType, true),
+    StructField("vat", DoubleType, true),
+    StructField("payment_method", StringType, true),
+    StructField("voucher_type", StringType, true),
+    StructField("hotspot_country_code", StringType, true),
+    StructField("hotspot_provider_code", StringType, true),
+    StructField("hotspot_venue_type_code", StringType, true),
+    StructField("hotspot_venue_code", StringType, true),
+    StructField("hotspot_city_code", StringType, true),
+    StructField("hotspot_ident_code", StringType, true),
+    StructField("hotspot_timezone", StringType, true),
+    StructField("natco", StringType, true),
+    StructField("username", StringType, true),
+    StructField("wlan_realm_code", StringType, true),
+    StructField("ma_name", StringType, true),
+    StructField("voucher_duration", IntegerType, true),
+    StructField("alternate_amount", DoubleType, true),
+    StructField("alternate_currency", StringType, true),
+    StructField("reduced_amount", DoubleType, true),
+    StructField("campaign_name", StringType, true),
+    StructField("entry_id", IntegerType, false),
+    StructField("load_date", TimestampType, false)
+  ))
+
+  val mapVoucherStructure = StructType(
+    Seq(
+      StructField("wlan_ta_id", StringType, true),
+      StructField("wlan_request_date", TimestampType, true),
+      StructField("wlan_username", StringType, true),
+      StructField("wlif_username", StringType, true),
+      StructField("wlif_realm_code", StringType, true),
+      StructField("entry_id", IntegerType, true),
+      StructField("load_date", TimestampType, true)
+    )
+  )
+  val exchangeRatesStructure = StructType(
+    Seq(
+      StructField("currency_code", StringType, true),
+      StructField("exchange_rate_code", StringType, true),
+      StructField("exchange_rate_avg", DoubleType, true),
+      StructField("exchange_rate_sell", DoubleType, true),
+      StructField("exchange_rate_buy", DoubleType, true),
+      StructField("faktv", IntegerType, true),
+      StructField("faktn", IntegerType, true),
+      StructField("period_from", TimestampType, true),
+      StructField("period_to", TimestampType, true),
+      StructField("valid_from", DateType, true),
+      StructField("valid_to", DateType, true),
+      StructField("entry_id", IntegerType, true),
+      StructField("load_date", TimestampType, true)
+    )
+  )
+
+
+
 }

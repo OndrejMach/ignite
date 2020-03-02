@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
-import com.tmobile.sit.ignite.inflight.datastructures.InputStructures
+import com.tmobile.sit.ignite.inflight.datastructures.{InputStructures, InputTypes}
 import com.tmobile.sit.ignite.inflight.processing.StageProcess
 
 
@@ -25,7 +25,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       schema = Some(InputStructures.aircraftStruct)
       ,delimiter = "|")
 
-    val df = csvReader.read().as[InputStructures.Aircraft].filter("hotspot_id = 'DE_TW5459'")
+    val df = csvReader.read().as[InputTypes.Aircraft].filter("hotspot_id = 'DE_TW5459'")
 
     val refDF = ReferenceData.inputAircraft.toDF
     assertDataFrameEquals(df.toDF(), refDF)
@@ -40,7 +40,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       schema = Some(InputStructures.airlineStructure)
       ,delimiter = "|")
 
-    val df = csvReader.read().as[InputStructures.Airline]//.filter("airline_name = 'Scoot'")
+    val df = csvReader.read().as[InputTypes.Airline]//.filter("airline_name = 'Scoot'")
     val stage = new StageProcess()
 
     val preprocessed = stage.processAirline(df).filter("wlif_airline_desc = 'Scoot'")
@@ -69,7 +69,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       schema = Some(InputStructures.airportStructure)
       , delimiter = "|")
 
-    val df = csvReader.read().as[InputStructures.Airport] //.filter("airline_name = 'Scoot'")
+    val df = csvReader.read().as[InputTypes.Airport] //.filter("airline_name = 'Scoot'")
     val stage = new StageProcess()
 
     val preprocessed = stage.processAirport(df).filter("wlif_city = 'GOROKA'")
@@ -84,7 +84,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       schema = Some(InputStructures.realmStructure)
       , delimiter = "|")
 
-    val df = csvReader.read().as[InputStructures.Realm]
+    val df = csvReader.read().as[InputTypes.Realm]
     val stage = new StageProcess()
 
     val preprocessed = stage.preprocessReal(df).filter("wlif_realm_desc = 't-online.de'")
@@ -102,7 +102,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       timestampFormat = "yyyy-MM-dd HH:mm:ss" )//2020-01-22 02:48:00
     //csvReader.read().printSchema()
 
-    val df = csvReader.read().as[InputStructures.Oooid]
+    val df = csvReader.read().as[InputTypes.Oooid]
 
     val stage = new StageProcess()
 
@@ -148,4 +148,54 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
 
     assert(flightLeg.take(1), ReferenceData.flightLegStage(loadDate))
   }
+
+
+
+
+  "Order DB csv reader" should "read data properly" in {
+    val csvReader = CSVReader("src/test/resources/data/cptm_ta_f_wlan_orderdb.20200212.csv",
+      header = false,
+      schema = Some(InputStructures.orderdbStructure),
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-dd HH:mm:ss" ,
+      dateFormat = "yyyy-MM-dd")
+
+    import spark.implicits._
+
+    val df =  csvReader.read().as[InputTypes.OrderDB].filter("ta_id = 79746017804843337512").first()
+
+    assert(df == ReferenceData.orderDb(14926, Timestamp.valueOf("2020-02-12 04:08:01")))
+  }
+
+  "Voucher csv reader" should "read data properly" in {
+    val csvReader = CSVReader("src/test/resources/data/cptm_ta_f_wlif_map_voucher.20200212.csv",
+      header = false,
+      schema = Some(InputStructures.mapVoucherStructure),
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-dd HH:mm:ss" ,
+      dateFormat = "yyyy-MM-dd")
+
+    import spark.implicits._
+
+    val df =  csvReader.read().as[InputTypes.MapVoucher].first()
+
+    assert(df == ReferenceData.voucher)
+  }
+
+  "Exchange rates csv reader" should "read data properly" in {
+    val csvReader = CSVReader("src/test/resources/data/cptm_ta_t_exchange_rates.csv",
+      header = false,
+      schema = Some(InputStructures.exchangeRatesStructure),
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-dd HH:mm:ss" ,
+      dateFormat = "yyyy-MM-dd")
+
+    import spark.implicits._
+
+    val df =  csvReader.read().as[InputTypes.ExchangeRates].first()
+
+    assert(df == ReferenceData.exchangeRates)
+  }
+
+
 }
