@@ -137,6 +137,4 @@ object InputTypes {
                             entry_id: Option[Integer],
                             load_date: Option[Timestamp]
                           )
-
-
 }
