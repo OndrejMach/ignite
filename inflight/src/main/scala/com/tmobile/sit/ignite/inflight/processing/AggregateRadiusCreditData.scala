@@ -8,12 +8,15 @@ import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.functions._
 
 class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) {
+
   lazy val filterAggrRadius: DataFrame = {
-    radius.filter(r => r.wlif_username.isDefined &&
-      (r.wlif_account_type.get == "credit") &&
-      r.wlif_session_stop.get.after(firstDate) &&
-      r.wlif_session_stop.get.before(lastPlus1Date))
-      .groupBy("wlif_username", "wlif_flight_id")
+    radius.filter(
+      col("wlif_username").isNotNull
+        && col("wlif_account_type").equalTo(lit("credit"))
+        && col("wlif_session_stop") > unix_timestamp(lit(firstDate)).cast("timestamp")
+        && col("wlif_session_stop") < unix_timestamp(lit(lastPlus1Date)).cast("timestamp")
+    )
+    .groupBy("wlif_username", "wlif_flight_id")
       .agg(
         sum("wlif_session_time").alias("wlif_session_time"),
         sum(col("wlif_in_volume") + col("wlif_out_volume")).alias("wlif_session_volume"),
@@ -50,7 +53,7 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
             max("wlan_request_date").alias("wlan_request_date")
           )
     voucher
-      .join(maxVals, Seq("wlan_request_date"), "leftsemi")
+      .join(maxVals, Seq("wlan_request_date", "wlan_username"), "leftsemi")
 
   }
 
@@ -67,8 +70,8 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
 
   lazy val getExchangeRates: DataFrame = {
     exchangeRates
-    .filter(e => (e.exchange_rate_code.get == "D") &&
-    e.valid_to.get.after(minRequestDate)
+    .filter( col("exchange_rate_code") === lit("D") &&
+      col("valid_to") > unix_timestamp(lit(minRequestDate)).cast("timestamp")
     )
       .withColumn("conversion", col("exchange_rate_avg")/col("faktv"))
   }
