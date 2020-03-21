@@ -2,22 +2,19 @@ package com.tmobile.sit.ignite.inflight.datastructures
 
 import java.sql.{Date, Timestamp}
 
-import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.Aircraft
-import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType, TimestampType}
-
 object InputTypes {
 
   case class Aircraft(tailsign: Option[String],
                       manufacturer: Option[String],
                       ac_type: Option[String],
                       serial_number: Option[String],
-                      year_of_manufacture: Option[Int],
+                      year_of_manufacture: Option[Long],
                       name: Option[String],
                       airline: Option[String],
                       icao_type: Option[String],
                       iata_type: Option[String],
                       gcs_equipped: Option[String],
-                      xid: Option[Int],
+                      xid: Option[Long],
                       hotspot_id: Option[String])
 
   case class Airline(airline_name: Option[String],
@@ -37,7 +34,7 @@ object InputTypes {
                     )
 
 
-  case class AirportLeg(wlif_flight_id: Option[Int],
+  case class AirportLeg(wlif_flight_id: Option[Long],
                         wlif_flightleg_status: Option[String],
                         wlif_airline_code: Option[String],
                         wlif_aircraft_code: Option[String],
@@ -48,21 +45,21 @@ object InputTypes {
                         wlif_method_opened: Option[String],
                         wlif_date_time_closed: Option[Timestamp],
                         wlif_method_closed: Option[String],
-                        wlif_xid_pac: Option[Int],
-                        wlif_num_users: Option[Int],
-                        wlif_num_sessions: Option[Int],
-                        wlif_session_time: Option[Int],
+                        wlif_xid_pac: Option[Long],
+                        wlif_num_users: Option[Long],
+                        wlif_num_sessions: Option[Long],
+                        wlif_session_time: Option[Long],
                         wlif_session_volume_out: Option[Double],
                         wlif_session_volume_in: Option[Double],
-                        wlif_active_sessions: Option[Int]
+                        wlif_active_sessions: Option[Long]
                        )
 
   case class Oooid(
-                    wlif_sequence: Option[Int],
+                    wlif_sequence: Option[Long],
                     wlif_method: Option[String],
-                    wlif_flight_id: Option[Int],
+                    wlif_flight_id: Option[Long],
                     wlif_auid: Option[String],
-                    wlif_xid_pac: Option[Int],
+                    wlif_xid_pac: Option[Long],
                     wlif_airline_code: Option[String],
                     wlif_aircraft_code: Option[String],
                     wlif_flight_number: Option[String],
@@ -103,12 +100,12 @@ object InputTypes {
                      username: Option[String],
                      wlan_realm_code: Option[String],
                      ma_name: Option[String],
-                     voucher_duration: Option[Int],
+                     voucher_duration: Option[Long],
                      alternate_amount: Option[Double],
                      alternate_currency: Option[String],
                      reduced_amount: Option[Double],
                      campaign_name: Option[String],
-                     entry_id: Int,
+                     entry_id: Long,
                      load_date: Timestamp
                     )
 
@@ -118,7 +115,7 @@ object InputTypes {
                          wlan_username: Option[String],
                          wlif_username: Option[String],
                          wlif_realm_code: Option[String],
-                         entry_id: Option[Int],
+                         entry_id: Option[Long],
                          load_date: Option[Timestamp]
                        )
 
@@ -128,13 +125,13 @@ object InputTypes {
                             exchange_rate_avg: Option[Double],
                             exchange_rate_sell: Option[Double],
                             exchange_rate_buy: Option[Double],
-                            faktv: Option[Int],
-                            faktn: Option[Int],
+                            faktv: Option[Long],
+                            faktn: Option[Long],
                             period_from: Option[Timestamp],
                             period_to: Option[Timestamp],
                             valid_from: Option[Date],
                             valid_to: Option[Date],
-                            entry_id: Option[Integer],
+                            entry_id: Option[Long],
                             load_date: Option[Timestamp]
                           )
 }

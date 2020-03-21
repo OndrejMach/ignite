@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.inflight.datastructures
 
-import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType, TimestampType}
+import org.apache.spark.sql.types.{DateType, DoubleType, LongType, StringType, StructField, StructType, TimestampType}
 
 object InputStructures {
 
@@ -10,13 +10,13 @@ object InputStructures {
       StructField("manufacturer", StringType, true),
       StructField("ac_type", StringType, true),
       StructField("serial_number", StringType, true),
-      StructField("year_of_manufacture", IntegerType, true),
+      StructField("year_of_manufacture", LongType, true),
       StructField("name", StringType, true),
       StructField("airline", StringType, true),
       StructField("icao_type", StringType, true),
       StructField("iata_type", StringType, true),
       StructField("gcs_equipped", StringType, true),
-      StructField("xid", IntegerType, true),
+      StructField("xid", LongType, true),
       StructField("hotspot_id", StringType, true)
     )
   )
@@ -39,11 +39,11 @@ object InputStructures {
   )
   )
   val oooidStructure = StructType(Seq(
-    StructField("wlif_sequence", IntegerType, true),
+    StructField("wlif_sequence", LongType, true),
     StructField("wlif_method", StringType, true),
-    StructField("wlif_flight_id", IntegerType, true),
+    StructField("wlif_flight_id", LongType, true),
     StructField("wlif_auid", StringType, true),
-    StructField("wlif_xid_pac", IntegerType, true),
+    StructField("wlif_xid_pac", LongType, true),
     StructField("wlif_airline_code", StringType, true),
     StructField("wlif_aircraft_code", StringType, true),
     StructField("wlif_flight_number", StringType, true),
@@ -67,16 +67,16 @@ object InputStructures {
       StructField("wlif_account_type", StringType, true),
       StructField("wlif_prefix", StringType, true),
       StructField("wlan_hotspot_ident_code", StringType, true),
-      StructField("wlif_xid_pac", IntegerType, true),
+      StructField("wlif_xid_pac", LongType, true),
       StructField("wlif_aircraft_code", StringType, true),
-      StructField("wlif_flight_id", IntegerType, true),
+      StructField("wlif_flight_id", LongType, true),
       StructField("wlif_airline_code", StringType, true),
       StructField("wlif_flight_number", StringType, true),
       StructField("wlif_airport_code_origin", StringType, true),
       StructField("wlif_airport_code_destination", StringType, true),
       StructField("wlif_session_start", TimestampType, true),
       StructField("wlif_session_stop", TimestampType, true),
-      StructField("wlif_session_time", IntegerType, true),
+      StructField("wlif_session_time", LongType, true),
       StructField("wlif_in_volume", DoubleType, true),
       StructField("wlif_out_volume", DoubleType, true),
       StructField("wlif_termination_cause", StringType, true)
@@ -86,7 +86,7 @@ object InputStructures {
 
   val flightLegStructure = StructType(
     Seq(
-      StructField("wlif_flight_id", IntegerType, true),
+      StructField("wlif_flight_id", LongType, true),
       StructField("wlif_flightleg_status", StringType, true),
       StructField("wlif_airline_code", StringType, true),
       StructField("wlif_aircraft_code", StringType, true),
@@ -97,13 +97,13 @@ object InputStructures {
       StructField("wlif_method_opened", StringType, true),
       StructField("wlif_date_time_closed", TimestampType, true),
       StructField("wlif_method_closed", StringType, true),
-      StructField("wlif_xid_pac", IntegerType, true),
-      StructField("wlif_num_users", IntegerType, true),
-      StructField("wlif_num_sessions", IntegerType, true),
-      StructField("wlif_session_time", IntegerType, true),
+      StructField("wlif_xid_pac", LongType, true),
+      StructField("wlif_num_users", LongType, true),
+      StructField("wlif_num_sessions", LongType, true),
+      StructField("wlif_session_time", LongType, true),
       StructField("wlif_session_volume_out", DoubleType, true),
       StructField("wlif_session_volume_in", DoubleType, true),
-      StructField("wlif_active_sessions", IntegerType, true)
+      StructField("wlif_active_sessions", LongType, true)
     )
   )
 
@@ -134,12 +134,12 @@ object InputStructures {
     StructField("username", StringType, true),
     StructField("wlan_realm_code", StringType, true),
     StructField("ma_name", StringType, true),
-    StructField("voucher_duration", IntegerType, true),
+    StructField("voucher_duration", LongType, true),
     StructField("alternate_amount", DoubleType, true),
     StructField("alternate_currency", StringType, true),
     StructField("reduced_amount", DoubleType, true),
     StructField("campaign_name", StringType, true),
-    StructField("entry_id", IntegerType, false),
+    StructField("entry_id", LongType, false),
     StructField("load_date", TimestampType, false)
   ))
 
@@ -150,7 +150,7 @@ object InputStructures {
       StructField("wlan_username", StringType, true),
       StructField("wlif_username", StringType, true),
       StructField("wlif_realm_code", StringType, true),
-      StructField("entry_id", IntegerType, true),
+      StructField("entry_id", LongType, true),
       StructField("load_date", TimestampType, true)
     )
   )
@@ -161,13 +161,13 @@ object InputStructures {
       StructField("exchange_rate_avg", DoubleType, true),
       StructField("exchange_rate_sell", DoubleType, true),
       StructField("exchange_rate_buy", DoubleType, true),
-      StructField("faktv", IntegerType, true),
-      StructField("faktn", IntegerType, true),
+      StructField("faktv", LongType, true),
+      StructField("faktn", LongType, true),
       StructField("period_from", TimestampType, true),
       StructField("period_to", TimestampType, true),
       StructField("valid_from", DateType, true),
       StructField("valid_to", DateType, true),
-      StructField("entry_id", IntegerType, true),
+      StructField("entry_id", LongType, true),
       StructField("load_date", TimestampType, true)
     )
   )

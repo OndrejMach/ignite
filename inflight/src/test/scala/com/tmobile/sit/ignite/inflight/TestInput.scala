@@ -87,7 +87,7 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
     val df = csvReader.read().as[InputTypes.Realm]
     val stage = new StageProcess()
 
-    val preprocessed = stage.preprocessReal(df).filter("wlif_realm_desc = 't-online.de'")
+    val preprocessed = stage.preprocessRealm(df).filter("wlif_realm_desc = 't-online.de'")
 
     assertDataFrameEquals(preprocessed.toDF(), ReferenceData.stagedRealm.toDF())
   }

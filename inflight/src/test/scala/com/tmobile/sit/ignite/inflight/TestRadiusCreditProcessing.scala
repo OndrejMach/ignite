@@ -1,10 +1,9 @@
 package com.tmobile.sit.ignite.inflight
-
 import java.sql.Timestamp
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import com.tmobile.sit.ignite.inflight.processing.data.StageData
-import com.tmobile.sit.ignite.inflight.processing.{AggregateRadiusCreditData, StageProcess}
+import com.tmobile.sit.ignite.inflight.processing.{AggregateRadiusCredit, AggregateRadiusCreditData, StageProcess}
 import org.apache.spark.sql.SparkSession
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
@@ -12,7 +11,7 @@ import org.scalatest.junit.JUnitRunner
 
 
 @RunWith(classOf[JUnitRunner])
-class TestStage extends FlatSpec with DataFrameSuiteBase {
+class TestRadiusCreditProcessing extends FlatSpec with DataFrameSuiteBase {
   implicit lazy val _: SparkSession = spark
 
 
@@ -21,8 +20,7 @@ class TestStage extends FlatSpec with DataFrameSuiteBase {
   val minRequestDate = Timestamp.valueOf("2011-02-11 00:00:00")
 
 
-
-  "RadiusCreditData" should "be prepared properly" in {
+  "RadiusCreditData" should "be processed well" in {
 
 
     val stage = new StageProcess
@@ -36,10 +34,10 @@ class TestStage extends FlatSpec with DataFrameSuiteBase {
     val aggregatevoucher = new AggregateRadiusCreditData(radius = radiusPrep, voucher = StageData.voucher, orderDB = StageData.orderDB, exchangeRates = StageData.exchangeRates,
       firstDate = firstDate, lastPlus1Date =lastPlus1Date, minRequestDate = minRequestDate )
 
-    assert(aggregatevoucher.getExchangeRates.count() > 0)
-    assert(aggregatevoucher.filterAggrRadius.count() >0)
-    assert(aggregatevoucher.mapVoucher.count() >0)
-    assert(aggregatevoucher.filterOrderDB.count() >0)
-  }
 
+    val processing = new  AggregateRadiusCredit(aggregatevoucher, loadDate = Timestamp.valueOf("2020-03-10 00:00:00"), runId = 123)
+
+    processing.executeProcessing().show(false)
+
+  }
 }

@@ -10,12 +10,12 @@ object StageTypes {
                        wlif_manufacturer: String,
                        wlif_ac_type: String,
                        wlif_serial_number: Option[String],
-                       wlif_year_of_manufacture: Int,
+                       wlif_year_of_manufacture: Long,
                        wlif_airline_code: String,
                        wlif_icao_type: String,
                        wlif_iata_type: String,
                        wlif_gcs_equipped: String,
-                       wlif_xid_pac: Int,
+                       wlif_xid_pac: Long,
                        wlan_hotspot_ident_code: String
                      )
 
@@ -44,11 +44,11 @@ object StageTypes {
                   )
 
   case class Oooi(
-                   wlif_sequence: Option[Int],
+                   wlif_sequence: Option[Long],
                    wlif_method: Option[String],
-                   wlif_flight_id: Option[Int],
+                   wlif_flight_id: Option[Long],
                    wlif_auid: Option[String],
-                   wlif_xid_pac: Option[Int],
+                   wlif_xid_pac: Option[Long],
                    wlif_airline_code: Option[String],
                    wlif_aircraft_code: Option[String],
                    wlif_flight_number: Option[String],
@@ -56,7 +56,7 @@ object StageTypes {
                    wlif_airport_code_destination: Option[String],
                    wlif_date_time_event: Option[Timestamp],
                    wlif_date_time_received: Option[Timestamp],
-                   entry_id: Option[Int],
+                   entry_id: Option[Long],
                    load_date: Option[Timestamp]
                  )
 
@@ -68,25 +68,25 @@ object StageTypes {
                      wlif_account_type: Option[String],
                      wlif_prefix: Option[String],
                      wlan_hotspot_ident_code: Option[String],
-                     wlif_xid_pac: Option[Int],
+                     wlif_xid_pac: Option[Long],
                      wlif_aircraft_code: Option[String],
-                     wlif_flight_id: Option[Int],
+                     wlif_flight_id: Option[Long],
                      wlif_airline_code: Option[String],
                      wlif_flight_number: Option[String],
                      wlif_airport_code_origin: Option[String],
                      wlif_airport_code_destination: Option[String],
                      wlif_session_start: Option[Timestamp],
                      wlif_session_stop: Option[Timestamp],
-                     wlif_session_time: Option[Int],
+                     wlif_session_time: Option[Long],
                      wlif_in_volume: Option[Double],
                      wlif_out_volume: Option[Double],
                      wlif_termination_cause: Option[String],
-                     entry_id: Int,
+                     entry_id: Long,
                      load_date: Timestamp
                    )
 
   case class FlightLeg(
-                        wlif_flight_id:Option[Int],
+                        wlif_flight_id:Option[Long],
                         wlif_flightleg_status: Option[String],
                         wlif_airline_code: Option[String],
                         wlif_aircraft_code: Option[String],
@@ -97,14 +97,14 @@ object StageTypes {
                         wlif_method_opened: Option[String],
                         wlif_date_time_closed: Option[Timestamp],
                         wlif_method_closed: Option[String],
-                        wlif_xid_pac: Option[Int],
-                        wlif_num_users: Option[Int],
-                        wlif_num_sessions: Option[Int],
-                        wlif_session_time: Option[Int],
+                        wlif_xid_pac: Option[Long],
+                        wlif_num_users: Option[Long],
+                        wlif_num_sessions: Option[Long],
+                        wlif_session_time: Option[Long],
                         wlif_session_volume_out: Option[Double],
                         wlif_session_volume_in: Option[Double],
-                        wlif_active_sessions: Option[Int],
-                        entry_id: Int,
+                        wlif_active_sessions: Option[Long],
+                        entry_id: Long,
                         load_date: Timestamp
                       )
 }

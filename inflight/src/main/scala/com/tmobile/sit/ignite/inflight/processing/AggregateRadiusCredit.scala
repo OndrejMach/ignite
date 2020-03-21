@@ -7,7 +7,12 @@ import org.apache.spark.sql.functions.{col, lit, when}
 
 class AggregateRadiusCredit(data: AggregateRadiusCreditData, runId: Int, loadDate: Timestamp) extends Processor {
   private def aggregateRadiusVoucher() : DataFrame = {
+    data.filterAggrRadius.show(false)
+
+    data.mapVoucher.show(false)
+
     data.filterAggrRadius
+      .drop("wlif_realm_code")
       .join(data.mapVoucher, Seq("wlif_username"), "inner")
       .select(
         "wlif_session_start",
@@ -69,7 +74,7 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
   val exchangeRatesDefault = getDefaultExchangeRates(data.getExchangeRates)
 
   withOrderDB
-    .join(data.getExchangeRates, (withOrderDB("currency") === data.getExchangeRates("currency_code")) && (withOrderDB("ta_request_date") === data.getExchangeRates("valid_date")), "left")
+    .join(data.getExchangeRates, (withOrderDB("currency") === data.getExchangeRates("currency_code")) && (withOrderDB("ta_request_date") === data.getExchangeRates("valid_to")), "left")
     .join(exchangeRatesDefault, Seq("currency"), "left")
     .withColumn("conversion", when(col("conversion").isNull && col("conversion_default").isNotNull, col("conversion_default")).otherwise(col("conversion")))
     .na.fill(1,Seq("conversion"))
@@ -82,8 +87,11 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
   override def executeProcessing() : DataFrame = {
     //join radius with map voucher
     val radiusWithVoucher = aggregateRadiusVoucher()
+
+    radiusWithVoucher.show(false)
     //join with orderDB
     val withOrderDB = joinWithOrderDB(radiusWithVoucher)
+    withOrderDB.show(false)
     //joinWithExchangeRates
     joinWithExchangeRates(withOrderDB)
   }

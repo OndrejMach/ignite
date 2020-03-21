@@ -55,7 +55,7 @@ class StageProcess(implicit sparkSession: SparkSession) {
       wlif_coverage = i.airport_coverage
     ))
   }
-  def preprocessReal(realmInput: Dataset[InputTypes.Realm]): Dataset[StageTypes.Realm] = {
+  def preprocessRealm(realmInput: Dataset[InputTypes.Realm]): Dataset[StageTypes.Realm] = {
     import sparkSession.implicits._
 
     realmInput.map(i => StageTypes.Realm(
@@ -83,6 +83,7 @@ class StageProcess(implicit sparkSession: SparkSession) {
         wlif_airport_code_destination = i.wlif_airport_code_destination,
         wlif_date_time_event = i.wlif_date_time_event,
         wlif_date_time_received = i.wlif_date_time_received,
+        //TODO review
         entry_id = Some(runId),
         load_date = Some(loadDate))
     )
