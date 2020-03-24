@@ -3,12 +3,14 @@ package com.tmobile.sit.ignite.inflight
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.inflight.config.Setup
 import com.tmobile.sit.ignite.inflight.processing.data.{InputData, OutputFilters, StageData, StagedInput}
 import com.tmobile.sit.ignite.inflight.processing.{AggregateRadiusCredit, AggregateRadiusCreditData, FullOutputsProcessor, StageProcess}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object Application {
+object Application extends Logger{
 
 
   private def processInput(stageProcess: StageProcess, runId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now()))(implicit sparkSession: SparkSession): StagedInput = {
@@ -49,6 +51,16 @@ object Application {
   }
 
   def main(args: Array[String]): Unit = {
+
+    val setup = new Setup()
+
+    if (!setup.settings.isAllDefined){
+      logger.error("Application parameters not properly defined")
+      setup.settings.printMissingFields()
+    }
+
+    setup.settings.printAllFields()
+    /*
     implicit val sparkSession = getSparkSession()
 
     val firstDate = Timestamp.valueOf("2019-02-10 00:00:00")
@@ -61,6 +73,9 @@ object Application {
     val fullOutput = new FullOutputsProcessor(input, "/Users/ondrejmachacek/tmp/inflight/")
 
     fullOutput.writeOutput()
+
+     */
+
   }
 
 }

@@ -1,6 +1,7 @@
 package com.tmobile.sit.ignite.inflight.processing
 
 import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.inflight.config.OutputFiles
 import com.tmobile.sit.ignite.inflight.processing.data.{OutputColumns, OutputFilters, StagedInput}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -15,24 +16,17 @@ object TransformDataFrameColumns {
 }
 
 
-class FullOutputsProcessor(stagedInput: StagedInput, outputPath: String)(implicit sparkSession: SparkSession) extends OutputWriter {
-  val flightLegFilename = outputPath + "CPTM_QV_F_WLIF_FLIGHTLEG.csv"
-  val airportFilename = outputPath + "CPTM_TA_D_WLIF_AIRPORT.csv"
-  val aircraftFilename = outputPath + "CPTM_QV_D_WLIF_AIRCRAFT.csv"
-  val airlineFilename = outputPath + "CPTM_QV_D_WLIF_AIRLINE.csv"
-  val oooiFilename = outputPath + "CPTM_QV_F_WLIF_OOOI.csv"
-  val radiusFilename = outputPath + "CPTM_QV_F_WLIF_RADIUS.csv"
-
+class FullOutputsProcessor(stagedInput: StagedInput, outputConf: OutputFiles, airlines: Seq[String])(implicit sparkSession: SparkSession) extends OutputWriter {
 
 
   private def filterStagedData(stagedData: StagedInput) : StagedInput = {
     StagedInput(
-      radius = stagedData.radius.filter(OutputFilters.filterAirline()),
+      radius = stagedData.radius.filter(OutputFilters.filterAirline(airlines)),
       airport = stagedData.airport,
       aircraft = stagedData.aircraft,
-      airline = stagedData.airline.filter(OutputFilters.filterAirline()),
-      oooi = stagedData.oooi.filter(OutputFilters.filterAirline()),
-      flightLeg = stagedData.flightLeg.filter(OutputFilters.filterAirline()),
+      airline = stagedData.airline.filter(OutputFilters.filterAirline(airlines)),
+      oooi = stagedData.oooi.filter(OutputFilters.filterAirline(airlines)),
+      flightLeg = stagedData.flightLeg.filter(OutputFilters.filterAirline(airlines)),
       realm = stagedData.realm
     )
   }
@@ -50,7 +44,7 @@ class FullOutputsProcessor(stagedInput: StagedInput, outputPath: String)(implici
   }
 
   private def writeOut(path: String, data: DataFrame) = {
-    val writer = CSVWriter(data, path, delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss")
+    val writer = CSVWriter(data, path, delimiter = "|", timestampFormat = outputConf.timestampFormat.get)
     writer.writeData()
   }
 
@@ -58,11 +52,11 @@ class FullOutputsProcessor(stagedInput: StagedInput, outputPath: String)(implici
     val filteredData = filterStagedData(stagedInput)
     val output = projectOutputColumns(filteredData)
 
-    writeOut(flightLegFilename, output.flightLeg)
-    writeOut(airportFilename, output.airport)
-    writeOut(aircraftFilename, output.aircraft)
-    writeOut(airlineFilename, output.airline)
-    writeOut(oooiFilename, output.oooi)
-    writeOut(radiusFilename, output.radius)
+    writeOut(outputConf.flightLegFile.get, output.flightLeg)
+    writeOut(outputConf.airportFile.get, output.airport)
+    writeOut(outputConf.aircraftFile.get, output.aircraft)
+    writeOut(outputConf.airlineFile.get, output.airline)
+    writeOut(outputConf.oooiFile.get, output.oooi)
+    writeOut(outputConf.radiusFile.get, output.radius)
   }
 }
