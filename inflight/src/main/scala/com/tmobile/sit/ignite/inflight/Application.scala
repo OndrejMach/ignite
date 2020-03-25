@@ -1,21 +1,12 @@
 package com.tmobile.sit.ignite.inflight
 
-import java.sql.Timestamp
-import java.time.LocalDateTime
-
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.inflight.config.Setup
-import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregateRadiusCredit, AggregateRadiusCreditData}
-import com.tmobile.sit.ignite.inflight.processing.data.{InputData, OutputFilters, ReferenceData, StageData}
-import com.tmobile.sit.ignite.inflight.processing.{FullOutputsProcessor, RadiusVoucheProcessor}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, StageData}
+import com.tmobile.sit.ignite.inflight.processing._
+import org.apache.spark.sql.SparkSession
 
 object Application extends Logger{
-
-  private def processAggregateRadiusCredit()(implicit sparkSession: SparkSession): Unit = {
-
-  }
 
   def main(args: Array[String]): Unit = {
     logger.info(s"Reading configuation files")
@@ -27,8 +18,9 @@ object Application extends Logger{
     }
     logger.info("Configuration parameters OK")
     setup.settings.printAllFields()
-    val runID = getRunId()
-    val loadDate = getLoadDate()
+
+    implicit val runID = getRunId()
+    implicit val loadDate = getLoadDate()
 
     logger.info(s"RunId: ${runID}")
     logger.info(s"LoadDate: ${loadDate}")
@@ -40,33 +32,35 @@ object Application extends Logger{
     logger.info("Getting reference data from stage files")
     val refData = new ReferenceData(setup.settings.referenceData)
 
-    logger.info("Preapring stage processor")
-    val stage = new StageData(inputFiles, runId = runID, loadDate = loadDate)
+    logger.info("Preapring stage data")
+    val stageData = new StageData(inputFiles)
+
     logger.info("Preparation for full-files processing")
-    val fullOutput = new FullOutputsProcessor(stage, setup.settings.output, setup.settings.appParams.filteredAirlineCodes.get)
-    logger.info("Data for full-files output ready")
+    val fullOutput = new FullOutputsProcessor(stageData, setup.settings.appParams.filteredAirlineCodes.get)
+    logger.info("Data for full-files")
 
-    logger.info("Preparing processor for RadiusVoucher")
-    val radiusVoucheProcessor = new RadiusVoucheProcessor(refData,stage, setup.settings.appParams.firstDate.get,
-      setup.settings.appParams.firstPlus1Date.get, setup.settings.appParams.minRequestDate.get,
-      runID, loadDate)
+    val fullOutputData = fullOutput.generateOutput()
+    val fullOutputsWriter = new FullOutputWriter(setup.settings.output,fullOutputData)
+    logger.info("Writing full files")
+    fullOutputsWriter.writeOutput()
+    logger.info("Full files DONE")
 
-    val radiusVoucherData = radiusVoucheProcessor.executeProcessing()
-    radiusVoucherData.show(false)
+    logger.info("Preparing processor for RadiusCredit")
+    val radiusCreditProcessor = new RadiusCreditDailyProcessor(refData,stageData, setup.settings.appParams.firstDate.get,
+      setup.settings.appParams.firstPlus1Date.get, setup.settings.appParams.minRequestDate.get)
 
+    logger.info("Creating RadiusCreditDaily data")
+    val radiusCreditDailyData = radiusCreditProcessor.executeProcessing()
 
-
-
-
-
-
-
-    fullOutput.writeOutput()
-
-
-
-
-
+    logger.info("Preparin VoucherRadius processor")
+    val voucherRadiusProcessor = new VoucherRadiusProcessor(stageData, refData, firstDate = setup.settings.appParams.firstDate.get,
+      lastPlus1Date = setup.settings.appParams.firstPlus1Date.get, minRequestDate = setup.settings.appParams.minRequestDate.get)
+    logger.info("Retrieving VoucherRadius data")
+    val voucherRadiusData = voucherRadiusProcessor.getVchrRdsData()
+    logger.info("Writing VoucherRadius data")
+    val aggregatesWriter = new AggregatesWriter(radiusCreditDailyData, voucherRadiusData, outputConf = setup.settings.output)
+    aggregatesWriter.writeOutput()
+    logger.info("Processing DONE")
   }
 
 }

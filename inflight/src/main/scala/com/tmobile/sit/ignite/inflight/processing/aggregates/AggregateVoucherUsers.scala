@@ -2,14 +2,15 @@ package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.inflight.processing.Processor
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
-class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData, runId: Int, loadDate: Timestamp) extends Processor {
+class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData)(implicit runId: Int, loadDate: Timestamp) extends Logger {
 
 
-  def executeProcessing(): DataFrame = {
+  val vchrRadiusTFull: DataFrame = {
     logger.info("Joining Voucher with Radius and FligheLeg to get non-voucher users")
     val nonVoucher = interimData.joinVoucherWithRadiusFlightLeg.filter("wlan_ta_id is null")
     logger.info("Getting voucher users")

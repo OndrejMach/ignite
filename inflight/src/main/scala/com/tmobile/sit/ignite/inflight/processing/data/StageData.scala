@@ -7,7 +7,7 @@ import com.tmobile.sit.ignite.inflight.datastructures.StageTypes
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{Dataset, SparkSession}
 
-class StageData(input: InputData, runId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now()))(implicit sparkSession: SparkSession) {
+class StageData(input: InputData)(implicit sparkSession: SparkSession, runId: Int, loadDate: Timestamp) {
   val aircraft: Dataset[StageTypes.Aircraft] = {
     import sparkSession.implicits._
     input.aircraft.map(i =>

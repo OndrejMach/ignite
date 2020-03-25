@@ -35,6 +35,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
         first("wlif_realm_code", true).alias("wlif_realm_code"),
         first("wlan_hotspot_ident_code", true).alias("wlan_hotspot_ident_code"),
         first("wlif_xid_pac", true).alias("wlif_xid_pac"),
+        first("wlif_account_type", ignoreNulls = true).alias("wlif_account_type"),
         sum("wlif_session_time").alias("wlif_session_time"),
         sum(col("wlif_in_volume") + col("wlif_out_volume")).alias("wlif_session_volume"),
         count("wlif_username").alias("count_sessions")
@@ -45,9 +46,12 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
     //Timestamp.valueOf("1900-01-01 00:00:00.0")
     logger.info("Joining Radius with flightleg")
     aggregateRadius
-      .join(filterFlightLeg, Seq("wlif_flight_id"), "inner")
+      .join(filterFlightLeg.select("wlif_flight_id",
+        "wlif_date_time_opened", "wlif_date_time_closed", "wlif_num_users", "wlif_num_sessions"),
+        Seq("wlif_flight_id"), "inner")
       .withColumn("wlif_date_time_opened", when(col("wlif_date_time_opened").equalTo(lit(Timestamp.valueOf("1900-01-01 00:00:00.0"))), col("wlif_session_stop")).otherwise(col("wlif_date_time_opened")))
       .withColumn("wlif_date_time_closed", when(col("wlif_date_time_opened").equalTo(lit(Timestamp.valueOf("1900-01-01 00:00:00.0"))), col("wlif_session_stop")).otherwise(col("wlif_date_time_opened")))
+      //.drop(filterFlightLeg("wlif_flight_number"), filterFlightLeg("wlif_airport_code_origin"))
       .select("wlif_flight_id",
         "wlif_flight_number",
         "wlif_airport_code_origin",
@@ -82,7 +86,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
         .join(maxValWlif, Seq("wlan_request_date", "wlif_username"), "leftsemi")
 
     joinRadiusWithFlightLeg
-      .join(voucherDedup, Seq("wlif_username"), "left")
+      .join(voucherDedup.select("wlan_ta_id","wlif_username","wlan_username" ), Seq("wlif_username"), "left")
       .select(
         "wlif_flight_id",
         "wlif_flight_number",
@@ -112,7 +116,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
   lazy val joinedOrderDBVoucherAndFlightLeg: DataFrame = {
     //unmatched - out->campaign_name = left->wlan_username;
     logger.info("JoiningOrderDB Voucher and Flightleg")
-    joinRadiusWithFlightLeg.join(filteredOrdedDB, joinRadiusWithFlightLeg("wlan_username") ===filteredOrdedDB("username"), "left" )
+    joinRadiusWithFlightLeg.join(filteredOrdedDB, joinRadiusWithFlightLeg("wlif_username") ===filteredOrdedDB("username"), "left" )
   }
 
 }

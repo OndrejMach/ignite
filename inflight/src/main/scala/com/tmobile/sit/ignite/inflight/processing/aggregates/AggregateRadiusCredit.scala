@@ -6,11 +6,11 @@ import com.tmobile.sit.ignite.inflight.processing.{Processor, getDefaultExchange
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{col, lit, when}
 
-class AggregateRadiusCredit(data: AggregateRadiusCreditData, runId: Int, loadDate: Timestamp) extends Processor {
+class AggregateRadiusCredit(data: AggregateRadiusVoucherData)(implicit runId: Int, loadDate: Timestamp) extends Processor {
   private def aggregateRadiusVoucher() : DataFrame = {
-    data.filterAggrRadius.show(false)
+    //data.filterAggrRadius.show(false)
 
-    data.mapVoucher.show(false)
+    //data.mapVoucher.show(false)
 
     data.filterAggrRadius
       .drop("wlif_realm_code")
@@ -89,10 +89,10 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
     //join radius with map voucher
     val radiusWithVoucher = aggregateRadiusVoucher()
 
-    radiusWithVoucher.show(false)
+    //radiusWithVoucher.show(false)
     //join with orderDB
     val withOrderDB = joinWithOrderDB(radiusWithVoucher)
-    withOrderDB.show(false)
+    //withOrderDB.show(false)
     //joinWithExchangeRates
     joinWithExchangeRates(withOrderDB)
   }

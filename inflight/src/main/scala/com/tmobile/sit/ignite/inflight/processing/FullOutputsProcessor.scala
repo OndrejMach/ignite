@@ -6,7 +6,7 @@ import com.tmobile.sit.ignite.inflight.config.OutputFiles
 import com.tmobile.sit.ignite.inflight.processing.data.{OutputColumns, OutputFilters, StageData, StagedDataForFullOutput}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-sealed case class Outputs(radius: DataFrame, airport: DataFrame, aircraft: DataFrame, airline: DataFrame, oooi: DataFrame, flightLeg:DataFrame)
+case class FullOutputs(radius: DataFrame, airport: DataFrame, aircraft: DataFrame, airline: DataFrame, oooi: DataFrame, flightLeg:DataFrame)
 
 object TransformDataFrameColumns {
   implicit class TransformColumnNames(df : DataFrame) {
@@ -17,7 +17,7 @@ object TransformDataFrameColumns {
 }
 
 
-class FullOutputsProcessor(stagedInput: StageData, outputConf: OutputFiles, airlines: Seq[String])(implicit sparkSession: SparkSession) extends OutputWriter with Logger {
+class FullOutputsProcessor(stagedInput: StageData, airlines: Seq[String])(implicit sparkSession: SparkSession) extends Logger {
 
 
   private def filterStagedData(stagedData: StageData) : StagedDataForFullOutput = {
@@ -33,10 +33,10 @@ class FullOutputsProcessor(stagedInput: StageData, outputConf: OutputFiles, airl
     )
   }
 
-  private def projectOutputColumns(data: StagedDataForFullOutput): Outputs = {
+  private def projectOutputColumns(data: StagedDataForFullOutput): FullOutputs = {
     import TransformDataFrameColumns.TransformColumnNames
     logger.info("Preparing output structures for full files output")
-    Outputs(
+    FullOutputs(
       radius = data.radius.select(OutputColumns.radius.head, OutputColumns.radius.tail : _*).columnsToUpperCase(),
       airport = data.airport.select(OutputColumns.airport.head, OutputColumns.airport.tail :_*).columnsToUpperCase(),
       aircraft = data.aircraft.select(OutputColumns.aircraft.head, OutputColumns.aircraft.tail :_*).columnsToUpperCase(),
@@ -46,22 +46,10 @@ class FullOutputsProcessor(stagedInput: StageData, outputConf: OutputFiles, airl
     )
   }
 
-  private def writeOut(path: String, data: DataFrame) = {
-    logger.info(s"Writing output file ${path}")
-    val writer = CSVWriter(data, path, delimiter = "|", timestampFormat = outputConf.timestampFormat.get)
-    writer.writeData()
-  }
 
-  def writeOutput() =  {
+  def generateOutput() =  {
     logger.info("Preparing data for full-files output")
     val filteredData = filterStagedData(stagedInput)
-    val output = projectOutputColumns(filteredData)
-    logger.info("Data ready for writing")
-    writeOut(outputConf.path.get + outputConf.flightLegFile.get, output.flightLeg)
-    writeOut(outputConf.path.get + outputConf.airportFile.get, output.airport)
-    writeOut(outputConf.path.get + outputConf.aircraftFile.get, output.aircraft)
-    writeOut(outputConf.path.get + outputConf.airlineFile.get, output.airline)
-    writeOut(outputConf.path.get + outputConf.oooiFile.get, output.oooi)
-    writeOut(outputConf.path.get + outputConf.radiusFile.get, output.radius)
+    projectOutputColumns(filteredData)
   }
 }

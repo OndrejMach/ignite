@@ -8,7 +8,7 @@ import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.Radius
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset}
 
-class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
+class AggregateRadiusVoucherData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
 
   lazy val filterAggrRadius: DataFrame = {
     logger.info("Filtering and aggregating Radius")
