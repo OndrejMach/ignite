@@ -1,19 +1,21 @@
-package com.tmobile.sit.ignite.inflight.processing
+package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{ExchangeRates, MapVoucher, OrderDB}
-import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.{FlightLeg, Radius}
-import org.apache.spark.sql.{DataFrame, Dataset}
+import com.tmobile.sit.ignite.inflight.processing.Processor
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
 class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData, runId: Int, loadDate: Timestamp) extends Processor {
 
 
   def executeProcessing(): DataFrame = {
+    logger.info("Joining Voucher with Radius and FligheLeg to get non-voucher users")
     val nonVoucher = interimData.joinVoucherWithRadiusFlightLeg.filter("wlan_ta_id is null")
+    logger.info("Getting voucher users")
     val voucher = interimData.joinVoucherWithRadiusFlightLeg.filter("wlan_ta_id is not null")
 
+    logger.info("Aggregating non-Voucher users")
     val nonVoucherAggr = nonVoucher
       .groupBy("wlif_flight_id", "wlif_date_time_closed", "wlif_airline_code", "wlif_account_type")
       .agg(
@@ -26,7 +28,7 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData, runId: Int
         first("wlif_realm_code").alias("wlif_realm_code"),
         first("wlan_hotspot_ident_code").alias("wlan_hotspot_ident_code")
       )
-
+    logger.info("Aggregating voucher users")
     val voucherAggr = voucher
       .groupBy("wlif_flight_id", "wlif_date_time_closed", "wlif_airline_code", "wlif_account_type")
       .agg(
@@ -37,6 +39,7 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData, runId: Int
       )
       .withColumnRenamed("wlif_account_type", "vchr_wlif_account_type")
 
+    logger.info("Joining voucher and non-voucher aggregates")
     voucherAggr
       .join(nonVoucherAggr, Seq("wlif_flight_id", "wlif_date_time_closed", "wlif_airline_code"), "right")
       .na

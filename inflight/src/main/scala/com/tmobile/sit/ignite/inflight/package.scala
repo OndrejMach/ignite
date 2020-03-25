@@ -1,6 +1,11 @@
 package com.tmobile.sit.ignite
 
+import java.sql.Timestamp
+import java.time.{LocalDate, LocalDateTime}
+
 import org.apache.spark.sql.SparkSession
+
+import scala.util.Random
 
 package object inflight {
   def getSparkSession() = SparkSession.builder()
@@ -16,4 +21,12 @@ package object inflight {
     .config("spark.dynamicAllocation.enabled", "true")
     .config("spark.app.name", "inflight_processing")
     .getOrCreate()
+
+  def getRunId(): Int = {
+    Random.nextInt()
+  }
+
+  def getLoadDate(): Timestamp = {
+    Timestamp.valueOf(LocalDateTime.now())
+  }
 }

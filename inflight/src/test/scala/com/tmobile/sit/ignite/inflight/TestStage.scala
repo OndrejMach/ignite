@@ -3,8 +3,8 @@ package com.tmobile.sit.ignite.inflight
 import java.sql.Timestamp
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import com.tmobile.sit.ignite.inflight.processing.data.StageData
-import com.tmobile.sit.ignite.inflight.processing.{AggregateRadiusCreditData, StageProcess}
+import com.tmobile.sit.ignite.inflight.processing.data.{ReferenceData, StageData}
+import com.tmobile.sit.ignite.inflight.processing.aggregates.AggregateRadiusCreditData
 import org.apache.spark.sql.SparkSession
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
@@ -25,11 +25,11 @@ class TestStage extends FlatSpec with DataFrameSuiteBase {
   "RadiusCreditData" should "be prepared properly" in {
 
 
-    val stage = new StageProcess
+    val stage = new StageData
 
     //radius.select(max("wlif_session_stop")).show(false)
 
-    val radiusPrep= stage.processRadius(StageData.radius)
+    val radiusPrep= stage.radius(StageData.radius)
 
     //radiusPrep.summary().select("wlif_session_stop").show(true)
 

@@ -1,14 +1,16 @@
-package com.tmobile.sit.ignite.inflight.processing
+package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{ExchangeRates, MapVoucher, OrderDB}
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{MapVoucher, OrderDB}
 import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.{FlightLeg, Radius}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset}
-import org.apache.spark.sql.functions.{col, count, first, lit, max, min, sum, when}
 
-class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], firstDate: Timestamp, lastPlus1Date: Timestamp) {
+class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], firstDate: Timestamp, lastPlus1Date: Timestamp) extends Logger {
   lazy val filterFlightLeg: Dataset[FlightLeg] = {
+    logger.info("Filtering FlightLeg")
     flightLeg.filter(
       flightLeg("wlif_date_time_closed").isNotNull &&
         flightLeg("wlif_flightleg_status").equalTo(lit("closed")) &&
@@ -19,6 +21,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
   }
 
   lazy val aggregateRadius: DataFrame = {
+    logger.info("Aggregating Radius data")
     radius.groupBy("wlif_username", "wlif_flight_id")
       .agg(
         min("wlif_session_start").alias("wlif_session_start"),
@@ -40,6 +43,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
 
   lazy val joinRadiusWithFlightLeg: DataFrame = {
     //Timestamp.valueOf("1900-01-01 00:00:00.0")
+    logger.info("Joining Radius with flightleg")
     aggregateRadius
       .join(filterFlightLeg, Seq("wlif_flight_id"), "inner")
       .withColumn("wlif_date_time_opened", when(col("wlif_date_time_opened").equalTo(lit(Timestamp.valueOf("1900-01-01 00:00:00.0"))), col("wlif_session_stop")).otherwise(col("wlif_date_time_opened")))
@@ -63,6 +67,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
   }
 
   lazy val joinVoucherWithRadiusFlightLeg: DataFrame = {
+    logger.info("Joining with RadiusFlightLeg")
     val maxValWlan =
       voucher.groupBy("wlan_username")
       .agg(max("wlan_request_date").alias("wlan_request_date"))
@@ -100,11 +105,13 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
   }
 
   lazy val filteredOrdedDB: Dataset[OrderDB] = {
+    logger.info("Filtering OrderDB")
     orderDB.filter(t => t.result_code.get == "OK" && !t.error_code.isDefined).dropDuplicates("username")
   }
 
   lazy val joinedOrderDBVoucherAndFlightLeg: DataFrame = {
     //unmatched - out->campaign_name = left->wlan_username;
+    logger.info("JoiningOrderDB Voucher and Flightleg")
     joinRadiusWithFlightLeg.join(filteredOrdedDB, joinRadiusWithFlightLeg("wlan_username") ===filteredOrdedDB("username"), "left" )
   }
 

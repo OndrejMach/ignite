@@ -1,7 +1,8 @@
-package com.tmobile.sit.ignite.inflight.processing
+package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
+import com.tmobile.sit.ignite.inflight.processing.{Processor, getDefaultExchangeRates}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{col, lit, when}
 

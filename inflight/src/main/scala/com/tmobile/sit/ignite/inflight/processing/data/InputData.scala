@@ -1,12 +1,16 @@
 package com.tmobile.sit.ignite.inflight.processing.data
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.ignite.inflight.config.InputFiles
 import com.tmobile.sit.ignite.inflight.datastructures.{InputStructures, InputTypes}
 import org.apache.spark.sql.SparkSession
 
-object InputData {
-  def radius(implicit sparkSession: SparkSession) = {
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_radius.csv",
+class InputData(input: InputFiles)(implicit sparkSession: SparkSession) extends Logger {
+  val radius = {
+    val path = input.path.get + input.radiusFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(path,
       header = false,
       schema = Some(InputStructures.radiusStructure),
       delimiter = "|",
@@ -14,35 +18,43 @@ object InputData {
       .read()
   }
 
-  def aircraft(implicit sparkSession: SparkSession) = {
+  val aircraft = {
     import sparkSession.implicits._
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_aircraft.csv",
+    val path = input.path.get+input.aircraftFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(input.path.get+input.aircraftFile.get,
       header = false,
       schema = Some(InputStructures.aircraftStruct)
       , delimiter = "|").read().as[InputTypes.Aircraft]
   }
 
-  def airline(implicit sparkSession: SparkSession) = {
+  val airline = {
     import sparkSession.implicits._
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_airline.csv",
+    val path = input.path.get + input.airlineFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(input.path.get + input.airlineFile.get,
       header = false,
       schema = Some(InputStructures.airlineStructure)
       ,delimiter = "|")
       .read().as[InputTypes.Airline]
   }
 
-  def airport (implicit sparkSession: SparkSession) = {
+  val airport  = {
     import sparkSession.implicits._
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_airport.csv",
+    val path = input.path.get + input.airportFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(input.path.get + input.airportFile.get,
       header = false,
       schema = Some(InputStructures.airportStructure)
       , delimiter = "|")
       .read().as[InputTypes.Airport]
   }
 
-  def oooi (implicit sparkSession: SparkSession) = {
+  val oooi  = {
     import sparkSession.implicits._
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_oooi.csv",
+    val path = input.path.get + input.oooidFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(input.path.get + input.oooidFile.get,
       header = false,
       schema = Some(InputStructures.oooidStructure),
       delimiter = "|",
@@ -50,9 +62,11 @@ object InputData {
       .read().as[InputTypes.Oooid]
   }
 
-  def flightLeg (implicit sparkSession: SparkSession) = {
+  val flightLeg  = {
     import sparkSession.implicits._
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_flightleg.csv",
+    val path = input.path.get + input.flightlegFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(input.path.get + input.flightlegFile.get,
       header = false,
       schema = Some(InputStructures.flightLegStructure),
       delimiter = "|",
@@ -60,9 +74,11 @@ object InputData {
       .read()
   }
 
-  def realm (implicit sparkSession: SparkSession) = {
+  val realm  = {
     import sparkSession.implicits._
-    CSVReader("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/inflight/data/input/G_2020-02-12_03-35-07_account_type.csv",
+    val path = input.path.get + input.realmFile.get
+    logger.info(s"Reading file ${path}")
+    CSVReader(input.path.get + input.realmFile.get,
       header = false,
       schema = Some(InputStructures.realmStructure)
       , delimiter = "|")

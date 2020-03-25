@@ -1,10 +1,11 @@
-package com.tmobile.sit.ignite.inflight.processing
+package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
 import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.ExchangeRates
+import com.tmobile.sit.ignite.inflight.processing.{Processor, getDefaultExchangeRates}
+import org.apache.spark.sql.functions.{col, lit, when}
 import org.apache.spark.sql.{DataFrame, Dataset}
-import org.apache.spark.sql.functions.{col, lit, max, when}
 
 class AggregateWithExechangeRates(interimData: AggregVchrRadiusInterimData, exchangeRates: Dataset[ExchangeRates],runId: Int, loadDate: Timestamp, minDate: Timestamp ) extends Processor {
 

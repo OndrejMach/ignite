@@ -1,15 +1,17 @@
-package com.tmobile.sit.ignite.inflight.processing
+package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{ExchangeRates, MapVoucher, OrderDB}
 import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.Radius
-import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, Dataset}
 
-class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) {
+class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
 
   lazy val filterAggrRadius: DataFrame = {
+    logger.info("Filtering and aggregating Radius")
     radius.filter(
       col("wlif_username").isNotNull
         && col("wlif_account_type").equalTo(lit("credit"))
@@ -46,6 +48,7 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
    */
 
   lazy val mapVoucher: DataFrame = {
+    logger.info("Mapping voucher")
     val maxVals =
       voucher
         .groupBy("wlan_username")
@@ -58,6 +61,7 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
   }
 
   lazy val filterOrderDB: DataFrame = {
+    logger.info("Filtering OrderDB")
     val maxVals = orderDB.groupBy("username")
       .agg(
         max("ta_request_date").alias("ta_request_date")
@@ -69,6 +73,7 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
   }
 
   lazy val getExchangeRates: DataFrame = {
+    logger.info("Getting and preparing exchange rates")
     exchangeRates
     .filter( col("exchange_rate_code") === lit("D") &&
       col("valid_to") > unix_timestamp(lit(minRequestDate)).cast("timestamp")

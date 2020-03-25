@@ -3,6 +3,8 @@ package com.tmobile.sit.ignite.inflight
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.max
 
+import scala.util.Random
+
 package object processing {
   def getDefaultExchangeRates(exchangeRates: DataFrame) : DataFrame = {
     exchangeRates.printSchema()
@@ -15,5 +17,4 @@ package object processing {
       .withColumnRenamed("currency_code", "currency")
       .withColumnRenamed("conversion", "conversion_default")
   }
-
 }

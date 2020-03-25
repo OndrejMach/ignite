@@ -6,75 +6,66 @@ import java.time.LocalDateTime
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.inflight.config.Setup
-import com.tmobile.sit.ignite.inflight.processing.data.{InputData, OutputFilters, StageData, StagedInput}
-import com.tmobile.sit.ignite.inflight.processing.{AggregateRadiusCredit, AggregateRadiusCreditData, FullOutputsProcessor, StageProcess}
+import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregateRadiusCredit, AggregateRadiusCreditData}
+import com.tmobile.sit.ignite.inflight.processing.data.{InputData, OutputFilters, ReferenceData, StageData}
+import com.tmobile.sit.ignite.inflight.processing.{FullOutputsProcessor, RadiusVoucheProcessor}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object Application extends Logger{
-
-
-  private def processInput(stageProcess: StageProcess, runId: Int = 0, loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now()))(implicit sparkSession: SparkSession): StagedInput = {
-    StagedInput(
-      aircraft = stageProcess.processAircraft(InputData.aircraft),
-      airport = stageProcess.processAirport(InputData.airport),
-      airline = stageProcess.processAirline(InputData.airline),
-      realm = stageProcess.preprocessRealm(InputData.realm),
-      radius = stageProcess.processRadius(InputData.radius),
-      flightLeg = stageProcess.processFlightLeg(InputData.flightLeg),
-      oooi = stageProcess.processOooid(InputData.oooi)
-    )
-  }
-
-
-
-  private def processRadiusVoucher(stageProcess: StageProcess, firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp)(implicit sparkSession: SparkSession): Unit = {
-
-    //radius.select(max("wlif_session_stop")).show(false)
-
-    val radiusPrep = stageProcess.processRadius(InputData.radius)
-
-    //radiusPrep.summary().select("wlif_session_stop").show(true)
-
-    val aggregatevoucher = new AggregateRadiusCreditData(radius = radiusPrep, voucher = StageData.voucher, orderDB = StageData.orderDB, exchangeRates = StageData.exchangeRates,
-      firstDate = firstDate, lastPlus1Date = lastPlus1Date, minRequestDate = minRequestDate)
-
-
-    val processing = new AggregateRadiusCredit(aggregatevoucher, loadDate = Timestamp.valueOf("2020-03-10 00:00:00"), runId = 123)
-
-    val result = processing.executeProcessing()
-
-    result.coalesce(1).write.csv("/Users/ondrejmachacek/tmp/inflightRadiusVoucher.csv")
-  }
 
   private def processAggregateRadiusCredit()(implicit sparkSession: SparkSession): Unit = {
 
   }
 
   def main(args: Array[String]): Unit = {
-
+    logger.info(s"Reading configuation files")
     val setup = new Setup()
-
+    logger.info(s"Configuration parameters check")
     if (!setup.settings.isAllDefined){
       logger.error("Application parameters not properly defined")
       setup.settings.printMissingFields()
     }
-
+    logger.info("Configuration parameters OK")
     setup.settings.printAllFields()
-    /*
+    val runID = getRunId()
+    val loadDate = getLoadDate()
+
+    logger.info(s"RunId: ${runID}")
+    logger.info(s"LoadDate: ${loadDate}")
+
+    logger.info("Getting SparkSession")
     implicit val sparkSession = getSparkSession()
+    logger.info("Processing started - input data gathering")
+    val inputFiles = new InputData(setup.settings.input)
+    logger.info("Getting reference data from stage files")
+    val refData = new ReferenceData(setup.settings.referenceData)
 
-    val firstDate = Timestamp.valueOf("2019-02-10 00:00:00")
-    val lastPlus1Date = Timestamp.valueOf("2020-02-28 00:00:00")
-    val minRequestDate = Timestamp.valueOf("2011-02-11 00:00:00")
-    val stage = new StageProcess()
+    logger.info("Preapring stage processor")
+    val stage = new StageData(inputFiles, runId = runID, loadDate = loadDate)
+    logger.info("Preparation for full-files processing")
+    val fullOutput = new FullOutputsProcessor(stage, setup.settings.output, setup.settings.appParams.filteredAirlineCodes.get)
+    logger.info("Data for full-files output ready")
 
-    val input = processInput(stage)
+    logger.info("Preparing processor for RadiusVoucher")
+    val radiusVoucheProcessor = new RadiusVoucheProcessor(refData,stage, setup.settings.appParams.firstDate.get,
+      setup.settings.appParams.firstPlus1Date.get, setup.settings.appParams.minRequestDate.get,
+      runID, loadDate)
 
-    val fullOutput = new FullOutputsProcessor(input, "/Users/ondrejmachacek/tmp/inflight/")
+    val radiusVoucherData = radiusVoucheProcessor.executeProcessing()
+    radiusVoucherData.show(false)
+
+
+
+
+
+
+
 
     fullOutput.writeOutput()
 
-     */
+
+
+
 
   }
 

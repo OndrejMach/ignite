@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
 import com.tmobile.sit.ignite.inflight.datastructures.{InputStructures, InputTypes}
-import com.tmobile.sit.ignite.inflight.processing.StageProcess
+import com.tmobile.sit.ignite.inflight.processing.data.StageData
 
 
 @RunWith(classOf[JUnitRunner])
@@ -41,9 +41,9 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       ,delimiter = "|")
 
     val df = csvReader.read().as[InputTypes.Airline]//.filter("airline_name = 'Scoot'")
-    val stage = new StageProcess()
+    val stage = new StageData()
 
-    val preprocessed = stage.processAirline(df).filter("wlif_airline_desc = 'Scoot'")
+    val preprocessed = stage.airline(df).filter("wlif_airline_desc = 'Scoot'")
 
     assertDataFrameEquals(preprocessed.toDF(), ReferenceData.stagedAirline.toDF())
   }
@@ -52,8 +52,8 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
     import spark.implicits._
 
     val df = ReferenceData.inputAircraft
-    val stage = new StageProcess()
-    val staged = stage.processAircraft(df.toDS()).toDF()
+    val stage = new StageData()
+    val staged = stage.aircraft(df.toDS()).toDF()
     val refDF = ReferenceData.stagedAircraft.toDF()
 
     //staged.printSchema()
@@ -70,9 +70,9 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       , delimiter = "|")
 
     val df = csvReader.read().as[InputTypes.Airport] //.filter("airline_name = 'Scoot'")
-    val stage = new StageProcess()
+    val stage = new StageData()
 
-    val preprocessed = stage.processAirport(df).filter("wlif_city = 'GOROKA'")
+    val preprocessed = stage.airport(df).filter("wlif_city = 'GOROKA'")
 
     assertDataFrameEquals(preprocessed.toDF(), ReferenceData.stagedAirport.toDF())
   }
@@ -85,9 +85,9 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
       , delimiter = "|")
 
     val df = csvReader.read().as[InputTypes.Realm]
-    val stage = new StageProcess()
+    val stage = new StageData()
 
-    val preprocessed = stage.preprocessRealm(df).filter("wlif_realm_desc = 't-online.de'")
+    val preprocessed = stage.realm(df).filter("wlif_realm_desc = 't-online.de'")
 
     assertDataFrameEquals(preprocessed.toDF(), ReferenceData.stagedRealm.toDF())
   }
@@ -104,11 +104,11 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
 
     val df = csvReader.read().as[InputTypes.Oooid]
 
-    val stage = new StageProcess()
+    val stage = new StageData()
 
     val loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())
 
-    val preprocessed = stage.processOooid(df, loadDate=loadDate).filter("wlif_sequence = '9842350'")
+    val preprocessed = stage.oooi(df, loadDate=loadDate).filter("wlif_sequence = '9842350'")
 
     assertDataFrameEquals(preprocessed.toDF(), ReferenceData.stagedOooi(loadDate).toDF())
   }
@@ -124,10 +124,10 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
 
     val df = csvReader.read()
 
-    val stage = new StageProcess()
+    val stage = new StageData()
 
     val loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())
-    val radius = stage.processRadius(df,loadDate = loadDate )
+    val radius = stage.radius(df,loadDate = loadDate )
 
     assert(radius.take(1), ReferenceData.radiusStage(loadDate))
   }
@@ -141,10 +141,10 @@ class JobTemplateTest extends FlatSpec with DataFrameSuiteBase {
 
     val df = csvReader.read()
 
-    val stage = new StageProcess()
+    val stage = new StageData()
 
     val loadDate: Timestamp = Timestamp.valueOf(LocalDateTime.now())
-    val flightLeg = stage.processFlightLeg(df,loadDate = loadDate )
+    val flightLeg = stage.flightLeg(df,loadDate = loadDate )
 
     assert(flightLeg.take(1), ReferenceData.flightLegStage(loadDate))
   }
