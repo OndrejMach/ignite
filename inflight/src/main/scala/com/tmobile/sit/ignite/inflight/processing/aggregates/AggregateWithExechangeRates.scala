@@ -20,8 +20,8 @@ class AggregateWithExechangeRates(interimData: AggregVchrRadiusInterimData, exch
 
     val exchangeRatesDefault = getDefaultExchangeRates(exchangeRts)
 
-    exchangeRts.printSchema()
-    interimData.joinedOrderDBVoucherAndFlightLeg.printSchema()
+    //exchangeRts.printSchema()
+    //interimData.joinedOrderDBVoucherAndFlightLeg.printSchema()
 
     interimData.joinedOrderDBVoucherAndFlightLeg
       .drop("entry_id")

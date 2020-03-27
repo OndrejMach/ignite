@@ -23,7 +23,7 @@ package object inflight {
     .getOrCreate()
 
   def getRunId(): Int = {
-    Random.nextInt()
+    Random.nextInt().abs
   }
 
   def getLoadDate(): Timestamp = {

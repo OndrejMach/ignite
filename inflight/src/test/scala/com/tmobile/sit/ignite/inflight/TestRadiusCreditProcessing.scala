@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.inflight
 import java.sql.Timestamp
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregateRadiusCredit, AggregateRadiusVoucherData}
+import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregateRadiusCredit, AggregateRadiusCreditData}
 import com.tmobile.sit.ignite.inflight.processing.data.{ReferenceData, StageData}
 import com.tmobile.sit.ignite.inflight.processing.AggregateRadiusCreditData
 import org.apache.spark.sql.SparkSession
@@ -32,7 +32,7 @@ class TestRadiusCreditProcessing extends FlatSpec with DataFrameSuiteBase {
 
     //radiusPrep.summary().select("wlif_session_stop").show(true)
 
-    val aggregatevoucher = new AggregateRadiusVoucherData(radius = radiusPrep, voucher = StageData.voucher, orderDB = StageData.orderDB, exchangeRates = StageData.exchangeRates,
+    val aggregatevoucher = new AggregateRadiusCreditData(radius = radiusPrep, voucher = StageData.voucher, orderDB = StageData.orderDB, exchangeRates = StageData.exchangeRates,
       firstDate = firstDate, lastPlus1Date =lastPlus1Date, minRequestDate = minRequestDate )
 
 

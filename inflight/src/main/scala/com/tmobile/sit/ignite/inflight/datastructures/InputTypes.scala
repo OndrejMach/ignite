@@ -78,7 +78,7 @@ object InputTypes {
                      ta_request_date: Option[Date],
                      ta_request_datetime: Option[Timestamp],
                      ta_request_hour: Option[String],
-                     paytid: Option[String],
+                     payid: Option[String],
                      error_code: Option[String],
                      email: Option[String],
                      amount: Option[Double],

@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import com.tmobile.sit.ignite.inflight.processing.data.{ReferenceData, StageData}
-import com.tmobile.sit.ignite.inflight.processing.aggregates.AggregateRadiusVoucherData
+import com.tmobile.sit.ignite.inflight.processing.aggregates.AggregateRadiusCreditData
 import org.apache.spark.sql.SparkSession
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
@@ -33,7 +33,7 @@ class TestStage extends FlatSpec with DataFrameSuiteBase {
 
     //radiusPrep.summary().select("wlif_session_stop").show(true)
 
-    val aggregatevoucher = new AggregateRadiusVoucherData(radius = radiusPrep, voucher = StageData.voucher, orderDB = StageData.orderDB, exchangeRates = StageData.exchangeRates,
+    val aggregatevoucher = new AggregateRadiusCreditData(radius = radiusPrep, voucher = StageData.voucher, orderDB = StageData.orderDB, exchangeRates = StageData.exchangeRates,
       firstDate = firstDate, lastPlus1Date =lastPlus1Date, minRequestDate = minRequestDate )
 
     assert(aggregatevoucher.getExchangeRates.count() > 0)

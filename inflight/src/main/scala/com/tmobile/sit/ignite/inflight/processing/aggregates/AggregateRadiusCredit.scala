@@ -6,7 +6,7 @@ import com.tmobile.sit.ignite.inflight.processing.{Processor, getDefaultExchange
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{col, lit, when}
 
-class AggregateRadiusCredit(data: AggregateRadiusVoucherData)(implicit runId: Int, loadDate: Timestamp) extends Processor {
+class AggregateRadiusCredit(data: AggregateRadiusCreditData)(implicit runId: Int, loadDate: Timestamp) extends Processor {
   private def aggregateRadiusVoucher() : DataFrame = {
     //data.filterAggrRadius.show(false)
 
@@ -57,7 +57,7 @@ class AggregateRadiusCredit(data: AggregateRadiusVoucherData)(implicit runId: In
         "wlif_session_volume",
         "count_sessions",
         "wlan_ta_id",
-        "paytid",
+        "payid",
         "amount",
         "currency",
         "card_institute",
@@ -87,14 +87,19 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
 
   override def executeProcessing() : DataFrame = {
     //join radius with map voucher
+    println(s"COUNT RADIUS AGGREGATED: ${data.filterAggrRadius.count()}")
     val radiusWithVoucher = aggregateRadiusVoucher()
-
+    println(s"COUNT RADIUSWITHVOUCHER: ${radiusWithVoucher.count()}")
     //radiusWithVoucher.show(false)
     //join with orderDB
     val withOrderDB = joinWithOrderDB(radiusWithVoucher)
+    println(s"COUNT RADIUSWITHVOUCHER with ORDERDB: ${withOrderDB.count()}")
     //withOrderDB.show(false)
     //joinWithExchangeRates
-    joinWithExchangeRates(withOrderDB)
+    val withExRts = joinWithExchangeRates(withOrderDB)
+      .withColumnRenamed("count_sessions", "wlif_num_sessions")
+    println(s"COUNT RADIUSWITHVOUCHER with ORDERDB with ExchangeRates: ${withExRts.count()}")
+    withExRts
   }
 
 }

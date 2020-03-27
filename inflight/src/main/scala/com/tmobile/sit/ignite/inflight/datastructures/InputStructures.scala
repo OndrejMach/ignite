@@ -112,7 +112,7 @@ object InputStructures {
     StructField("ta_request_date", DateType, true),
     StructField("ta_request_datetime", TimestampType, true),
     StructField("ta_request_hour", StringType, true),
-    StructField("paytid", StringType, true),
+    StructField("payid", StringType, true),
     StructField("error_code", StringType, true),
     StructField("email", StringType, true),
     StructField("amount", DoubleType, true),

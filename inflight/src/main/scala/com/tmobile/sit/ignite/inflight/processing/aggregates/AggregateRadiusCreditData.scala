@@ -8,17 +8,22 @@ import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.Radius
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset}
 
-class AggregateRadiusVoucherData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
+class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
 
   lazy val filterAggrRadius: DataFrame = {
     logger.info("Filtering and aggregating Radius")
-    radius.filter(
-      col("wlif_username").isNotNull
-        && col("wlif_account_type").equalTo(lit("credit"))
-        && col("wlif_session_stop") > unix_timestamp(lit(firstDate)).cast("timestamp")
-        && col("wlif_session_stop") < unix_timestamp(lit(lastPlus1Date)).cast("timestamp")
+    println(s"COUNT RADIUS: ${radius.count()}")
+    //radius.select("wlif_account_type").distinct().show()
+    val filtered = radius.filter(
+      col("wlif_username").isNotNull  &&
+        col("wlif_account_type").equalTo(lit("credit")) &&
+        col("wlif_session_stop") >= unix_timestamp(lit(firstDate)).cast("timestamp") &&
+        col("wlif_session_stop") < unix_timestamp(lit(lastPlus1Date)).cast("timestamp")
     )
-    .groupBy("wlif_username", "wlif_flight_id")
+    filtered.select("wlif_session_stop").distinct().show(false)
+    println(s"COUNT RADIUS AFTER FILTER: ${filtered.count()}")
+    filtered
+      .groupBy("wlif_username", "wlif_flight_id")
       .agg(
         sum("wlif_session_time").alias("wlif_session_time"),
         sum(col("wlif_in_volume") + col("wlif_out_volume")).alias("wlif_session_volume"),

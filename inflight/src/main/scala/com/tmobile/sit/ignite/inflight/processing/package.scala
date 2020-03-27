@@ -7,7 +7,7 @@ import scala.util.Random
 
 package object processing {
   def getDefaultExchangeRates(exchangeRates: DataFrame) : DataFrame = {
-    exchangeRates.printSchema()
+    //exchangeRates.printSchema()
 
     exchangeRates
       .groupBy("currency_code")
