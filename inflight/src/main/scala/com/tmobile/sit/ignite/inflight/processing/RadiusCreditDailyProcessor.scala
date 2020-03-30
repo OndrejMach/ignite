@@ -4,7 +4,9 @@ import java.sql.Timestamp
 
 import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregateRadiusCredit, AggregateRadiusCreditData}
 import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, StageData}
+import com.tmobile.sit.ignite.inflight.translateSeconds
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.col
 
 class RadiusCreditDailyProcessor(refData: ReferenceData, stageData: StageData,
                                  firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp
@@ -13,7 +15,6 @@ class RadiusCreditDailyProcessor(refData: ReferenceData, stageData: StageData,
   def executeProcessing(): DataFrame = {
 
     import TransformDataFrameColumns.TransformColumnNames
-
     val aggregateRadiusCredit = new AggregateRadiusCreditData(radius = stageData.radius, voucher = refData.voucher, orderDB = refData.orderDB, exchangeRates = refData.exchangeRates,
       firstDate = firstDate, lastPlus1Date = lastPlus1Date, minRequestDate = minRequestDate)
 
@@ -23,7 +24,7 @@ class RadiusCreditDailyProcessor(refData: ReferenceData, stageData: StageData,
     val result = processing
       .executeProcessing()
 
-      result.printSchema()
+     // result.printSchema()
       result.select("wlif_session_stop","wlif_aircraft_code",
       "wlif_flight_id","wlif_airline_code",
       "wlif_flight_number","wlif_airport_code_origin",

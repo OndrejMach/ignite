@@ -15,8 +15,8 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
       flightLeg("wlif_date_time_closed").isNotNull &&
         flightLeg("wlif_flightleg_status").equalTo(lit("closed")) &&
         flightLeg("wlif_num_users").gt(lit(0)) &&
-        flightLeg("wlif_date_time_closed").geq(lit(firstDate)) &&
-        flightLeg("wlif_date_time_closed").leq(lit(lastPlus1Date))
+        flightLeg("wlif_date_time_closed") >= unix_timestamp(lit(firstDate)).cast("timestamp") &&
+        flightLeg("wlif_date_time_closed")< unix_timestamp(lit(lastPlus1Date)).cast("timestamp")
     )
   }
 
@@ -116,7 +116,11 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
   lazy val joinedOrderDBVoucherAndFlightLeg: DataFrame = {
     //unmatched - out->campaign_name = left->wlan_username;
     logger.info("JoiningOrderDB Voucher and Flightleg")
-    joinRadiusWithFlightLeg.join(filteredOrdedDB, joinRadiusWithFlightLeg("wlif_username") ===filteredOrdedDB("username"), "left" )
+
+    //joinVoucherWithRadiusFlightLeg.printSchema()
+    //filteredOrdedDB.printSchema()
+
+    joinVoucherWithRadiusFlightLeg.join(filteredOrdedDB, joinVoucherWithRadiusFlightLeg("wlan_username") ===filteredOrdedDB("username"), "left" )
   }
 
 }

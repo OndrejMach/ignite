@@ -52,7 +52,7 @@ object Application extends Logger{
     logger.info("Creating RadiusCreditDaily data")
     val radiusCreditDailyData = radiusCreditProcessor.executeProcessing()
 
-    logger.info("Preparin VoucherRadius processor")
+    logger.info("Preparing VoucherRadius processor")
     val voucherRadiusProcessor = new VoucherRadiusProcessor(stageData, refData, firstDate = setup.settings.appParams.firstDate.get,
       lastPlus1Date = setup.settings.appParams.firstPlus1Date.get, minRequestDate = setup.settings.appParams.minRequestDate.get)
     logger.info("Retrieving VoucherRadius data")

@@ -13,6 +13,7 @@ class VoucherRadiusProcessor(stageData: StageData, refData: ReferenceData,
                              firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp)
                             (implicit runId : Int, loadDate: Timestamp) extends Logger {
   def getVchrRdsData() : VoucherRadiusOutputs = {
+    import TransformDataFrameColumns.TransformColumnNames
     logger.info("Preparing interim structures for voucherRadius aggregates")
     val interimData: AggregVchrRadiusInterimData = new AggregVchrRadiusInterimData(flightLeg = stageData.flightLeg, radius = stageData.radius,voucher=refData.voucher,
       orderDB = refData.orderDB, firstDate=firstDate, lastPlus1Date=lastPlus1Date)
@@ -21,6 +22,6 @@ class VoucherRadiusProcessor(stageData: StageData, refData: ReferenceData,
     logger.info("preparing radiusVoucher aggregates daily file")
     val aggregatesWithExchangeRates = new AggregateWithExechangeRates(interimData = interimData, exchangeRates = refData.exchangeRates, minDate = minRequestDate)
     logger.info("RadiusVoucher aggregates ready")
-    VoucherRadiusOutputs(voucherRadiusDaily = aggregatesWithExchangeRates.voucherRadiusDaily, voucherRadiusFull = aggregateVoucherUsers.vchrRadiusTFull)
+    VoucherRadiusOutputs(voucherRadiusDaily = aggregatesWithExchangeRates.voucherRadiusDaily.columnsToUpperCase(), voucherRadiusFull = aggregateVoucherUsers.vchrRadiusTFull.columnsToUpperCase())
   }
 }

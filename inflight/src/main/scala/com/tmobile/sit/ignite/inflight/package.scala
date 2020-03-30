@@ -29,4 +29,12 @@ package object inflight {
   def getLoadDate(): Timestamp = {
     Timestamp.valueOf(LocalDateTime.now())
   }
+
+  def translateSeconds  = (secs: Long ) => {
+    val hours = secs/3600
+    val minutes = secs%3600/60
+    val seconds = (secs%3600)%60
+
+    s"${hours}:${minutes}:${seconds}"
+  }
 }

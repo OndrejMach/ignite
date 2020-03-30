@@ -10,7 +10,8 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData)(implicit runId: Int
   private def aggregateRadiusVoucher() : DataFrame = {
     //data.filterAggrRadius.show(false)
 
-    //data.mapVoucher.show(false)
+    logger.debug(s"Voucher dount: ${data.mapVoucher.select("wlif_username").distinct().count()}")
+    logger.debug(s"Aggregated radius: ${data.filterAggrRadius.select("wlif_username").distinct().count()}")
 
     data.filterAggrRadius
       .drop("wlif_realm_code")
@@ -87,18 +88,18 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
 
   override def executeProcessing() : DataFrame = {
     //join radius with map voucher
-    println(s"COUNT RADIUS AGGREGATED: ${data.filterAggrRadius.count()}")
+    logger.debug(s"COUNT RADIUS AGGREGATED: ${data.filterAggrRadius.count()}")
     val radiusWithVoucher = aggregateRadiusVoucher()
-    println(s"COUNT RADIUSWITHVOUCHER: ${radiusWithVoucher.count()}")
+    logger.debug(s"COUNT RADIUSWITHVOUCHER: ${radiusWithVoucher.count()}")
     //radiusWithVoucher.show(false)
     //join with orderDB
     val withOrderDB = joinWithOrderDB(radiusWithVoucher)
-    println(s"COUNT RADIUSWITHVOUCHER with ORDERDB: ${withOrderDB.count()}")
+    logger.debug(s"COUNT RADIUSWITHVOUCHER with ORDERDB: ${withOrderDB.count()}")
     //withOrderDB.show(false)
     //joinWithExchangeRates
     val withExRts = joinWithExchangeRates(withOrderDB)
       .withColumnRenamed("count_sessions", "wlif_num_sessions")
-    println(s"COUNT RADIUSWITHVOUCHER with ORDERDB with ExchangeRates: ${withExRts.count()}")
+    logger.debug(s"COUNT RADIUSWITHVOUCHER with ORDERDB with ExchangeRates: ${withExRts.count()}")
     withExRts
   }
 

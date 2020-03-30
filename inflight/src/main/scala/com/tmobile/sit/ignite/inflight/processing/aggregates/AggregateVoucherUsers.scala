@@ -75,6 +75,13 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData)(implicit r
         "flight_sessions")
       .withColumn("entry_id", lit(runId))
       .withColumn("load_date", lit(loadDate))
+      .select("wlif_date_time_opened","wlif_date_time_closed",
+        "wlif_flight_id","wlif_flight_number",
+        "wlif_realm_code","wlif_airline_code",
+        "wlif_account_type","wlan_hotspot_ident_code",
+        "non_voucher_users","non_voucher_sessions",
+        "voucher_users","voucher_sessions",
+        "flight_users","flight_sessions")
   }
 
 }

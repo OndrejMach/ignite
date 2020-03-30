@@ -12,16 +12,16 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
 
   lazy val filterAggrRadius: DataFrame = {
     logger.info("Filtering and aggregating Radius")
-    println(s"COUNT RADIUS: ${radius.count()}")
+    logger.debug(s"COUNT RADIUS: ${radius.count()}, ${firstDate}, ${lastPlus1Date}")
     //radius.select("wlif_account_type").distinct().show()
     val filtered = radius.filter(
-      col("wlif_username").isNotNull  &&
+      col("wlif_username").isNotNull &&
         col("wlif_account_type").equalTo(lit("credit")) &&
         col("wlif_session_stop") >= unix_timestamp(lit(firstDate)).cast("timestamp") &&
         col("wlif_session_stop") < unix_timestamp(lit(lastPlus1Date)).cast("timestamp")
     )
-    filtered.select("wlif_session_stop").distinct().show(false)
-    println(s"COUNT RADIUS AFTER FILTER: ${filtered.count()}")
+    //filtered.select("wlif_session_stop").distinct().show(false)
+    logger.debug(s"COUNT RADIUS AFTER FILTER: ${filtered.count()}")
     filtered
       .groupBy("wlif_username", "wlif_flight_id")
       .agg(
@@ -57,9 +57,9 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
     val maxVals =
       voucher
         .groupBy("wlan_username")
-          .agg(
-            max("wlan_request_date").alias("wlan_request_date")
-          )
+        .agg(
+          max("wlan_request_date").alias("wlan_request_date")
+        )
     voucher
       .join(maxVals, Seq("wlan_request_date", "wlan_username"), "leftsemi")
 
@@ -72,18 +72,18 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
         max("ta_request_date").alias("ta_request_date")
       )
     orderDB
-      .filter(o =>  (o.result_code.get == "OK") && (!o.cancellation.isDefined))
-      .join(maxVals,Seq("ta_request_date", "username"), "leftsemi")
+      .filter(o => (o.result_code.get == "OK") && (!o.cancellation.isDefined))
+      .join(maxVals, Seq("ta_request_date", "username"), "leftsemi")
 
   }
 
   lazy val getExchangeRates: DataFrame = {
     logger.info("Getting and preparing exchange rates")
     exchangeRates
-    .filter( col("exchange_rate_code") === lit("D") &&
-      col("valid_to") > unix_timestamp(lit(minRequestDate)).cast("timestamp")
-    )
-      .withColumn("conversion", col("exchange_rate_avg")/col("faktv"))
+      .filter(col("exchange_rate_code") === lit("D") &&
+        col("valid_to") > unix_timestamp(lit(minRequestDate)).cast("timestamp")
+      )
+      .withColumn("conversion", col("exchange_rate_avg") / col("faktv"))
   }
 
 
