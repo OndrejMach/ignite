@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.inflight.processing
+package com.tmobile.sit.ignite.inflight.processing.writers
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter

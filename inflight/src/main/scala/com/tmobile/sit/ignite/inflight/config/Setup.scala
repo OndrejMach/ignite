@@ -40,7 +40,8 @@ class Setup(configFile: String = "inflight.conf") extends Logger {
         firstPlus1Date = getTimestamp(serviceConf.getString("config.firstPlus1Date")),
         minRequestDate = getTimestamp(serviceConf.getString("config.minRequestDate")),
         sparkAppName = serviceConf.getString("config.sparkAppName"),
-        filteredAirlineCodes = getArray(serviceConf.getString("config.filteredAirlineCodes"))
+        filteredAirlineCodes = getArray(serviceConf.getString("config.filteredAirlineCodes")),
+        airlineCodesForReport = getArray(serviceConf.getString("config.airlineCodesForReport"))
       ),
       input = InputFiles(
         path = serviceConf.getString("config.input.path"),
@@ -64,7 +65,8 @@ class Setup(configFile: String = "inflight.conf") extends Logger {
         aircraftFile = serviceConf.getString("config.output.aircraftFile"),
         vchrRadiusDailyFile = serviceConf.getString("config.output.vchrRadiusDailyFile"),
         radiusCreditDailyFile = serviceConf.getString("config.output.radiusCreditDailyFile"),
-        timestampFormat = serviceConf.getString("config.output.timestampFormat")
+        timestampFormat = serviceConf.getString("config.output.timestampFormat"),
+        excelReportsPath = serviceConf.getString("config.output.excelReportsPath")
       ),
       referenceData = StageFiles(
         path = serviceConf.getString("config.stageFiles.path"),

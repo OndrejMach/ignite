@@ -27,17 +27,18 @@ case class OutputFiles(path: Option[String], radiusFile: Option[String],
                        airportFile: Option[String], airlineFile: Option[String],
                        oooiFile: Option[String], aircraftFile: Option[String],
                        vchrRadiusDailyFile: Option[String], radiusCreditDailyFile: Option[String],
-                       timestampFormat: Option[String]) extends FilesConfig
+                       excelReportsPath: Option[String], timestampFormat: Option[String]) extends FilesConfig
 
 case class ApplicationParams (
                                firstDate: Option[Timestamp],
                                firstPlus1Date: Option[Timestamp],
                                minRequestDate: Option[Timestamp],
                                sparkAppName: Option[String],
-                               filteredAirlineCodes: Option[Seq[String]]
+                               filteredAirlineCodes: Option[Seq[String]],
+                               airlineCodesForReport:Option[Seq[String]]
                              ) extends GenericSettings {
   def isAllDefined = {
-    firstDate.isDefined && firstPlus1Date.isDefined && minRequestDate.isDefined && sparkAppName.isDefined && !sparkAppName.isEmpty && filteredAirlineCodes.isDefined
+    firstDate.isDefined && firstPlus1Date.isDefined && minRequestDate.isDefined && sparkAppName.isDefined && !sparkAppName.isEmpty && filteredAirlineCodes.isDefined && airlineCodesForReport.isDefined
   }
 }
 

@@ -1,10 +1,9 @@
 package com.tmobile.sit.ignite.inflight.processing
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.inflight.config.OutputFiles
-import com.tmobile.sit.ignite.inflight.processing.data.{OutputColumns, OutputFilters, StageData, StagedDataForFullOutput}
+import com.tmobile.sit.ignite.inflight.processing.data.{OutputFilters, StageData, StagedDataForFullOutput}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import com.tmobile.sit.ignite.inflight.datastructures.OutputStructure
 
 case class FullOutputs(radius: DataFrame, airport: DataFrame, aircraft: DataFrame, airline: DataFrame, oooi: DataFrame, flightLeg:DataFrame)
 
@@ -37,12 +36,12 @@ class FullOutputsProcessor(stagedInput: StageData, airlines: Seq[String])(implic
     import TransformDataFrameColumns.TransformColumnNames
     logger.info("Preparing output structures for full files output")
     FullOutputs(
-      radius = data.radius.select(OutputColumns.radius.head, OutputColumns.radius.tail : _*).columnsToUpperCase(),
-      airport = data.airport.select(OutputColumns.airport.head, OutputColumns.airport.tail :_*).columnsToUpperCase(),
-      aircraft = data.aircraft.select(OutputColumns.aircraft.head, OutputColumns.aircraft.tail :_*).columnsToUpperCase(),
-      airline = data.airline.select(OutputColumns.airline.head, OutputColumns.airline.tail :_*).columnsToUpperCase(),
-      oooi = data.oooi.select(OutputColumns.oooi.head, OutputColumns.oooi.tail :_*).columnsToUpperCase(),
-      flightLeg = data.flightLeg.select(OutputColumns.flightLeg.head, OutputColumns.flightLeg.tail :_*).columnsToUpperCase()
+      radius = data.radius.select(OutputStructure.radius.head, OutputStructure.radius.tail : _*).columnsToUpperCase(),
+      airport = data.airport.select(OutputStructure.airport.head, OutputStructure.airport.tail :_*).columnsToUpperCase(),
+      aircraft = data.aircraft.select(OutputStructure.aircraft.head, OutputStructure.aircraft.tail :_*).columnsToUpperCase(),
+      airline = data.airline.select(OutputStructure.airline.head, OutputStructure.airline.tail :_*).columnsToUpperCase(),
+      oooi = data.oooi.select(OutputStructure.oooi.head, OutputStructure.oooi.tail :_*).columnsToUpperCase(),
+      flightLeg = data.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail :_*).columnsToUpperCase()
     )
   }
 

@@ -4,6 +4,8 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.inflight.config.Setup
 import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, StageData}
 import com.tmobile.sit.ignite.inflight.processing._
+import com.tmobile.sit.ignite.inflight.processing.aggregates.ExcelReports
+import com.tmobile.sit.ignite.inflight.processing.writers.{AggregatesWriter, DailySessionReport, ExcelReportsWriter, FullOutputWriter}
 import org.apache.spark.sql.SparkSession
 
 object Application extends Logger{
@@ -60,6 +62,17 @@ object Application extends Logger{
     logger.info("Writing VoucherRadius data")
     val aggregatesWriter = new AggregatesWriter(radiusCreditDailyData, voucherRadiusData, outputConf = setup.settings.output)
     aggregatesWriter.writeOutput()
+
+    logger.info("Generating excel reports daily")
+    val excelReports = new ExcelReports(radiusCreditDailyData, voucherRadiusData.voucherRadiusDaily, setup.settings.appParams.airlineCodesForReport.get)
+    val dailyReports=(excelReports.getSessionReport(), excelReports.getVoucherReport())
+
+    logger.info("Writing excel reports")
+    val excelWriter = new ExcelReportsWriter(dailyReports._1, dailyReports._2,new DailySessionReport,
+      setup.settings.output.excelReportsPath.get,
+      setup.settings.appParams.firstDate.get )
+    excelWriter.writeOutput()
+
     logger.info("Processing DONE")
   }
 

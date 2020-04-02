@@ -2,11 +2,13 @@ package com.tmobile.sit.ignite.inflight.processing.aggregates
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.ignite.inflight.processing.{Processor, getDefaultExchangeRates}
-import org.apache.spark.sql.DataFrame
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.inflight.processing.{getDefaultExchangeRates}
+import com.tmobile.sit.ignite.inflight.translateSeconds
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, lit, when}
 
-class AggregateRadiusCredit(data: AggregateRadiusCreditData)(implicit runId: Int, loadDate: Timestamp) extends Processor {
+class AggregateRadiusCredit(data: AggregateRadiusCreditData)(implicit runId: Int, loadDate: Timestamp,sparkSession: SparkSession) extends Logger {
   private def aggregateRadiusVoucher() : DataFrame = {
     //data.filterAggrRadius.show(false)
 
@@ -86,7 +88,9 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
     .withColumn("load_date", lit(loadDate))
 }
 
-  override def executeProcessing() : DataFrame = {
+  def executeProcessing() : DataFrame = {
+    val translate = sparkSession.udf.register("translateSeconds",translateSeconds)
+
     //join radius with map voucher
     logger.debug(s"COUNT RADIUS AGGREGATED: ${data.filterAggrRadius.count()}")
     val radiusWithVoucher = aggregateRadiusVoucher()
@@ -100,7 +104,9 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
     val withExRts = joinWithExchangeRates(withOrderDB)
       .withColumnRenamed("count_sessions", "wlif_num_sessions")
     logger.debug(s"COUNT RADIUSWITHVOUCHER with ORDERDB with ExchangeRates: ${withExRts.count()}")
+
     withExRts
+      .withColumn("wlif_session_time",translate(col("wlif_session_time")))
   }
 
 }
