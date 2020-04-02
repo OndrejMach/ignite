@@ -41,7 +41,8 @@ class Setup(configFile: String = "inflight.conf") extends Logger {
         minRequestDate = getTimestamp(serviceConf.getString("config.minRequestDate")),
         sparkAppName = serviceConf.getString("config.sparkAppName"),
         filteredAirlineCodes = getArray(serviceConf.getString("config.filteredAirlineCodes")),
-        airlineCodesForReport = getArray(serviceConf.getString("config.airlineCodesForReport"))
+        airlineCodesForReport = getArray(serviceConf.getString("config.airlineCodesForReport")),
+        monthlyReportDate = getTimestamp(serviceConf.getString("config.monthlyReportDate"))
       ),
       input = InputFiles(
         path = serviceConf.getString("config.input.path"),
@@ -72,7 +73,9 @@ class Setup(configFile: String = "inflight.conf") extends Logger {
         path = serviceConf.getString("config.stageFiles.path"),
         voucherfile = serviceConf.getString("config.stageFiles.voucherfile"),
         orderDBFile = serviceConf.getString("config.stageFiles.orderDBFile"),
-        exchangeRatesFile = serviceConf.getString("config.stageFiles.orderDBFile")
+        exchangeRatesFile = serviceConf.getString("config.stageFiles.orderDBFile"),
+        sessionFile = serviceConf.getString("config.stageFiles.sessionFile"),
+        completeFile = serviceConf.getString("config.stageFiles.completeFile")
       )
 
     )
