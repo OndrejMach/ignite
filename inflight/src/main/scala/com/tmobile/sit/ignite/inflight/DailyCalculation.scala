@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.inflight
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.inflight.config.{Settings, Setup}
-import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, StageData}
+import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, NormalisedExchangeRates, StageData}
 import com.tmobile.sit.ignite.inflight.processing._
 import com.tmobile.sit.ignite.inflight.processing.aggregates.ExcelReports
 import com.tmobile.sit.ignite.inflight.processing.writers.{AggregatesWriter, DailySessionReport, ExcelReportsWriter, FullOutputWriter, StageWriter}
@@ -34,16 +34,19 @@ class DailyCalculation(settings: Settings) (implicit sparkSession: SparkSession)
     logger.info("Writing full files")
     fullOutputsWriter.writeOutput()
     logger.info("Full files DONE")
+    logger.info("Preparing staged reference data (Exchange Rates)")
+    val refDataStaged = new NormalisedExchangeRates(exchangeRates = refData.exchangeRates, settings.appParams.minRequestDate.get)
 
     logger.info("Preparing processor for RadiusCredit")
-    val radiusCreditProcessor = new RadiusCreditDailyProcessor(refData,stageData, settings.appParams.firstDate.get,
+    val radiusCreditProcessor = new RadiusCreditDailyProcessor(refData,stageData, refDataStaged,settings.appParams.firstDate.get,
       settings.appParams.firstPlus1Date.get, settings.appParams.minRequestDate.get)
 
     logger.info("Creating RadiusCreditDaily data")
     val radiusCreditDailyData = radiusCreditProcessor.executeProcessing()
 
+
     logger.info("Preparing VoucherRadius processor")
-    val voucherRadiusProcessor = new VoucherRadiusProcessor(stageData, refData, firstDate = settings.appParams.firstDate.get,
+    val voucherRadiusProcessor = new VoucherRadiusProcessor(stageData, refData, refDataStaged,firstDate = settings.appParams.firstDate.get,
       lastPlus1Date = settings.appParams.firstPlus1Date.get, minRequestDate = settings.appParams.minRequestDate.get)
     logger.info("Retrieving VoucherRadius data")
     val voucherRadiusData = voucherRadiusProcessor.getVchrRdsData()

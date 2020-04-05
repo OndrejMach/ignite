@@ -31,10 +31,13 @@ package object inflight {
   }
 
   def translateSeconds  = (secs: Long ) => {
+    def pad(n: Long): String = {
+      if (n<10) "0"+n.toString else n.toString
+    }
     val hours = secs/3600
     val minutes = secs%3600/60
     val seconds = (secs%3600)%60
 
-    s"${hours}:${minutes}:${seconds}"
+    s"${pad(hours) }:${pad(minutes)}:${pad(seconds)}"
   }
 }

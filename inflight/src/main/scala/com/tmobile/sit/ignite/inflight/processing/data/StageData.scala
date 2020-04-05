@@ -87,8 +87,4 @@ class StageData(input: InputData)(implicit sparkSession: SparkSession, runId: In
       .withColumn("load_date", lit(loadDate))
       .as[StageTypes.FlightLeg]
   }
-
-
-
-
 }

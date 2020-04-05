@@ -3,16 +3,16 @@ package com.tmobile.sit.ignite.inflight.processing.aggregates
 import java.sql.Timestamp
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.inflight.processing.{getDefaultExchangeRates}
+import com.tmobile.sit.ignite.inflight.processing.data.NormalisedExchangeRates
 import com.tmobile.sit.ignite.inflight.translateSeconds
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, lit, when}
+import org.apache.spark.sql.functions.{col, lit, round}
 
-class AggregateRadiusCredit(data: AggregateRadiusCreditData)(implicit runId: Int, loadDate: Timestamp,sparkSession: SparkSession) extends Logger {
+class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeRates: NormalisedExchangeRates)(implicit runId: Int, loadDate: Timestamp, sparkSession: SparkSession) extends Logger {
   private def aggregateRadiusVoucher() : DataFrame = {
     //data.filterAggrRadius.show(false)
 
-    logger.debug(s"Voucher dount: ${data.mapVoucher.select("wlif_username").distinct().count()}")
+    logger.debug(s"Voucher count: ${data.mapVoucher.select("wlif_username").distinct().count()}")
     logger.debug(s"Aggregated radius: ${data.filterAggrRadius.select("wlif_username").distinct().count()}")
 
     data.filterAggrRadius
@@ -75,17 +75,7 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData)(implicit runId: Int
 
   }
 private def joinWithExchangeRates(withOrderDB: DataFrame) = {
-  val exchangeRatesDefault = getDefaultExchangeRates(data.getExchangeRates)
-
-  withOrderDB
-    .join(data.getExchangeRates, (withOrderDB("currency") === data.getExchangeRates("currency_code")) && (withOrderDB("ta_request_date") === data.getExchangeRates("valid_to")), "left")
-    .join(exchangeRatesDefault, Seq("currency"), "left")
-    .withColumn("conversion", when(col("conversion").isNull && col("conversion_default").isNotNull, col("conversion_default")).otherwise(col("conversion")))
-    .na.fill(1,Seq("conversion"))
-    .withColumn("amount_incl_vat", col("amount") * col("conversion") + lit(0.005))
-    .withColumn("amount_excl_vat", (col("amount") * col("conversion"))/(lit(1) + col("vat") / lit(100)) + lit(0.005) )
-    .withColumn("entry_id", lit(runId))
-    .withColumn("load_date", lit(loadDate))
+  normalisedExchangeRates.joinWithExchangeRates(withOrderDB)
 }
 
   def executeProcessing() : DataFrame = {
@@ -107,6 +97,9 @@ private def joinWithExchangeRates(withOrderDB: DataFrame) = {
 
     withExRts
       .withColumn("wlif_session_time",translate(col("wlif_session_time")))
+      .withColumn("wlif_session_volume", round(col("wlif_session_volume"), 2))
+      .withColumn("amount_incl_vat", round(col("amount_incl_vat"), 2))
+      .withColumn("amount_excl_vat", round(col("amount_excl_vat"), 2))
   }
 
 }

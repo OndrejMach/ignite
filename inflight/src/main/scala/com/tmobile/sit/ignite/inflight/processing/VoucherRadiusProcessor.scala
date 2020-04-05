@@ -3,13 +3,13 @@ package com.tmobile.sit.ignite.inflight.processing
 import java.sql.Timestamp
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregVchrRadiusInterimData, AggregateVoucherUsers, AggregateWithExechangeRates}
-import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, StageData}
+import com.tmobile.sit.ignite.inflight.processing.aggregates.{AggregVchrRadiusInterimData, AggregateVchrRdsExechangeRates, AggregateVoucherUsers}
+import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, NormalisedExchangeRates, StageData}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class VoucherRadiusOutputs(voucherRadiusDaily: DataFrame, voucherRadiusFull: DataFrame)
 
-class VoucherRadiusProcessor(stageData: StageData, refData: ReferenceData,
+class VoucherRadiusProcessor(stageData: StageData, refData: ReferenceData, normalisedExchageRates: NormalisedExchangeRates,
                              firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp)
                             (implicit runId : Int, loadDate: Timestamp, sparkSession: SparkSession) extends Logger {
   def getVchrRdsData() : VoucherRadiusOutputs = {
@@ -19,7 +19,7 @@ class VoucherRadiusProcessor(stageData: StageData, refData: ReferenceData,
     logger.info("preparing radiusVoucher aggregates Full file")
     val aggregateVoucherUsers = new AggregateVoucherUsers(interimData=interimData)
     logger.info("preparing radiusVoucher aggregates daily file")
-    val aggregatesWithExchangeRates = new AggregateWithExechangeRates(interimData = interimData, exchangeRates = refData.exchangeRates, minDate = minRequestDate)
+    val aggregatesWithExchangeRates = new AggregateVchrRdsExechangeRates(interimData = interimData,  minDate = minRequestDate,normalisedExchangeRates = normalisedExchageRates)
     logger.info("RadiusVoucher aggregates ready")
     VoucherRadiusOutputs(voucherRadiusDaily = aggregatesWithExchangeRates.voucherRadiusDaily, voucherRadiusFull = aggregateVoucherUsers.vchrRadiusTFull)
   }

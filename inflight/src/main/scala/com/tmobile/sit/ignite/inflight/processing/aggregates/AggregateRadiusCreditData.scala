@@ -8,7 +8,7 @@ import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.Radius
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset}
 
-class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], exchangeRates: Dataset[ExchangeRates], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
+class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
 
   lazy val filterAggrRadius: DataFrame = {
     logger.info("Filtering and aggregating Radius")
@@ -76,15 +76,5 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
       .join(maxVals, Seq("ta_request_date", "username"), "leftsemi")
 
   }
-
-  lazy val getExchangeRates: DataFrame = {
-    logger.info("Getting and preparing exchange rates")
-    exchangeRates
-      .filter(col("exchange_rate_code") === lit("D") &&
-        col("valid_to") > unix_timestamp(lit(minRequestDate)).cast("timestamp")
-      )
-      .withColumn("conversion", col("exchange_rate_avg") / col("faktv"))
-  }
-
 
 }
