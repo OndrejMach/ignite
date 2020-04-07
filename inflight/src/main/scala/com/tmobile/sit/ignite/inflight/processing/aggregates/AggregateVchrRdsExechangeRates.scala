@@ -9,7 +9,7 @@ import org.apache.spark.sql.functions.{col, lit, round, when}
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 class AggregateVchrRdsExechangeRates(interimData: AggregVchrRadiusInterimData, minDate: Timestamp, normalisedExchangeRates: NormalisedExchangeRates)
-                                    (implicit runId: Int, loadDate: Timestamp, sparkSession: SparkSession) extends Logger {
+                                    (implicit sparkSession: SparkSession) extends Logger {
 
   val voucherRadiusDaily: DataFrame = {
     val translate = sparkSession.udf.register("translateSeconds", translateSeconds)
@@ -19,8 +19,8 @@ class AggregateVchrRdsExechangeRates(interimData: AggregVchrRadiusInterimData, m
     val filtered = interimData
       .joinedOrderDBVoucherAndFlightLeg
       .filter(col("voucher_type").isNotNull) // get only voucher users
-      .drop("entry_id")
-      .drop("load_date")
+      //.drop("entry_id")
+      //.drop("load_date")
 
     normalisedExchangeRates
       .joinWithExchangeRates(filtered)

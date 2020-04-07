@@ -11,6 +11,8 @@ object OutputStructure {
     "voucher_type","voucher_duration",
     "wlif_num_sessions","wlif_session_volume","wlif_session_time")
 
+  val radiusCreditStageColumns = Seq()
+
   val voucherRadiusDailyColumns = Seq("wlif_date_time_opened","wlif_date_time_closed",
     "wlif_flight_id","wlif_flight_number",
     "wlif_airport_code_origin","wlif_airport_code_destination",

@@ -7,7 +7,7 @@ import com.tmobile.sit.ignite.inflight.datastructures.StageTypes
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{Dataset, SparkSession}
 
-class StageData(input: InputData)(implicit sparkSession: SparkSession, runId: Int, loadDate: Timestamp) {
+class StageData(input: InputData)(implicit sparkSession: SparkSession) {
   val aircraft: Dataset[StageTypes.Aircraft] = {
     import sparkSession.implicits._
     input.aircraft.map(i =>
@@ -67,24 +67,24 @@ class StageData(input: InputData)(implicit sparkSession: SparkSession, runId: In
   val oooi: Dataset[StageTypes.Oooi] = {
     import sparkSession.implicits._
     input.oooi
-      .withColumn("entry_id", lit(runId))
-      .withColumn( "load_date", lit(loadDate))
+      //.withColumn("entry_id", lit(runId))
+     // .withColumn( "load_date", lit(loadDate))
       .as[StageTypes.Oooi]
   }
 
   val radius: Dataset[StageTypes.Radius] = {
     import sparkSession.implicits._
     input.radius
-      .withColumn("entry_id", lit(runId))
-      .withColumn("load_date", lit(loadDate))
+     // .withColumn("entry_id", lit(runId))
+     // .withColumn("load_date", lit(loadDate))
       .as[StageTypes.Radius]
   }
 
   val flightLeg : Dataset[StageTypes.FlightLeg] = {
     import sparkSession.implicits._
     input.flightLeg
-      .withColumn("entry_id", lit(runId))
-      .withColumn("load_date", lit(loadDate))
+      //.withColumn("entry_id", lit(runId))
+      //.withColumn("load_date", lit(loadDate))
       .as[StageTypes.FlightLeg]
   }
 }

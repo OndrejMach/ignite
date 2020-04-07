@@ -60,6 +60,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
       .withColumn("wlif_date_time_opened", when(col("wlif_date_time_opened").equalTo(lit(Timestamp.valueOf("1900-01-01 00:00:00.0"))), col("wlif_session_stop")).otherwise(col("wlif_date_time_opened")))
       .withColumn("wlif_date_time_closed", when(col("wlif_date_time_opened").equalTo(lit(Timestamp.valueOf("1900-01-01 00:00:00.0"))), col("wlif_session_stop")).otherwise(col("wlif_date_time_closed")))
       //.drop(filterFlightLeg("wlif_flight_number"), filterFlightLeg("wlif_airport_code_origin"))
+      /*
       .select("wlif_flight_id",
         "wlif_flight_number",
         "wlif_airport_code_origin",
@@ -76,6 +77,8 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
         "wlif_airline_code",
         "wlif_session_time",
         "wlif_session_volume")
+
+       */
 
    // ret
     //  .select(year(col("wlif_date_time_closed")), month(col("wlif_date_time_closed")), dayofmonth(col("wlif_date_time_closed"))).distinct().show(false)
@@ -104,6 +107,7 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
 
     joinRadiusWithFlightLeg
       .join(voucherDedup.select("wlan_ta_id","wlif_username","wlan_username" ), Seq("wlif_username"), "left")
+      /*
       .select(
         "wlif_flight_id",
         "wlif_flight_number",
@@ -123,6 +127,8 @@ class AggregVchrRadiusInterimData(flightLeg: Dataset[FlightLeg], radius: Dataset
         "wlif_session_time",
         "wlif_session_volume"
       )
+
+       */
   }
 
   val filteredOrdedDB: Dataset[OrderDB] = {

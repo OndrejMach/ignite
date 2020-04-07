@@ -6,7 +6,7 @@ import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
-class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData)(implicit runId: Int, loadDate: Timestamp) extends Logger {
+class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData) extends Logger {
 
 
   val vchrRadiusTFull: DataFrame = {
@@ -58,8 +58,8 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData)(implicit r
         col("voucher_sessions") + col("non_voucher_sessions"))
         .otherwise(col("vchr_wlif_num_sessions")))
 
-      .withColumn("entry_id", lit(runId))
-      .withColumn("load_date", lit(loadDate))
+      //.withColumn("entry_id", lit(runId))
+      //.withColumn("load_date", lit(loadDate))
   }
 
 }

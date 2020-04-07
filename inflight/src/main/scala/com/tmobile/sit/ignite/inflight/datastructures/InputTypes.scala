@@ -104,9 +104,9 @@ object InputTypes {
                      alternate_amount: Option[Double],
                      alternate_currency: Option[String],
                      reduced_amount: Option[Double],
-                     campaign_name: Option[String],
-                     entry_id: Long,
-                     load_date: Timestamp
+                     campaign_name: Option[String]
+                     //entry_id: Long,
+                     //load_date: Timestamp
                     )
 
   case class MapVoucher(
@@ -114,9 +114,9 @@ object InputTypes {
                          wlan_request_date: Option[Timestamp],
                          wlan_username: Option[String],
                          wlif_username: Option[String],
-                         wlif_realm_code: Option[String],
-                         entry_id: Option[Long],
-                         load_date: Option[Timestamp]
+                         wlif_realm_code: Option[String]
+                        // entry_id: Option[Long],
+                        // load_date: Option[Timestamp]
                        )
 
   case class ExchangeRates(
@@ -130,8 +130,8 @@ object InputTypes {
                             period_from: Option[Timestamp],
                             period_to: Option[Timestamp],
                             valid_from: Option[Date],
-                            valid_to: Option[Date],
-                            entry_id: Option[Long],
-                            load_date: Option[Timestamp]
+                            valid_to: Option[Date]
+                            //entry_id: Option[Long],
+                            //load_date: Option[Timestamp]
                           )
 }

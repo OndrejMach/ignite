@@ -20,7 +20,10 @@ class ReferenceData(stageFiles: StageFiles)(implicit sparkSession: SparkSession)
       delimiter = "|",
       timestampFormat = "yyyy-MM-dd HH:mm:ss" ,
       dateFormat = "yyyy-MM-dd")
-      .read().as[MapVoucher]
+      .read()
+      .drop("entry_id")
+      .drop("load_date")
+      .as[MapVoucher]
   }
 
   val orderDB = {
@@ -33,7 +36,10 @@ class ReferenceData(stageFiles: StageFiles)(implicit sparkSession: SparkSession)
       delimiter = "|",
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
       dateFormat = "yyyy-MM-dd")
-      .read().as[OrderDB]
+      .read()
+      .drop("entry_id")
+      .drop("load_date")
+      .as[OrderDB]
   }
 
   val exchangeRates = {
@@ -46,6 +52,9 @@ class ReferenceData(stageFiles: StageFiles)(implicit sparkSession: SparkSession)
       delimiter = "|",
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
       dateFormat = "yyyy-MM-dd")
-      .read().as[ExchangeRates]
+      .read()
+      .drop("entry_id")
+      .drop("load_date")
+      .as[ExchangeRates]
   }
 }

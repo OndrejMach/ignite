@@ -11,7 +11,7 @@ case class VoucherRadiusOutputs(voucherRadiusDaily: DataFrame, voucherRadiusFull
 
 class VoucherRadiusProcessor(stageData: StageData, refData: ReferenceData, normalisedExchageRates: NormalisedExchangeRates,
                              firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp)
-                            (implicit runId : Int, loadDate: Timestamp, sparkSession: SparkSession) extends Logger {
+                            (implicit sparkSession: SparkSession) extends Logger {
   def getVchrRdsData() : VoucherRadiusOutputs = {
     logger.info("Preparing interim structures for voucherRadius aggregates")
     val interimData: AggregVchrRadiusInterimData = new AggregVchrRadiusInterimData(flightLeg = stageData.flightLeg, radius = stageData.radius,voucher=refData.voucher,

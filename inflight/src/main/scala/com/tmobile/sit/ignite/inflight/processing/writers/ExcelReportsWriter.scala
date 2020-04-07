@@ -14,9 +14,13 @@ private[writers] object RepTypes extends Enumeration {
   val session, voucher = Value
 }
 
-class ExcelReportsWriter(sessionReport: DataFrame, voucherReport: DataFrame, reportType: ExcelReportType, path: String, date: Timestamp) extends OutputWriter with Logger{
+trait ExcelReportsWriter extends Logger {
+  def writeOutput(sessionReport: DataFrame, voucherReport: DataFrame): Unit
+}
 
-  override def writeOutput(): Unit = {
+class ExcelReportsWriterImpl(reportType: ExcelReportType, path: String, date: Timestamp) extends ExcelReportsWriter {
+
+  override def writeOutput(sessionReport: DataFrame, voucherReport: DataFrame): Unit = {
     logger.info("Writing excel reports "+reportType.getName)
 
     def writePerAirline(data: DataFrame, interimCols: Seq[String], outputCols: Seq[String], repType: RepTypes) = {

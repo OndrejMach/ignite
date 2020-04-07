@@ -8,7 +8,7 @@ import com.tmobile.sit.ignite.inflight.translateSeconds
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, lit, round}
 
-class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeRates: NormalisedExchangeRates)(implicit runId: Int, loadDate: Timestamp, sparkSession: SparkSession) extends Logger {
+class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeRates: NormalisedExchangeRates)(implicit sparkSession: SparkSession) extends Logger {
   private def aggregateRadiusVoucher() : DataFrame = {
     //data.filterAggrRadius.show(false)
 
@@ -18,6 +18,7 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeR
     data.filterAggrRadius
       .drop("wlif_realm_code")
       .join(data.mapVoucher, Seq("wlif_username"), "inner")
+      /*
       .select(
         "wlif_session_start",
         "wlif_session_stop",
@@ -38,11 +39,14 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeR
         "wlif_session_volume",
         "count_sessions"
       )
+
+       */
   }
 
   private def joinWithOrderDB(radiusWithVoucher: DataFrame) = {
     radiusWithVoucher
       .join(data.filterOrderDB, radiusWithVoucher("wlan_username")===data.filterOrderDB("username"), "inner")
+      /*
       .select(
         "wlif_user",
         "wlan_username",
@@ -72,6 +76,8 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeR
         "wlif_username",
         "wlif_xid_pac"
       )
+
+       */
 
   }
 private def joinWithExchangeRates(withOrderDB: DataFrame) = {

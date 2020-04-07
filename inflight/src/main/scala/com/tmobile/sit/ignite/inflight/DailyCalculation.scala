@@ -1,27 +1,32 @@
 package com.tmobile.sit.ignite.inflight
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.inflight.config.{Settings, Setup}
-import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData, NormalisedExchangeRates, StageData}
+import com.tmobile.sit.ignite.inflight.config.Settings
 import com.tmobile.sit.ignite.inflight.processing._
-import com.tmobile.sit.ignite.inflight.processing.aggregates.ExcelReports
-import com.tmobile.sit.ignite.inflight.processing.writers.{AggregatesWriter, DailySessionReport, ExcelReportsWriter, FullOutputWriter, StageWriter}
+import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData}
+import com.tmobile.sit.ignite.inflight.processing.writers.DailyWriter
 import org.apache.spark.sql.SparkSession
 
-class DailyCalculation(settings: Settings) (implicit sparkSession: SparkSession) extends Processor{
+class DailyCalculation(inputData: InputData, refData: ReferenceData, dailyWriter: DailyWriter)(implicit sparkSession: SparkSession,settings: Settings) extends Processor{
 
   override def executeCalculation() {
-    implicit val runID = getRunId()
-    implicit val loadDate = getLoadDate()
+    //implicit val runID = getRunId()
+    //implicit val loadDate = getLoadDate()
 
-    logger.info(s"RunId: ${runID}")
-    logger.info(s"LoadDate: ${loadDate}")
-
+    //logger.info(s"RunId: ${runID}")
+    //.info(s"LoadDate: ${loadDate}")
+  /*
     logger.info("Processing started - input data gathering")
     val inputFiles = new InputData(settings.input)
     logger.info("Getting reference data from stage files")
     val refData = new ReferenceData(settings.referenceData)
+*/
+    val dailyProcessor = new DailyProcessorImpl(settings = settings, inputFiles = inputData, refData = refData)
 
+    val inflightOutputs = dailyProcessor.runDailyProcessing()
+
+    dailyWriter.writeDailyData(inflightOutputs)
+
+    /*
     logger.info("Preapring stage data")
     val stageData = new StageData(inputFiles)
 
@@ -30,10 +35,14 @@ class DailyCalculation(settings: Settings) (implicit sparkSession: SparkSession)
     logger.info("Data for full-files")
 
     val fullOutputData = fullOutput.generateOutput()
+
+
+
     val fullOutputsWriter = new FullOutputWriter(settings.output,fullOutputData)
     logger.info("Writing full files")
     fullOutputsWriter.writeOutput()
-    logger.info("Full files DONE")
+    logger.info("Full files DONE"
+
     logger.info("Preparing staged reference data (Exchange Rates)")
     val refDataStaged = new NormalisedExchangeRates(exchangeRates = refData.exchangeRates, settings.appParams.minRequestDate.get)
 
@@ -44,13 +53,14 @@ class DailyCalculation(settings: Settings) (implicit sparkSession: SparkSession)
     logger.info("Creating RadiusCreditDaily data")
     val radiusCreditDailyData = radiusCreditProcessor.executeProcessing()
 
-
     logger.info("Preparing VoucherRadius processor")
     val voucherRadiusProcessor = new VoucherRadiusProcessor(stageData, refData, refDataStaged,firstDate = settings.appParams.firstDate.get,
       lastPlus1Date = settings.appParams.firstPlus1Date.get, minRequestDate = settings.appParams.minRequestDate.get)
     logger.info("Retrieving VoucherRadius data")
     val voucherRadiusData = voucherRadiusProcessor.getVchrRdsData()
+
     logger.info("Writing VoucherRadius data")
+
     val aggregatesWriter = new AggregatesWriter(radiusCreditDailyData, voucherRadiusData, outputConf = settings.output)
     aggregatesWriter.writeOutput()
 
@@ -70,7 +80,7 @@ class DailyCalculation(settings: Settings) (implicit sparkSession: SparkSession)
       settings.output.excelReportsPath.get,
       settings.appParams.firstDate.get )
     excelWriter.writeOutput()
-
+*/
     logger.info("Processing DONE")
   }
 

@@ -55,9 +55,9 @@ object StageTypes {
                    wlif_airport_code_origin: Option[String],
                    wlif_airport_code_destination: Option[String],
                    wlif_date_time_event: Option[Timestamp],
-                   wlif_date_time_received: Option[Timestamp],
-                   entry_id: Option[Long],
-                   load_date: Option[Timestamp]
+                   wlif_date_time_received: Option[Timestamp]
+                  // entry_id: Option[Long],
+                  // load_date: Option[Timestamp]
                  )
 
   case class Radius(
@@ -80,9 +80,9 @@ object StageTypes {
                      wlif_session_time: Option[Long],
                      wlif_in_volume: Option[Double],
                      wlif_out_volume: Option[Double],
-                     wlif_termination_cause: Option[String],
-                     entry_id: Long,
-                     load_date: Timestamp
+                     wlif_termination_cause: Option[String]
+                    // entry_id: Long,
+                    // load_date: Timestamp
                    )
 
   case class FlightLeg(
@@ -103,8 +103,8 @@ object StageTypes {
                         wlif_session_time: Option[Long],
                         wlif_session_volume_out: Option[Double],
                         wlif_session_volume_in: Option[Double],
-                        wlif_active_sessions: Option[Long],
-                        entry_id: Long,
-                        load_date: Timestamp
+                        wlif_active_sessions: Option[Long]
+                      //  entry_id: Long
+                       // load_date: Timestamp
                       )
 }
