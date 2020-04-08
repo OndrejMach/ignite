@@ -5,6 +5,11 @@ import java.sql.Timestamp
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.config.ServiceConfig
 
+/**
+ *
+ * This class parses config file and stores all the parameters in case classes. It also does type conversions - especially strings to Timestamps
+ */
+
 class Setup(configFile: String = "inflight.conf") extends Logger {
 
   def getTimestamp(timestamp: Option[String]): Option[Timestamp] = {

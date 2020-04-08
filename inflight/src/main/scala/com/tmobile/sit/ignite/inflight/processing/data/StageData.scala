@@ -1,12 +1,13 @@
 package com.tmobile.sit.ignite.inflight.processing.data
 
-import java.sql.Timestamp
-import java.time.LocalDateTime
-
 import com.tmobile.sit.ignite.inflight.datastructures.StageTypes
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{Dataset, SparkSession}
 
+/**
+ * Here input data is verified, filtered or slightly transformed if needed. This is basically the source for processing.
+ * @param input - class containing raw inputs
+ * @param sparkSession - yes
+ */
 class StageData(input: InputData)(implicit sparkSession: SparkSession) {
   val aircraft: Dataset[StageTypes.Aircraft] = {
     import sparkSession.implicits._
@@ -68,19 +69,19 @@ class StageData(input: InputData)(implicit sparkSession: SparkSession) {
     import sparkSession.implicits._
     input.oooi
       //.withColumn("entry_id", lit(runId))
-     // .withColumn( "load_date", lit(loadDate))
+      // .withColumn( "load_date", lit(loadDate))
       .as[StageTypes.Oooi]
   }
 
   val radius: Dataset[StageTypes.Radius] = {
     import sparkSession.implicits._
     input.radius
-     // .withColumn("entry_id", lit(runId))
-     // .withColumn("load_date", lit(loadDate))
+      // .withColumn("entry_id", lit(runId))
+      // .withColumn("load_date", lit(loadDate))
       .as[StageTypes.Radius]
   }
 
-  val flightLeg : Dataset[StageTypes.FlightLeg] = {
+  val flightLeg: Dataset[StageTypes.FlightLeg] = {
     import sparkSession.implicits._
     input.flightLeg
       //.withColumn("entry_id", lit(runId))

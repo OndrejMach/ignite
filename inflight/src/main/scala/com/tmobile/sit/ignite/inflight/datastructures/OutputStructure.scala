@@ -1,5 +1,11 @@
 package com.tmobile.sit.ignite.inflight.datastructures
 
+/**
+ * here you can find columns which will be represented in the outputs. Keep in mind that column names are in CAPITAL letters there.
+ * The interim structures are used for staging and internal application state keep. In case you'd like to add/remove column from the output here you can do it.
+ * The calculation always contains the superset of the available columns (if possible of course ;))
+ */
+
 object OutputStructure {
   val radiusCreditDailyColumns = Seq("wlif_session_stop","wlif_aircraft_code",
     "wlif_flight_id","wlif_airline_code",

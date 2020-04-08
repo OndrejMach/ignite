@@ -1,10 +1,13 @@
 package com.tmobile.sit.ignite.inflight.processing.aggregates
 
-import java.sql.Timestamp
-
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+
+/**
+ * This class calculate voucher radius full file
+ * @param interimData - required input data preprocessed - common with  voucher radius daily processing
+ */
 
 class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData) extends Logger {
 
@@ -57,9 +60,6 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData) extends Lo
       .withColumn("flight_sessions", when(col("wlif_num_sessions").isNull && col("vchr_wlif_num_sessions") === lit(-1),
         col("voucher_sessions") + col("non_voucher_sessions"))
         .otherwise(col("vchr_wlif_num_sessions")))
-
-      //.withColumn("entry_id", lit(runId))
-      //.withColumn("load_date", lit(loadDate))
   }
 
 }

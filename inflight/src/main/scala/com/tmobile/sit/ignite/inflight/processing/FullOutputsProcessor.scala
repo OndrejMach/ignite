@@ -7,6 +7,9 @@ import com.tmobile.sit.ignite.inflight.datastructures.OutputStructure
 
 case class FullOutputs(radius: DataFrame, airport: DataFrame, aircraft: DataFrame, airline: DataFrame, oooi: DataFrame, flightLeg:DataFrame)
 
+/**
+ * Implicit class for transforming column names to upper case - used in all the outputs
+ */
 object TransformDataFrameColumns {
   implicit class TransformColumnNames(df : DataFrame) {
     def columnsToUpperCase() : DataFrame = {
@@ -15,7 +18,12 @@ object TransformDataFrameColumns {
   }
 }
 
-
+/**
+ * Processor class doing daily files calculations (AIRPORT, AIRLINE, FLIGHLEG, RADIUS, AIRCRAFT, OOOI, REALM)
+ * @param stagedInput - raw files preprocessed
+ * @param airlines - airline codes relevant for the output
+ * @param sparkSession - hu
+ */
 class FullOutputsProcessor(stagedInput: StageData, airlines: Seq[String])(implicit sparkSession: SparkSession) extends Logger {
 
 

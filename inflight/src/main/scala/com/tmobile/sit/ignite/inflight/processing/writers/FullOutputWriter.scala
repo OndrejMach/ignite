@@ -5,6 +5,13 @@ import com.tmobile.sit.ignite.inflight.datastructures.OutputStructure
 import com.tmobile.sit.ignite.inflight.processing.{FullOutputs, TransformDataFrameColumns}
 import org.apache.spark.sql.SparkSession
 
+
+/**
+ * A wrapper class holding writes for the full files output
+ * @param outputConf - configuration for the output files
+ * @param output - output data
+ * @param sparkSession - always here
+ */
 class FullOutputWriter(outputConf: OutputFiles, output: FullOutputs )(implicit sparkSession: SparkSession) extends InflightWriterUTF8Char(outputConf.timestampFormat.get) {
 
   override def writeOutput(): Unit = {

@@ -1,19 +1,35 @@
 package com.tmobile.sit.ignite.inflight.processing
 
-import java.sql.Timestamp
-
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.inflight.config.{InputFiles, Settings}
+import com.tmobile.sit.ignite.inflight.config.Settings
 import com.tmobile.sit.ignite.inflight.processing.aggregates.ExcelReports
 import com.tmobile.sit.ignite.inflight.processing.data.{InputData, NormalisedExchangeRates, ReferenceData, StageData}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * This class holds all the daily outputs.
+ * @param fullOutputs - data for full outputs
+ * @param radiusCredit - radius credit aggregates
+ * @param voucherRadiusOutputs - voucher radius data - both daily and full
+ * @param excelSessionReport - excel daily session report
+ * @param excelVoucherReport - excel daily complete report
+ */
 case class InflightOutputs(fullOutputs: FullOutputs, radiusCredit: DataFrame, voucherRadiusOutputs: VoucherRadiusOutputs, excelSessionReport: DataFrame, excelVoucherReport: DataFrame )
 
+/**
+ * Daily processor trait
+ */
 trait DailyProcessor extends Logger {
   def runDailyProcessing() :  InflightOutputs
 }
 
+/**
+ * class doing daily prococessings
+ * @param settings - configuration
+ * @param inputFiles - input data
+ * @param refData - reference (stage) data - orderDB, map voucher, exchange rates
+ * @param sparkSession - yeah
+ */
 class DailyProcessorImpl(settings: Settings, inputFiles: InputData, refData: ReferenceData )(implicit sparkSession: SparkSession)extends DailyProcessor {
 
   private def getFullOutputs(stageData: StageData): FullOutputs = {

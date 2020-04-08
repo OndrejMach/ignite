@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.inflight.datastructures
 
 import org.apache.spark.sql.types.{DateType, DoubleType, LongType, StringType, StructField, StructType, TimestampType}
 
+/**
+ * Type definitions for all the input files - remark - loadId and entryID will hopefully be removed in the future
+ */
+
 object InputStructures {
 
   val aircraftStruct = StructType(

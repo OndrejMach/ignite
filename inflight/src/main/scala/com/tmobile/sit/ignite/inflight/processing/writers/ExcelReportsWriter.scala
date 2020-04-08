@@ -18,6 +18,12 @@ trait ExcelReportsWriter extends Logger {
   def writeOutput(sessionReport: DataFrame, voucherReport: DataFrame): Unit
 }
 
+/**
+ * Excel reports writer - generates Excel files for session report and complete reports
+ * @param reportType - specifies whether daily or monthly reports is generated
+ * @param path - path where to store the reports
+ * @param date - date used in the output filenames
+ */
 class ExcelReportsWriterImpl(reportType: ExcelReportType, path: String, date: Timestamp) extends ExcelReportsWriter {
 
   override def writeOutput(sessionReport: DataFrame, voucherReport: DataFrame): Unit = {

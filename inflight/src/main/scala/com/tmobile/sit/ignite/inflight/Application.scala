@@ -6,6 +6,14 @@ import com.tmobile.sit.ignite.inflight.processing.data.{InputData, ReferenceData
 import com.tmobile.sit.ignite.inflight.processing.writers.{DailyWriterImpl, ExcelReportsWriter, ExcelReportsWriterImpl, MonthlySessionReport}
 import org.apache.spark.sql.SparkSession
 
+/**
+ * here the processing is started:
+ * 1) reads and validas configuration files, initialised logger - prints parameters
+ * 2) initialises spark session
+ * 3) based on the commandline argument (daily|monthly) decides whether to run daily calculation or only do monthly excel reports
+ * 4) starts processing
+ */
+
 object Application extends Logger{
 
   private def prepareDailyCalculation(implicit sparkSession: SparkSession, settings: Settings): Processor = {

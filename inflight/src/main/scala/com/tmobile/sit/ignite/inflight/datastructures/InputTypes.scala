@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.inflight.datastructures
 
 import java.sql.{Date, Timestamp}
 
+/**
+* for type safety all the input data are stored as DataSets - the definitions below corresponds to the types in the files.
+ */
+
 object InputTypes {
 
   case class Aircraft(tailsign: Option[String],

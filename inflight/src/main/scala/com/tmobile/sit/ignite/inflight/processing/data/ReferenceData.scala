@@ -7,6 +7,12 @@ import com.tmobile.sit.ignite.inflight.datastructures.InputStructures
 import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{ExchangeRates, MapVoucher, OrderDB}
 import org.apache.spark.sql.SparkSession
 
+/**
+ * A wrapper class for getting regerence (stage) data - dependencies are hotspot (orderDB, mapVoucher) and exchange rates
+ * @param stageFiles - stageFiles configuration
+ * @param sparkSession - yes it's needed
+ */
+
 class ReferenceData(stageFiles: StageFiles)(implicit sparkSession: SparkSession) extends Logger{
 
 

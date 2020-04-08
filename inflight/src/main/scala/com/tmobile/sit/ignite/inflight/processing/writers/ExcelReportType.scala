@@ -3,6 +3,10 @@ package com.tmobile.sit.ignite.inflight.processing.writers
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
+/**
+ * Types representing Excell reports kinds - Daily or Monthly. Both have to provide relevant filenames and also name of the report (Daily, Monthly)
+ */
+
 trait ExcelReportType {
   def getFilenameSession(airlineCode: String, date: Timestamp): String
   def getFilenameVoucher(airlineCode: String, date: Timestamp): String

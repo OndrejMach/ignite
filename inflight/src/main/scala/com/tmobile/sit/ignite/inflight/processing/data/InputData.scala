@@ -6,6 +6,12 @@ import com.tmobile.sit.ignite.inflight.config.InputFiles
 import com.tmobile.sit.ignite.inflight.datastructures.{InputStructures, InputTypes}
 import org.apache.spark.sql.SparkSession
 
+/**
+ * This class hold the input data - reads them from the input files basically
+ * @param input - input section from the configuration file
+ * @param sparkSession - guess?
+ */
+
 class InputData(input: InputFiles)(implicit sparkSession: SparkSession) extends Logger {
   val radius = {
     val path = input.path.get + input.radiusFile.get

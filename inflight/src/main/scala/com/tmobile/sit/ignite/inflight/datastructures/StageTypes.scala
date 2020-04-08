@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.inflight.datastructures
 
 import java.sql.Timestamp
 
+/**
+ * Dataset definition for stage types - files are first read from CSVs and then validated and mapped to form the stage files - their specification is here.
+ */
+
 object StageTypes {
 
   case class Aircraft(

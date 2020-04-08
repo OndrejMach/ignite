@@ -1,5 +1,9 @@
 package com.tmobile.sit.ignite.inflight
 
+/**
+ * in case type of processing (monthly|daily) is not set as a commandline argument some simple help is printed here
+ */
+
 class HelperProcessor extends Processor {
   override def executeCalculation(): Unit = {
     logger.warn("Inflight ETL processing started - please specify the run mode!")

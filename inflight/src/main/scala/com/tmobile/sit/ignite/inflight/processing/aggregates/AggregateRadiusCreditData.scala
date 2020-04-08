@@ -3,17 +3,26 @@ package com.tmobile.sit.ignite.inflight.processing.aggregates
 import java.sql.Timestamp
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{ExchangeRates, MapVoucher, OrderDB}
+import com.tmobile.sit.ignite.inflight.datastructures.InputTypes.{MapVoucher, OrderDB}
 import com.tmobile.sit.ignite.inflight.datastructures.StageTypes.Radius
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset}
+
+/**
+ * Prepares data for Radius Credit daily aggregates
+ * @param radius - radius input file
+ * @param voucher - map voucher file from hotspot
+ * @param orderDB - orderDB file from hotspot
+ * @param firstDate - date for which calculation is done
+ * @param lastPlus1Date - upper bound for date calculation - normally firstDate + 1 day (not included in the output)
+ * @param minRequestDate - min date for which data is considered
+ */
 
 class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVoucher], orderDB: Dataset[OrderDB], firstDate: Timestamp, lastPlus1Date: Timestamp, minRequestDate: Timestamp) extends Logger {
 
   lazy val filterAggrRadius: DataFrame = {
     logger.info("Filtering and aggregating Radius")
     logger.debug(s"COUNT RADIUS: ${radius.count()}, ${firstDate}, ${lastPlus1Date}")
-    //radius.select("wlif_account_type").distinct().show()
     val filtered = radius.filter(
       col("wlif_username").isNotNull &&
         col("wlif_account_type").equalTo(lit("credit")) &&
@@ -41,16 +50,6 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
         first("wlif_xid_pac").alias("wlif_xid_pac")
       )
   }
-
-  /*
-   wlan_ta_id: Option[String],
-                         wlan_request_date: Option[Timestamp],
-                         wlan_username: Option[String],
-                         wlif_username: Option[String],
-                         wlif_realm_code: Option[String],
-                         entry_id: Option[Int],
-                         load_date: Option[Timestamp]
-   */
 
   lazy val mapVoucher: DataFrame = {
     logger.info("Mapping voucher")

@@ -1,12 +1,10 @@
 package com.tmobile.sit.ignite
 
-import java.sql.Timestamp
-import java.time.{LocalDate, LocalDateTime}
-
 import org.apache.spark.sql.SparkSession
 
-import scala.util.Random
-
+/**
+ * helper methods for common actions - getting sparkSession and transforming seconds to more human readable form hours:minutes:seconds
+ */
 package object inflight {
   def getSparkSession() = SparkSession.builder()
     //.appName("Test FWLog Reader")
@@ -22,22 +20,16 @@ package object inflight {
     .config("spark.app.name", "inflight_processing")
     .getOrCreate()
 
-  def getRunId(): Int = {
-    Random.nextInt().abs
-  }
 
-  def getLoadDate(): Timestamp = {
-    Timestamp.valueOf(LocalDateTime.now())
-  }
-
-  def translateSeconds  = (secs: Long ) => {
+  def translateSeconds = (secs: Long) => {
     def pad(n: Long): String = {
-      if (n<10) "0"+n.toString else n.toString
+      if (n < 10) "0" + n.toString else n.toString
     }
-    val hours = secs/3600
-    val minutes = secs%3600/60
-    val seconds = (secs%3600)%60
 
-    s"${pad(hours) }:${pad(minutes)}:${pad(seconds)}"
+    val hours = secs / 3600
+    val minutes = secs % 3600 / 60
+    val seconds = (secs % 3600) % 60
+
+    s"${pad(hours)}:${pad(minutes)}:${pad(seconds)}"
   }
 }

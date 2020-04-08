@@ -9,6 +9,11 @@ trait DailyWriter extends Logger {
   def writeDailyData(inflightOutputs: InflightOutputs): Unit
 }
 
+/**
+ * A master Writer class wrapping-up writers for all the daily outputs aggregates, excel reports and full outputs.
+ * @param sparkSession - needed
+ * @param settings - settings for getting an info where to store files
+ */
 
 class DailyWriterImpl(implicit sparkSession: SparkSession,settings: Settings) extends DailyWriter {
   override def writeDailyData(inflightOutputs: InflightOutputs): Unit = {

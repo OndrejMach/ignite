@@ -4,6 +4,9 @@ import java.sql.Timestamp
 
 import com.tmobile.sit.common.config.GenericSettings
 
+/**
+ * Helping with verification of all the parameters. Gathers case class fields and verifies them
+ */
 abstract class FilesConfig extends GenericSettings {
   def isAllDefined: Boolean = {
     val fields = this.getClass.getDeclaredFields
@@ -12,7 +15,13 @@ abstract class FilesConfig extends GenericSettings {
   }
 }
 
-
+/**
+ * Case classes for parameter groups -
+ * Input files exclusively for inflight
+ * Stage files - means reference data from hotspot (orderDB, voucher) and exchange rates
+ * output files - where outputs are stored
+ * application parameters - params needed by all the components - certain dates, filtering sets etc.
+ */
 case class InputFiles(path: Option[String], airportFile: Option[String],
                       oooidFile: Option[String], radiusFile: Option[String],
                       flightlegFile: Option[String], airlineFile: Option[String],

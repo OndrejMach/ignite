@@ -6,6 +6,14 @@ import com.tmobile.sit.ignite.inflight.translateSeconds
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 
+/**
+ * A very important class generationg data for Excel reports - Session report and also complete report. Reports are generated daily or monthly
+ * @param radiusCreditdata - radius credit aggregates
+ * @param voucherRadiusData - voucher radius aggregates
+ * @param airlineCodes - airline codes to include in the report
+ * @param sparkSession - clear
+ */
+
 class ExcelReports(radiusCreditdata: DataFrame, voucherRadiusData: DataFrame, airlineCodes: Seq[String])(implicit sparkSession: SparkSession) extends Logger{
   def getSessionReport(): DataFrame = {
     logger.info("Staring processing of session report")
