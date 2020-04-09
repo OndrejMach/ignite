@@ -25,11 +25,13 @@ package object inflight {
     def pad(n: Long): String = {
       if (n < 10) "0" + n.toString else n.toString
     }
-
-    val hours = secs / 3600
-    val minutes = secs % 3600 / 60
-    val seconds = (secs % 3600) % 60
-
-    s"${pad(hours)}:${pad(minutes)}:${pad(seconds)}"
+    if (secs <= 0) {
+      "00:00:00"
+    } else {
+      val hours = secs / 3600
+      val minutes = secs % 3600 / 60
+      val seconds = (secs % 3600) % 60
+      s"${pad(hours)}:${pad(minutes)}:${pad(seconds)}"
+    }
   }
 }

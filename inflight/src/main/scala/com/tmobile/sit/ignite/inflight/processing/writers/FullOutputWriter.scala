@@ -1,9 +1,12 @@
 package com.tmobile.sit.ignite.inflight.processing.writers
 
+import java.sql.Timestamp
+
 import com.tmobile.sit.ignite.inflight.config.OutputFiles
 import com.tmobile.sit.ignite.inflight.datastructures.OutputStructure
 import com.tmobile.sit.ignite.inflight.processing.{FullOutputs, TransformDataFrameColumns}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 
 /**
@@ -17,7 +20,26 @@ class FullOutputWriter(outputConf: OutputFiles, output: FullOutputs )(implicit s
   override def writeOutput(): Unit = {
     import TransformDataFrameColumns.TransformColumnNames
     logger.info("Full output data ready for writing")
-    writeData(outputConf.path.get + outputConf.flightLegFile.get, output.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail : _*).columnsToUpperCase())
+
+    Seq("wlif_flight_id", "wlif_flightleg_status",
+      "wlif_airline_code", "wlif_aircraft_code",
+      "wlif_flight_number", "wlif_airport_code_origin", "" +
+        "wlif_airport_code_destination",
+      "wlif_date_time_opened", "wlif_num_users",
+      "wlif_num_sessions", "wlif_session_time",
+      "wlif_session_volume_out", "wlif_session_volume_in")
+    //println(s"55555555555555555 Writing: ${outputConf.path.get + outputConf.flightLegFile.get} ${output.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail : _*).columnsToUpperCase().count()}")
+    //output.flightLeg
+    //  .select(concat_ws(OutputStructure.flightLeg)).repartition(1)
+    //  .write.csv("/Users/ondrejmachacek/tmp/inflight/curak.csv")
+    //val cols = OutputStructure.flightLeg.map(_.toUpperCase)
+    //val flightLegData = dataFrame
+    //  .withColumn(cols.mkString("|"), concat_ws("|",cols.map(col(_)) :_* )).select(cols.mkString("|"))
+
+    writeData(outputConf.path.get + outputConf.flightLegFile.get,
+      output.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail : _*)
+      .columnsToUpperCase()//.na.fill(Timestamp.valueOf("0000-00-00 00:00:00"), Seq("wlif_date_time_opened"))
+    )
     writeData(outputConf.path.get + outputConf.airportFile.get, output.airport.select(OutputStructure.airport.head, OutputStructure.airport.tail : _*).columnsToUpperCase())
     writeData(outputConf.path.get + outputConf.aircraftFile.get, output.aircraft.select(OutputStructure.aircraft.head, OutputStructure.aircraft.tail : _*).columnsToUpperCase())
     writeData(outputConf.path.get + outputConf.airlineFile.get, output.airline.select(OutputStructure.airline.head, OutputStructure.airline.tail : _*).columnsToUpperCase())

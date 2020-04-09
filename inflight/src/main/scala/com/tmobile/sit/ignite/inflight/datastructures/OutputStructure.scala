@@ -41,7 +41,7 @@ object OutputStructure {
 
   val flightLeg = Seq("wlif_flight_id", "wlif_flightleg_status",
     "wlif_airline_code", "wlif_aircraft_code",
-    "wlif_flight_number", "wlif_airport_code_origin", "" +
+    "wlif_flight_number", "wlif_airport_code_origin",
       "wlif_airport_code_destination",
     "wlif_date_time_opened", "wlif_num_users",
     "wlif_num_sessions", "wlif_session_time",

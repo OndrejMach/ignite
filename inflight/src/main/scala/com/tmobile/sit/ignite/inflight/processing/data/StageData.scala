@@ -2,10 +2,13 @@ package com.tmobile.sit.ignite.inflight.processing.data
 
 import com.tmobile.sit.ignite.inflight.datastructures.StageTypes
 import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{DoubleType, LongType}
 
 /**
  * Here input data is verified, filtered or slightly transformed if needed. This is basically the source for processing.
- * @param input - class containing raw inputs
+ *
+ * @param input        - class containing raw inputs
  * @param sparkSession - yes
  */
 class StageData(input: InputData)(implicit sparkSession: SparkSession) {
@@ -83,9 +86,15 @@ class StageData(input: InputData)(implicit sparkSession: SparkSession) {
 
   val flightLeg: Dataset[StageTypes.FlightLeg] = {
     import sparkSession.implicits._
-    input.flightLeg
-      //.withColumn("entry_id", lit(runId))
-      //.withColumn("load_date", lit(loadDate))
+
+    val ret = input.flightLeg
+      .withColumn("wlif_num_users", when(col("wlif_num_users").equalTo("\\N"), lit(null).cast(LongType)).otherwise(col("wlif_num_users").cast(LongType)))
+      .withColumn("wlif_num_sessions", when(col("wlif_num_sessions").equalTo("\\N"), lit(null).cast(LongType)).otherwise(col("wlif_num_sessions").cast(LongType)))
+      .withColumn("wlif_session_time", when(col("wlif_session_time").equalTo("\\N"), lit(null).cast(LongType)).otherwise(col("wlif_session_time").cast(LongType)))
+      .withColumn("wlif_session_volume_out", when(col("wlif_session_volume_out").equalTo("\\N"), lit(null).cast(DoubleType)).otherwise(col("wlif_session_volume_out").cast(DoubleType)))
+      .withColumn("wlif_session_volume_in", when(col("wlif_session_volume_in").equalTo("\\N"), lit(null).cast(DoubleType)).otherwise(col("wlif_session_volume_in").cast(DoubleType)))
+      .withColumn("wlif_active_sessions", when(col("wlif_active_sessions").equalTo("\\N"), lit(null).cast(LongType)).otherwise(col("wlif_active_sessions").cast(LongType)))
       .as[StageTypes.FlightLeg]
+    ret
   }
 }

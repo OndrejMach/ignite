@@ -29,7 +29,7 @@ class FullOutputsProcessor(stagedInput: StageData, airlines: Seq[String])(implic
 
   private def filterStagedData(stagedData: StageData) : StagedDataForFullOutput = {
     logger.info(s"Filtering output data for full output files (airlines: ${airlines.mkString(",")})")
-    StagedDataForFullOutput(
+    val ret = StagedDataForFullOutput(
       radius = stagedData.radius.filter(OutputFilters.filterAirline(airlines)),
       airport = stagedData.airport,
       aircraft = stagedData.aircraft,
@@ -38,12 +38,14 @@ class FullOutputsProcessor(stagedInput: StageData, airlines: Seq[String])(implic
       flightLeg = stagedData.flightLeg.filter(OutputFilters.filterAirline(airlines)),
       realm = stagedData.realm
     )
+
+    ret
   }
 
   private def projectOutputColumns(data: StagedDataForFullOutput): FullOutputs = {
     import TransformDataFrameColumns.TransformColumnNames
     logger.info("Preparing output structures for full files output")
-    FullOutputs(
+    val ret  = FullOutputs(
       radius = data.radius.select(OutputStructure.radius.head, OutputStructure.radius.tail : _*).columnsToUpperCase(),
       airport = data.airport.select(OutputStructure.airport.head, OutputStructure.airport.tail :_*).columnsToUpperCase(),
       aircraft = data.aircraft.select(OutputStructure.aircraft.head, OutputStructure.aircraft.tail :_*).columnsToUpperCase(),
@@ -51,6 +53,8 @@ class FullOutputsProcessor(stagedInput: StageData, airlines: Seq[String])(implic
       oooi = data.oooi.select(OutputStructure.oooi.head, OutputStructure.oooi.tail :_*).columnsToUpperCase(),
       flightLeg = data.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail :_*).columnsToUpperCase()
     )
+
+    ret
   }
 
 

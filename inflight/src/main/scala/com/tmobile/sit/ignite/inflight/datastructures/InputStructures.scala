@@ -102,12 +102,12 @@ object InputStructures {
       StructField("wlif_date_time_closed", TimestampType, true),
       StructField("wlif_method_closed", StringType, true),
       StructField("wlif_xid_pac", LongType, true),
-      StructField("wlif_num_users", LongType, true),
-      StructField("wlif_num_sessions", LongType, true),
-      StructField("wlif_session_time", LongType, true),
-      StructField("wlif_session_volume_out", DoubleType, true),
-      StructField("wlif_session_volume_in", DoubleType, true),
-      StructField("wlif_active_sessions", LongType, true)
+      StructField("wlif_num_users", StringType, true),
+      StructField("wlif_num_sessions", StringType, true),
+      StructField("wlif_session_time", StringType, true),
+      StructField("wlif_session_volume_out", StringType, true),
+      StructField("wlif_session_volume_in", StringType, true),
+      StructField("wlif_active_sessions", StringType, true)
     )
   )
 
