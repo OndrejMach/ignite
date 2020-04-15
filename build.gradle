@@ -25,6 +25,13 @@ sourceCompatibility = 1.8
 allprojects {
     repositories {
         jcenter()
+        maven {
+            credentials {
+                username NEXUS3_USERNAME
+                password NEXUS3_PASSWORD
+            }
+            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+        }
     }
 }
 
@@ -32,6 +39,13 @@ repositories {
     jcenter()
     mavenLocal()
     mavenCentral()
+    maven {
+        credentials {
+            username NEXUS3_USERNAME
+            password NEXUS3_PASSWORD
+        }
+        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+    }
 }
 
 dependencies {

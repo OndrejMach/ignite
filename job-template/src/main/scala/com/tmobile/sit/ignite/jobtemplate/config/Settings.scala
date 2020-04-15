@@ -1,6 +1,7 @@
 package com.tmobile.sit.ignite.jobtemplate.config
 
-import com.tmobile.sit.ignite.common.config.GenericSettings
+import com.tmobile.sit.common.config.GenericSettings
+
 
 case class Settings(inputPathPeople: Option[String]
                     , inputPathSalaryInfo: Option[String]
