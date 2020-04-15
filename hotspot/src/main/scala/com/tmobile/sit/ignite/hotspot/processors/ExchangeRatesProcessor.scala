@@ -1,17 +1,15 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
 import java.sql.{Date, Timestamp}
+import java.time.LocalDateTime
 
 import com.tmobile.sit.common.readers.Reader
 import com.tmobile.sit.ignite.hotspot.data.{ExchangeRates, OutputStructures}
-import org.apache.spark.sql.functions.{col, lit, when, round}
+import org.apache.spark.sql.functions.{col, lit, round, when}
 import org.apache.spark.sql.types.{DateType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
-//TODO merge with actual exchange rates
-
-
-class ExchangeRatesProcessor(exchangeRatesReader: Reader, processingDate: Date)(implicit sparkSession: SparkSession) extends Processor {
+class ExchangeRatesProcessor(exchangeRatesReader: Reader, prevExchangeRatesReader: Reader,maxDate: Date)(implicit sparkSession: SparkSession) extends Processor {
 
   private def processExchangeRates(in: Dataset[ExchangeRates], periodFrom: Timestamp, periodTo: Timestamp, maxDate: Date): DataFrame = {
     import sparkSession.implicits._
@@ -71,6 +69,24 @@ class ExchangeRatesProcessor(exchangeRatesReader: Reader, processingDate: Date)(
       .withColumn("exchange_rate_avg", round($"exchange_rate_avg", 6))
       .withColumn("exchange_rate_buy", round($"exchange_rate_buy", 6))
       .withColumn("exchange_rate_sell", round($"exchange_rate_sell", 6))
+      .withColumn("entry_id", lit(0))
+      .withColumn("load_date", lit(Timestamp.valueOf(LocalDateTime.now())))
+      .select(OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.head, OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.tail: _*)
+  }
+
+  def historise(newExchangeRates: DataFrame, oldDataExchangeRates: DataFrame) : DataFrame = {
+   val joined =  oldDataExchangeRates
+      .union(newExchangeRates)
+      .distinct()
+      .join(
+        newExchangeRates.select(col("currency_code"), col("exchange_rate_code"),col("valid_to"), col("valid_from").alias("new_valid_from")),
+        Seq("currency_code", "exchange_rate_code", "valid_to"),
+        "left_outer"
+      )
+      logger.info(s"Historising count ${joined.filter(col("new_valid_from").isNotNull).count()}")
+
+      joined.withColumn("valid_to", when(col("valid_from") < col("new_valid_from"),col("new_valid_from")).otherwise(col("valid_to")))
+      //.drop("old_valid_from")
       .select(OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.head, OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.tail: _*)
   }
 
@@ -85,7 +101,12 @@ class ExchangeRatesProcessor(exchangeRatesReader: Reader, processingDate: Date)(
     logger.info(s"Reading data")
     val exchRates = parser.getData
     logger.info("processing exchange rates")
-    processExchangeRates(in = exchRates, periodFrom = periods._1, periodTo = periods._2, processingDate)
+    val newExchangeRates = processExchangeRates(in = exchRates, periodFrom = periods._1, periodTo = periods._2, maxDate)
+    logger.info(s"got new exchange rates (count: ${newExchangeRates.count()})")
+    logger.info("Reading old exchangeRates")
+    val oldExchangeRates = prevExchangeRatesReader.read()
+    logger.info("Historising data")
+    historise(newExchangeRates, oldExchangeRates)
   }
 
 }

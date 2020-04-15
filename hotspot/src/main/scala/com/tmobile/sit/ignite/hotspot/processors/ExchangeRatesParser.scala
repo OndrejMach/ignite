@@ -1,13 +1,13 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
-import java.sql.{Date, Timestamp}
-import java.time.{LocalDate, LocalDateTime}
+import java.sql.Timestamp
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.ExchangeRates
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 class ExchangeRatesParser(exchangeRatesRawData: DataFrame)(implicit sparkSession: SparkSession) extends Logger{
   val getPeriodDates: (Timestamp, Timestamp) = {

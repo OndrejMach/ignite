@@ -4,4 +4,3 @@ include 'hotspot'
 include 'inflight'
 include 'rcse'
 include 'job-template'
-
