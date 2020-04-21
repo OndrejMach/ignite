@@ -80,7 +80,9 @@ class Setup(configFile: String = "inflight.conf") extends Logger {
         orderDBFile = serviceConf.getString("config.stageFiles.orderDBFile"),
         exchangeRatesFile = serviceConf.getString("config.stageFiles.exchangeRatesFile"),
         sessionFile = serviceConf.getString("config.stageFiles.sessionFile"),
-        completeFile = serviceConf.getString("config.stageFiles.completeFile")
+        completeFile = serviceConf.getString("config.stageFiles.completeFile"),
+        tFileStage = serviceConf.getString("config.stageFiles.tFileStage"),
+        tFileMask = serviceConf.getString("config.stageFiles.tFileMask")
       )
 
     )
