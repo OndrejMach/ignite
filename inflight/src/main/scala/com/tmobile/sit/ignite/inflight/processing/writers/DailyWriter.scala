@@ -25,7 +25,13 @@ class DailyWriterImpl(implicit sparkSession: SparkSession,settings: Settings) ex
 
     logger.info("Writing VoucherRadius data")
 
-    val aggregatesWriter = new AggregatesWriter(inflightOutputs.radiusCredit, inflightOutputs.voucherRadiusOutputs, outputConf = settings.output, stageConfig = settings.referenceData)
+    val aggregatesWriter = new AggregatesWriter(
+      inflightOutputs.radiusCredit,
+      inflightOutputs.voucherRadiusOutputs,
+      outputConf = settings.output,
+      stageConfig = settings.referenceData,
+      airlines = settings.appParams.filteredAirlineCodes.get
+    )
     aggregatesWriter.writeOutput()
 
     logger.info("Preparing stage writer")
