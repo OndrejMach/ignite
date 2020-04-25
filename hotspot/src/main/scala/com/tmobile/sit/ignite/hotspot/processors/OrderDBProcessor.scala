@@ -4,40 +4,88 @@ import java.sql.Timestamp
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.Reader
-import com.tmobile.sit.ignite.hotspot.data.{OrderDBStage, OrderDBStructures, WlanHotspotTypes}
-import org.apache.spark.sql.types.{DateType, TimestampType}
-import org.apache.spark.sql.{Dataset, SparkSession}
-import org.apache.spark.sql.functions.{lit, unix_timestamp, max}
+import com.tmobile.sit.ignite.hotspot.data.{OrderDBInputData, OrderDBStage, OrderDBStructures, WlanHotspotTypes}
+import org.apache.spark.sql.types.{DateType, LongType, TimestampType}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.functions._
 
-class OrderDBProcessor(inputHotspot: Reader, inputMPS: Reader, inputErrorCodes: Reader, maxDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
-  def mapWlanHotspotStage(data: Dataset[OrderDBStructures.OrderDBInput]): Dataset[OrderDBStage] = {
-    import sparkSession.implicits._
+
+case class OderdDBPRocessingOutputs(wlanHotspot: DataFrame, errorCodes: DataFrame)
+
+class OrderDBProcessor( orderDBInputData: OrderDBInputData,maxDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
+  import sparkSession.implicits._
+  private def mapWlanHotspotStage(data: Dataset[OrderDBStructures.OrderDBInput]): Dataset[OrderDBStage] = {
+    logger.info("Filtering and preparing input data from input file")
     data.filter(i => !(i.result_code.get == "KO" && !i.error_code.isDefined) && !(i.reduced_amount.isDefined && !i.campaign_name.isDefined))
       .map(i => OrderDBStage(i))
   }
 
-  def processData(): Unit = {
-    import sparkSession.implicits._
-    val data = new OrderDBData(orderDbReader = inputMPS, oldErrorCodes = inputErrorCodes, inputHotspot = inputHotspot)
-
-    val wlanHotspotNew= mapWlanHotspotStage(data.fullData)
-      .select($"hotspot_ident_code", $"hotspot_timezone", $"hotspot_venue_type_code", $"hotspot_venue_code", $"hotspot_provider_code", $"hotspot_country_code", $"hotspot_city_code", $"ta_request_date")
-      .withColumn("valid_from", unix_timestamp($"ta_request_date").cast(TimestampType))
-      .withColumn("valid_to", lit(maxDate).cast(TimestampType))
-      .withColumn("wlan_hotspot_id", lit(0))
+  private def preprocessWlanHotspotStage(stageWlanHotspot: Dataset[OrderDBStage]) : Dataset[WlanHotspotTypes.WlanHotspotStage] = {
+    logger.info("Preparing input data for processing.. staging..")
+    stageWlanHotspot
+    .select($"hotspot_ident_code",
+      $"hotspot_timezone",
+      $"hotspot_venue_type_code",
+      $"hotspot_venue_code",
+      $"hotspot_provider_code",
+      $"hotspot_country_code",
+      $"hotspot_city_code",
+      $"ta_request_date")
+      .withColumn("valid_from_n", unix_timestamp($"ta_request_date").cast(TimestampType))
+      .withColumn("valid_to_n", lit(maxDate).cast(TimestampType))
+      .withColumn("hotspot_id", lit(0))
       .drop("ta_request_date")
       .distinct()
       .filter(!$"hotspot_ident_code".startsWith(lit("undefined_OTHER_OTHER")))
       .as[WlanHotspotTypes.WlanHotspotStage]
-      .map(r => WlanHotspotTypes.WlanHostpot(r))
+  }
 
-    //map_1, unique pres identCode, map_2
+  private def joinWlanHotspotData(wlanHotspotNew: Dataset[WlanHotspotTypes.WlanHotspotStage], wlanHotspotOld: Dataset[WlanHotspotTypes.WlanHostpot], maxId: Long) : DataFrame = {
+    def getField(nameNew: String, nameOld: String): Column = {
+      when(wlanHotspotNew(nameNew).isNotNull,wlanHotspotNew(nameNew)).otherwise(wlanHotspotOld(nameOld))
+    }
+   // val maxId = data.hotspotIDsSorted.first().getLong(0)
+    logger.info("Old Wlan data to be joined with new data from order_db")
+    val merge = wlanHotspotOld
+      .join(wlanHotspotNew.withColumnRenamed("hotspot_ident_code","wlan_hotspot_ident_code"),
+        Seq("wlan_hotspot_ident_code"), "full_outer")
+      .withColumn("valid_from", getField("valid_from_n","valid_from" ))
+      .withColumn("valid_to", getField("valid_to_n","valid_to"))
+      .withColumn("hotspot_timezone", getField("hotspot_timezone", "wlan_hotspot_timezone"))
+      .withColumn("hotspot_venue_type_code", getField("hotspot_venue_type_code","wlan_venue_type_code" ))
+      .withColumn("hotspot_venue_code", getField("hotspot_venue_code", "wlan_venue_code"))
+      .withColumn("hotspot_provider_code", getField("hotspot_provider_code", "wlan_provider_code"))
+      .withColumn("hotspot_country_code", getField("hotspot_country_code", "country_code"))
+      .withColumn("hotspot_city_code", getField("hotspot_city_code", "city_code"))
+      .drop("hotspot_timezone","hotspot_venue_type_code","hotspot_venue_code", "hotspot_provider_code", "hotspot_country_code", "hotspot_city_code", "hotspot_id","valid_to_n", "valid_from_n" )
 
-    val wlanHotspotOld = inputHotspot.read().as[WlanHotspotTypes.WlanHostpot]
+   logger.info(s"Calculating new hotspotIDs based on maxId from previous runs ${maxId}")
+    val forNewIDs = merge
+      .filter("wlan_hotspot_id is null")
+      .select("wlan_hotspot_ident_code")
+      .sort()
+      .withColumn("id", monotonically_increasing_id().cast(LongType))
+      .withColumn("id", $"id" + lit(maxId))
 
-    val ret = wlanHotspotOld.union(wlanHotspotNew)
+    logger.info("Joining data with new IDs wiht old wlan hotspot data")
+    merge
+      .join(forNewIDs, Seq("wlan_hotspot_ident_code"), "left_outer")
+      .withColumn("wlan_hotspot_id", when($"wlan_hotspot_id".isNull, $"id").otherwise($"wlan_hotspot_id"))
+      .drop("id")
+  }
 
-    ret.select(max($"valid_to")).show(false)
-
+  def processData(): OderdDBPRocessingOutputs = {
+    logger.info("Preparing input data - orderDB, wlanhotspot data, error codes and old error codes list file")
+    val data = new OrderDBData(orderDbReader = orderDBInputData.inputMPSReader, oldErrorCodes = orderDBInputData.oldErrorCodesReader, inputHotspot = orderDBInputData.dataHotspotReader)
+    logger.info("Reading and filtering input data")
+    val wlanHotspotNew= mapWlanHotspotStage(data.fullData)
+    logger.info("Preprocessing input data")
+    val preprocessedWlanHotspot = preprocessWlanHotspotStage(wlanHotspotNew)
+    logger.info("Reading old wlan hotspot data")
+    val wlanHotspotOld = orderDBInputData.dataHotspotReader.read().as[WlanHotspotTypes.WlanHostpot]
+    logger.info("Joining new wlan hotspot data with the old wlan hotspot set")
+    val wlanData = joinWlanHotspotData(preprocessedWlanHotspot,wlanHotspotOld, data.hotspotIDsSorted.first().getLong(0))
+    logger.info("Generating outputs - wlan hotspot file and error code list file")
+    OderdDBPRocessingOutputs(wlanHotspot = wlanData, data.allOldErrorCodes.union(data.newErrorCodes))
   }
 }

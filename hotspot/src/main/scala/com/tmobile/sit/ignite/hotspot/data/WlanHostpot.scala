@@ -114,13 +114,14 @@ object WlanHotspotTypes {
                           entry_id: Option[Long],
                           load_date: Option[Timestamp]
                         )
-
+/*
   object WlanHostpot{
+
     def apply(stage: WlanHotspotStage): WlanHostpot = {
       def getValue(s: Option[String]) : Option[String] = if (s.isDefined && !s.get.isEmpty) s else Some("UNDEFINED")
       
       new WlanHostpot(
-        wlan_hotspot_id= stage.wlan_hotspot_id,
+        wlan_hotspot_id= stage.hotspot_id,
         wlan_hotspot_ident_code= stage.hotspot_ident_code,
         wlan_hotspot_desc=Some("Hotspot not assigned"),
         wlan_hotspot_timezone= stage.hotspot_timezone,
@@ -172,10 +173,14 @@ object WlanHotspotTypes {
         load_date=Some(Timestamp.valueOf(LocalDateTime.now()))
       )
     }
+
+
   }
 
+ */
+
   case class WlanHotspotStage(
-                               wlan_hotspot_id: Option[Long],
+                               hotspot_id: Option[Long],
                                hotspot_ident_code: Option[String],
                                hotspot_timezone: Option[String],
                                hotspot_venue_type_code: Option[String],
@@ -183,7 +188,7 @@ object WlanHotspotTypes {
                                hotspot_provider_code: Option[String],
                                hotspot_country_code: Option[String],
                                hotspot_city_code: Option[String],
-                               valid_from: Option[Timestamp],
-                               valid_to: Option[Timestamp]
+                               valid_from_n: Option[Timestamp],
+                               valid_to_n: Option[Timestamp]
                              )
 }

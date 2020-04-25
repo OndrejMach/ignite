@@ -4,6 +4,7 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.Reader
 import org.apache.spark.sql.{Dataset, SparkSession}
 import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures
+import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures.{ErrorCode, OrderDBInput}
 import org.apache.spark.sql.functions.{col, desc, lit}
 import org.apache.spark.sql.types.LongType
 
@@ -11,27 +12,30 @@ class OrderDBData(orderDbReader: Reader, inputHotspot: Reader, oldErrorCodes: Re
 
   import sparkSession.implicits._
 
+  val allOldErrorCodes = oldErrorCodes.read()
+
   val fullData: Dataset[OrderDBStructures.OrderDBInput] = {
     logger.info("Getting OrderDB full input")
     orderDbReader
       .read()
       .filter(col("value").startsWith("D;"))
       .as[String]
-      .map(Mappers.mapInputOrderDB(_))
+      .map(OrderDBInput(_))
   }
 
   val errorCodesDaily: Dataset[OrderDBStructures.ErrorCode] = {
     logger.info("Getting error codes")
     fullData
-      .map(Mappers.mapErrorCodes(_))
+      .map(ErrorCode(_))
   }
 
   val newErrorCodes = errorCodesDaily.join(
-    oldErrorCodes.read().select("error_code").withColumn("old", lit(1)),
+    allOldErrorCodes.select("error_code").withColumn("old", lit(1)),
     Seq("error_code"),
     "left_outer"
   )
     .filter("old is null")
+    .drop("old")
 
 
   val hotspotFile = {
