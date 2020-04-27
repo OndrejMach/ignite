@@ -9,7 +9,7 @@ import org.apache.spark.sql.types.{LongType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
 
-case class OderdDBPRocessingOutputs(wlanHotspot: DataFrame, errorCodes: DataFrame, mapVoucher: DataFrame, orderDb: DataFrame)
+case class OderdDBPRocessingOutputs(wlanHotspot: DataFrame, errorCodes: DataFrame, mapVoucher: DataFrame, orderDb: DataFrame, maxHotspotID: Long)
 
 class OrderDBProcessor( orderDBInputData: OrderDBInputData,maxDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
@@ -95,12 +95,15 @@ class OrderDBProcessor( orderDBInputData: OrderDBInputData,maxDate: Timestamp)(i
     logger.info("Reading old wlan hotspot data")
     val wlanHotspotOld = orderDBInputData.dataHotspotReader.read().as[WlanHotspotTypes.WlanHostpot]
     logger.info("Joining new wlan hotspot data with the old wlan hotspot set")
-    val wlanData = joinWlanHotspotData(preprocessedWlanHotspot,wlanHotspotOld, data.hotspotIDsSorted.first().getLong(0))
+    val maxId = data.hotspotIDsSorted.first().getLong(0)
+    val wlanData = joinWlanHotspotData(preprocessedWlanHotspot,wlanHotspotOld, maxId)
     logger.info("Generating outputs - wlan hotspot file and error code list file")
     OderdDBPRocessingOutputs(
       wlanHotspot = wlanData, //cptm_ta_d_wlan_hotspot
       errorCodes= data.allOldErrorCodes.union(data.newErrorCodes), //cptm_ta_d_wlan_error_code
       mapVoucher = mapVoucher(data.fullData), //cptm_ta_f_wlif_map_voucher
-      orderDb = wlanHotspotNew.toDF()) //cptm_ta_f_wlan_orderdb
+      orderDb = wlanHotspotNew.toDF(),
+      maxHotspotID = maxId
+    ) //cptm_ta_f_wlan_orderdb
   }
 }

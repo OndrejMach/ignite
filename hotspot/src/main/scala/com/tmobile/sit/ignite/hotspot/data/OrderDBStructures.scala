@@ -17,6 +17,44 @@ object OrderDBStructures {
     )
   )
 
+  val orderDBStruct = StructType(
+    Seq(
+      StructField("ta_id", StringType, true),
+      StructField("ta_request_date", DateType, true),
+      StructField("ta_request_datetime", TimestampType, true),
+      StructField("ta_request_hour", StringType, true),
+      StructField("paytid", StringType, true),
+      StructField("error_code", StringType, true),
+      StructField("email", StringType, true),
+      StructField("amount", DoubleType, true),
+      StructField("currency", StringType, true),
+      StructField("result_code", StringType, true),
+      StructField("cancellation", StringType, true),
+      StructField("card_institute", StringType, true),
+      StructField("vat", DoubleType, true),
+      StructField("payment_method", StringType, true),
+      StructField("voucher_type", StringType, true),
+      StructField("hotspot_country_code", StringType, true),
+      StructField("hotspot_provider_code", StringType, true),
+      StructField("hotspot_venue_type_code", StringType, true),
+      StructField("hotspot_venue_code", StringType, true),
+      StructField("hotspot_city_code", StringType, true),
+      StructField("hotspot_ident_code", StringType, true),
+      StructField("hotspot_timezone", StringType, true),
+      StructField("natco", StringType, true),
+      StructField("username", StringType, true),
+      StructField("wlan_realm_code", StringType, true),
+      StructField("ma_name", StringType, true),
+      StructField("voucher_duration", LongType, true),
+      StructField("alternate_amount", DoubleType, true),
+      StructField("alternate_currency", StringType, true),
+      StructField("reduced_amount", DoubleType, true),
+      StructField("campaign_name", StringType, true),
+      StructField("entry_id", LongType, true),
+      StructField("load_date", TimestampType, true)
+    )
+  )
+
   case class OrderDBInput(
                            data_code: Option[String],
                            transaction_id: Option[String],
