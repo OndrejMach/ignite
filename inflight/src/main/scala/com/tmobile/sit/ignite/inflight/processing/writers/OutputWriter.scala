@@ -15,10 +15,10 @@ trait OutputWriter extends Logger {
 abstract class InflightWriterUTF8Char(timestampFormat: String) extends OutputWriter  {
   private val UTF8CHAR = "\ufeff"
 
-  def writeData(path: String, data: DataFrame)(implicit sparkSession: SparkSession) = {
+  def writeData(path: String, data: DataFrame, writeHeader: Boolean = true)(implicit sparkSession: SparkSession) = {
     logger.info(s"Writing output file ${path}")
     val firstColumn = data.columns(0)
-    val writer = CSVWriter(data.withColumnRenamed(firstColumn,UTF8CHAR+firstColumn), path, delimiter = "|", timestampFormat = timestampFormat)
+    val writer = CSVWriter(data.withColumnRenamed(firstColumn,UTF8CHAR+firstColumn), path, delimiter = "|", timestampFormat = timestampFormat, writeHeader = writeHeader)
     writer.writeData()
   }
 }

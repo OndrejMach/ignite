@@ -30,7 +30,8 @@ case class InputFiles(path: Option[String], airportFile: Option[String],
 
 case class StageFiles(path: Option[String], voucherfile: Option[String],
                       orderDBFile: Option[String], exchangeRatesFile: Option[String],
-                      sessionFile: Option[String], completeFile: Option[String]) extends FilesConfig
+                      sessionFile: Option[String], completeFile: Option[String],
+                      tFileStage: Option[String], tFileMask: Option[String]) extends FilesConfig
 
 case class OutputFiles(path: Option[String], radiusFile: Option[String],
                        voucherRadiusFile: Option[String], flightLegFile: Option[String],

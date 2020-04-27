@@ -13,10 +13,13 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData) extends Lo
 
 
   val vchrRadiusTFull: DataFrame = {
+    logger.info(s"T table input count: ${interimData.joinVoucherWithRadiusFlightLeg.count()}")
     logger.info("Joining Voucher with Radius and FligheLeg to get non-voucher users")
     val nonVoucher = interimData.joinVoucherWithRadiusFlightLeg.filter("wlan_ta_id is null")
     logger.info("Getting voucher users")
     val voucher = interimData.joinVoucherWithRadiusFlightLeg.filter("wlan_ta_id is not null")
+
+    logger.info(s"Counts on T table: nonVoucher - ${nonVoucher.count()} voucher - ${voucher.count()}")
 
     logger.info("Aggregating non-Voucher users")
     val nonVoucherAggr = nonVoucher
@@ -41,6 +44,7 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData) extends Lo
         first("wlif_num_sessions").alias("vchr_wlif_num_sessions")
       )
       .withColumnRenamed("wlif_account_type", "vchr_wlif_account_type")
+    logger.info(s"Counts on T table aggregates: nonVoucher - ${nonVoucherAggr.count()} voucher - ${voucherAggr.count()}")
 
     logger.info("Joining voucher and non-voucher aggregates")
     voucherAggr
