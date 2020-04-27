@@ -1,0 +1,11 @@
+cptm_ta_f_wlan_failed_login
+cptm_ta_x_wlan_failed_login
+cptm_ta_q_wlan_cdr +1
+cptm_ta_f_wlan_orderdb +1
+cptm_ta_d_wlan_hotspot +1
+cptm_ta_d_wlan_error_code +1
+cptm_ta_x_wlan_session_d
+cptm_ta_x_wlan_session_q
+cptm_ta_x_wlan_orderdb_h
+cptm_ta_x_wlan_failed_transac
+cptm_ta_d_wlan_voucher +1

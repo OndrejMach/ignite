@@ -1,8 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.data
 
 import java.sql.Timestamp
-
-import com.tmobile.sit.ignite.hotspot.ApplicationOrderDB.{ENTRY_ID, FUTURE, LOAD_DATE}
 import com.tmobile.sit.ignite.hotspot.processors.{getDouble, getLong, getString}
 import org.apache.spark.sql.types._
 

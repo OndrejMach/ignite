@@ -3,14 +3,13 @@ package com.tmobile.sit.ignite.hotspot.processors
 import java.sql.Timestamp
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.Reader
 import com.tmobile.sit.ignite.hotspot.data.{OrderDBInputData, OrderDBStage, OrderDBStructures, WlanHotspotTypes}
-import org.apache.spark.sql.types.{DateType, LongType, TimestampType}
-import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{LongType, TimestampType}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
 
-case class OderdDBPRocessingOutputs(wlanHotspot: DataFrame, errorCodes: DataFrame)
+case class OderdDBPRocessingOutputs(wlanHotspot: DataFrame, errorCodes: DataFrame, mapVoucher: DataFrame, orderDb: DataFrame)
 
 class OrderDBProcessor( orderDBInputData: OrderDBInputData,maxDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
@@ -74,6 +73,18 @@ class OrderDBProcessor( orderDBInputData: OrderDBInputData,maxDate: Timestamp)(i
       .drop("id")
   }
 
+  private def mapVoucher(data: Dataset[OrderDBStructures.OrderDBInput]) = {
+    data
+      .filter(!($"result_code".notEqual(lit("OK")) || $"cancellation".isNotNull))
+      .withColumn("tmp_username", split($"username", "@"))
+      .withColumn("wlif_username", when($"username".contains("@"),sha2($"tmp_username".getItem(0),224)))
+      .withColumn("wlif_realm_code", when($"username".contains("@"),$"tmp_username".getItem(1)))
+      .withColumn("wlan_username", trim($"username"))
+      .na.fill("#",Seq("wlan_username"))
+      .withColumn("wlan_ta_id", $"transaction_id")
+      .withColumn("wlan_request_date", to_timestamp(concat($"transaction_date", $"transaction_time"), "yyyyMMddHHmmss"))
+  }
+
   def processData(): OderdDBPRocessingOutputs = {
     logger.info("Preparing input data - orderDB, wlanhotspot data, error codes and old error codes list file")
     val data = new OrderDBData(orderDbReader = orderDBInputData.inputMPSReader, oldErrorCodes = orderDBInputData.oldErrorCodesReader, inputHotspot = orderDBInputData.dataHotspotReader)
@@ -86,6 +97,10 @@ class OrderDBProcessor( orderDBInputData: OrderDBInputData,maxDate: Timestamp)(i
     logger.info("Joining new wlan hotspot data with the old wlan hotspot set")
     val wlanData = joinWlanHotspotData(preprocessedWlanHotspot,wlanHotspotOld, data.hotspotIDsSorted.first().getLong(0))
     logger.info("Generating outputs - wlan hotspot file and error code list file")
-    OderdDBPRocessingOutputs(wlanHotspot = wlanData, data.allOldErrorCodes.union(data.newErrorCodes))
+    OderdDBPRocessingOutputs(
+      wlanHotspot = wlanData, //cptm_ta_d_wlan_hotspot
+      errorCodes= data.allOldErrorCodes.union(data.newErrorCodes), //cptm_ta_d_wlan_error_code
+      mapVoucher = mapVoucher(data.fullData), //cptm_ta_f_wlif_map_voucher
+      orderDb = wlanHotspotNew.toDF()) //cptm_ta_f_wlan_orderdb
   }
 }
