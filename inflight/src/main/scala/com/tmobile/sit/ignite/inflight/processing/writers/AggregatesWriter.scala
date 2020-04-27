@@ -26,7 +26,10 @@ class AggregatesWriter(radiusCredit: DataFrame, vchrRadiusData: VoucherRadiusOut
       oldData
         .filter(col("_c5").isin(airlines: _*)).distinct()
         .drop("_c14")
-        .drop("_c15"))
+        .drop("_c15")
+        .toDF(OutputStructure.TTableOutputs :_*)
+    )
+
     //------
   }
 
