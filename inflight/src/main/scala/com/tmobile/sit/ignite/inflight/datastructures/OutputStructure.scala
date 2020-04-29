@@ -109,5 +109,20 @@ object OutputStructure {
     "Voucher Duration (hours)","Campaign Name",
     "Data Usage in MB","Session Time (HH:MM:SS)"
   )
+  
+  val TTableOutputs = Seq("WLIF_DATE_TIME_OPENED",
+    "WLIF_DATE_TIME_CLOSED",
+    "WLIF_FLIGHT_ID",
+    "WLIF_FLIGHT_NUMBER",
+    "WLIF_REALM_CODE",
+    "WLIF_AIRLINE_CODE",
+    "WLIF_ACCOUNT_TYPE",
+    "WLAN_HOTSPOT_IDENT_CODE",
+    "NON_VOUCHER_USERS",
+    "NON_VOUCHER_SESSIONS",
+    "VOUCHER_USERS",
+    "VOUCHER_SESSIONS",
+    "FLIGHT_USERS",
+    "FLIGHT_SESSIONS")
 
 }
