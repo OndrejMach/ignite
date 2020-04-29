@@ -6,12 +6,12 @@ import java.time.{LocalDate, LocalDateTime}
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.CommonStructures
+import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
 import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OrderDBInputData, OrderDBStructures}
 import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{IntegerType, TimestampType}
+import com.tmobile.sit.ignite.common.data.CommonTypes
 
 
 object Application extends App {
@@ -19,6 +19,7 @@ object Application extends App {
 
   import sparkSession.implicits._
 
+  val MIN_REQUEST_DATE = Timestamp.valueOf("2017-01-01 00:00:00")
   val MAX_DATE = Date.valueOf("4712-12-31")
 
   val PROCESSING_DATE = Date.valueOf(LocalDate.now())
@@ -63,10 +64,16 @@ object Application extends App {
 
   val sessionD = new SessionDProcessor(cdrData = cdrData, orderdDBData = orderdDBData, PROCESSING_DATE).processData()
 
+  //FailedTransactions
   val orderDBplus1Data = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_f_wlan_orderdb.20200409.csv", schema = Some(OrderDBStructures.orderDBStruct),header = false, delimiter = "|" ).read()
 
 
-  new FailedTransactionsProcessor(orderDBData = orderdDBData.orderDb, orderDBPLus1 = orderDBplus1Data, wlanHostspot = orderdDBData.wlanHotspot, WLAN_HOTSPOT_ODATE).processData()
+
+  new FailedTransactionsProcessor(orderDBData = orderdDBData.orderDb,
+    orderDBPLus1 = orderDBplus1Data,
+    wlanHostspot = orderdDBData.wlanHotspot,
+    processingDate = WLAN_HOTSPOT_ODATE,
+    normalisedExchangeRates= new NormalisedExchangeRates(exchRatesFinal.as[CommonTypes.ExchangeRates],MIN_REQUEST_DATE)).processData()
 
   //when()
 
