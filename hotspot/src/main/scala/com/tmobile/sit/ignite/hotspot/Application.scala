@@ -8,16 +8,14 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.CommonStructures
 import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
-import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OrderDBInputData, OrderDBStructures}
+import com.tmobile.sit.ignite.hotspot.data.{FUTURE, InterimDataStructures, OrderDBInputData, OrderDBStructures}
 import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.common.data.CommonTypes
 
 
 object Application extends App {
-  implicit val sparkSession = getSparkSession()
 
-  import sparkSession.implicits._
 
   val MIN_REQUEST_DATE = Timestamp.valueOf("2017-01-01 00:00:00")
   val MAX_DATE = Date.valueOf("4712-12-31")
@@ -28,6 +26,15 @@ object Application extends App {
 
   val outputFile = "/Users/ondrejmachacek/tmp/hotspot/exchangeRates.csv"
   val inputFile = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/CUP_exchangerates_d_20200408_1.csv"
+  val FILE_DATE = Date.valueOf(LocalDate.now())
+
+  implicit val sparkSession = getSparkSession()
+  implicit val processingDate = WLAN_HOTSPOT_ODATE
+
+  import sparkSession.implicits._
+
+
+
 
   val exchangeRatesReader = new ExchangeRatesReader(inputFile)
   val oldExchangeFilesReader = CSVReader(path = outputFile, schema = Some(CommonStructures.exchangeRatesStructure), header = false, delimiter = "|")
@@ -52,7 +59,6 @@ object Application extends App {
 
   val orderdDBData = orderDBProcessor.processData()
   //CDR
-  val FILE_DATE = Date.valueOf(LocalDate.now())
 
 
   val inputFileCDR = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.CDR.DAY.20200408*.csv"
@@ -68,12 +74,18 @@ object Application extends App {
   val orderDBplus1Data = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_f_wlan_orderdb.20200409.csv", schema = Some(OrderDBStructures.orderDBStruct),header = false, delimiter = "|" ).read()
 
 
+  val cityData = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/common/cptm_ta_d_city.csv", header = false, schema = Some(InterimDataStructures.CITY_STRUCT), delimiter = "|").read()
+  val voucherData = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv", header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|").read()
+
 
   new FailedTransactionsProcessor(orderDBData = orderdDBData.orderDb,
-    orderDBPLus1 = orderDBplus1Data,
-    wlanHostspot = orderdDBData.wlanHotspot,
-    processingDate = WLAN_HOTSPOT_ODATE,
+    wlanHotspot = orderdDBData.wlanHotspot,
+    orderDBDataPLus1 = orderDBplus1Data,
+    oldCitiesData = cityData,
+    oldVoucherData = voucherData,
     normalisedExchangeRates= new NormalisedExchangeRates(exchRatesFinal.as[CommonTypes.ExchangeRates],MIN_REQUEST_DATE)).processData()
+
+
 
   //when()
 
