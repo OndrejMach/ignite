@@ -9,7 +9,7 @@ import com.tmobile.sit.ignite.common.data.CommonStructures
 import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
 import com.tmobile.sit.ignite.hotspot.data.{FUTURE, InterimDataStructures, OrderDBInputData, OrderDBStructures}
-import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor}
+import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor, SessionsQProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.common.data.CommonTypes
 
@@ -85,7 +85,13 @@ object Application extends App {
     oldVoucherData = voucherData,
     normalisedExchangeRates= new NormalisedExchangeRates(exchRatesFinal.as[CommonTypes.ExchangeRates],MIN_REQUEST_DATE)).processData()
 
+  cdrData.show(false)
 
+  val emptyDF = sparkSession.emptyDataFrame
+
+  val res = new SessionsQProcessor(cdrData, emptyDF,emptyDF,Timestamp.valueOf(LocalDateTime.of(2020,4, 6, 0, 0, 0, 0)) ).getData
+
+  res.show(false)
 
   //when()
 

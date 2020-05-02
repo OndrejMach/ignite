@@ -44,3 +44,4 @@ class WlanAndOrderDBData(wlanHotspotData: DataFrame, orderDbDataActual: DataFram
       .withColumnRenamed("payment_method", "wlan_payment_type_code")
       .withColumnRenamed("error_code", "wlan_error_code")
   }
+}
