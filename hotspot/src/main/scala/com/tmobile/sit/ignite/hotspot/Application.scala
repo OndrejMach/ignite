@@ -9,9 +9,10 @@ import com.tmobile.sit.ignite.common.data.CommonStructures
 import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
 import com.tmobile.sit.ignite.hotspot.data.{FUTURE, InterimDataStructures, OrderDBInputData, OrderDBStructures}
-import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor, SessionsQProcessor}
+import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedLoginProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor, SessionsQProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.common.data.CommonTypes
+import com.tmobile.sit.ignite.hotspot.data.FailedLoginsStructure.FailedLogin
 
 
 object Application extends App {
@@ -78,7 +79,7 @@ object Application extends App {
   val voucherData = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv", header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|").read()
 
 
-  new FailedTransactionsProcessor(orderDBData = orderdDBData.orderDb,
+  val transactionData = new FailedTransactionsProcessor(orderDBData = orderdDBData.orderDb,
     wlanHotspot = orderdDBData.wlanHotspot,
     orderDBDataPLus1 = orderDBplus1Data,
     oldCitiesData = cityData,
@@ -89,9 +90,15 @@ object Application extends App {
 
   val emptyDF = sparkSession.emptyDataFrame
 
-  val res = new SessionsQProcessor(cdrData, emptyDF,emptyDF,Timestamp.valueOf(LocalDateTime.of(2020,4, 6, 0, 0, 0, 0)) ).getData
+  val res = new SessionsQProcessor(cdrData, cdrData,cdrData,Timestamp.valueOf(LocalDateTime.of(2020,4, 6, 0, 0, 0, 0)) ).getData
 
   res.show(false)
+
+  val failedLoginReader = new TextReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.20200411020101.csv")
+
+  val flProc = new FailedLoginProcessor(failedLoginReader = failedLoginReader, citiesData = transactionData.cities, hotspotData= orderdDBData.wlanHotspot )
+
+  flProc.getData.show(false)
 
   //when()
 

@@ -1,73 +1,26 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
 import java.sql.Timestamp
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.hotspot.processors.udfs.TimeCalculations
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-case class SessionMetrics(quarterID: Long, volume: Double, duration: Long)
+case class SessionMetrics(quarterID: Long, volume: Double, duration: Long, start_flag: Int, end_flag: Int)
 
 class SessionsQProcessor(dataCDRsActual: DataFrame, dataCDRsminus1Day: DataFrame, dataCDRsplus1Day: DataFrame, processingDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
 
-  val toQuarters = (a: Timestamp, e: Timestamp, volumeRatio: Double) => {
-    val endDate = if (e.toLocalDateTime.getDayOfMonth != a.toLocalDateTime.getDayOfMonth) {
-      val plus1Day = a.toLocalDateTime.plusDays(1)
-      LocalDateTime.of(plus1Day.getYear, plus1Day.getMonth, plus1Day.getDayOfMonth, 0, 0, 0, 0)
-    } else {
-      e.toLocalDateTime
-    }
-
-    def getNextQuarter(d: LocalDateTime): LocalDateTime = {
-      val nextQuarter = d.plusMinutes(15 - (d.getMinute % 15))
-      LocalDateTime.of(nextQuarter.getYear, nextQuarter.getMonth, nextQuarter.getDayOfMonth, nextQuarter.getHour, nextQuarter.getMinute, 0, 0)
-    }
-
-    def getQuarterID(d: LocalDateTime): Int = {
-      d.getMinute / 15
-    }
-
-    def durationBetween(a: LocalDateTime) : Long = {
-      println(s"a: ${a.getYear}-${a.getMonth}-${a.getDayOfMonth} e:${endDate.getYear}-${endDate.getMonth}-${endDate.getDayOfMonth}")
-      if (((a.getMinute / 15) == (endDate.getMinute / 15)) && (ChronoUnit.MINUTES.between(a, endDate) <= 15)) ChronoUnit.SECONDS.between(a, endDate)
-      else {
-        val next = getNextQuarter(a)
-        ChronoUnit.MINUTES.between(a, next)*60
-      }
-    }
-
-    for {i <- 0 to (ChronoUnit.MINUTES.between(a.toLocalDateTime, endDate).toInt / 15)} yield {
-      if (i == 0) {
-        val duration = durationBetween(a.toLocalDateTime)
-        SessionMetrics(
-          quarterID = getQuarterID(a.toLocalDateTime),
-          duration = duration,
-          volume = volumeRatio * duration
-        )
-      } else {
-        val duration = durationBetween(getNextQuarter(a.toLocalDateTime.plusMinutes((i - 1) * 15)))
-        SessionMetrics(
-          quarterID = getQuarterID(a.toLocalDateTime.plusMinutes(i * 15)),
-          duration = duration,
-          volume = volumeRatio * duration
-        )
-      }
-    }
-  }
-
-
-  val getData: DataFrame = {
+  private val preprocessedData = {
     import org.apache.spark.sql.functions.udf
     import sparkSession.implicits._
-    val toQuartersUDF = udf(toQuarters)
+    val toQuartersUDF = udf(TimeCalculations.toQuarters)
 
     val toProcess =
       dataCDRsActual
-    // .union(dataCDRsminus1Day)
-    // .union(dataCDRsplus1Day)
+      .union(dataCDRsminus1Day)
+      .union(dataCDRsplus1Day)
 
     val upperDateLimit = Timestamp.valueOf(processingDate.toLocalDateTime.plusDays(1))
 
@@ -82,6 +35,34 @@ class SessionsQProcessor(dataCDRsActual: DataFrame, dataCDRsminus1Day: DataFrame
       .withColumn("session_event_ts", from_unixtime($"session_event_ts"))
       .filter(!((col("session_start_ts") >= lit(upperDateLimit)) || (col("session_event_ts") <= lit(processingDate))))
       .withColumn("quarterSplit", toQuartersUDF($"session_start_ts", $"session_event_ts", $"volume_per_sec"))
+      .withColumn("metrics", explode($"quarterSplit"))
+      .drop("quarterSplit")
+      .withColumn("quarter_of_an_hour_id",$"metrics".getItem("quarterID"))
+      .withColumn("volume",$"metrics".getItem("volume"))
+      .withColumn("duration", $"metrics".getItem("duration"))
+      .withColumn("start_flag", $"metrics".getItem("start_flag"))
+      .withColumn("end_flag",$"metrics".getItem("end_flag") )
+      .drop("metrics")
+  }
+
+  val getData: DataFrame = {
+   val aggKey = Seq("wlan_session_date","quarter_of_an_hour_id",
+     "wlan_user_provider_code","wlan_provider_code",
+     "wlan_hotspot_ident_code","wlan_user_account_id",
+     "terminate_cause_id","login_type")
+
+    preprocessedData
+      .sort(aggKey.head, aggKey.tail :_*)
+      .groupBy(aggKey.head, aggKey.tail :_*)
+      .agg(
+        first("terminate_cause_id").alias("terminate_cause_id"),
+        sum("volume").alias("session_volume"),
+        sum("duration").alias("session_duration"),
+        sum("start_flag").alias("num_of_session_start"),
+        sum("end_flag").alias("num_of_session_stop"),
+        count("*").alias("num_of_session_active")
+      )
+      .withColumn("num_subscriber", lit(1))
   }
 
 }
