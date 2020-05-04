@@ -32,10 +32,11 @@ class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implici
       .withColumn("city_ldesc", lit("new"))
       .withColumn("load_date", lit(processingDate).cast(TimestampType))
       .withColumn("entry_id", lit(1))
+      .select("city_id","city_code", "city_desc","city_ldesc","entry_id","load_date" )
   }
 
   val allCities = {
-    logger.info("Preparing new cities data")
+    logger.info(s"Preparing new cities data, new cities count: ${newCities.count()}")
     newCities.union(cityData)
   }
 }

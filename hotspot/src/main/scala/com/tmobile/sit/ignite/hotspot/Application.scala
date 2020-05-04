@@ -8,7 +8,7 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.CommonStructures
 import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
-import com.tmobile.sit.ignite.hotspot.data.{FUTURE, InterimDataStructures, OrderDBInputData, OrderDBStructures}
+import com.tmobile.sit.ignite.hotspot.data.{ErrorCodes, FUTURE, InterimDataStructures, OrderDBInputData, OrderDBStructures}
 import com.tmobile.sit.ignite.hotspot.processors.{CDRProcessor, ExchangeRatesProcessor, FailedLoginProcessor, FailedTransactionsProcessor, OrderDBProcessor, SessionDProcessor, SessionsQProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.common.data.CommonTypes
@@ -86,19 +86,21 @@ object Application extends App {
     oldVoucherData = voucherData,
     normalisedExchangeRates= new NormalisedExchangeRates(exchRatesFinal.as[CommonTypes.ExchangeRates],MIN_REQUEST_DATE)).processData()
 
-  cdrData.show(false)
+  //cdrData.show(false)
 
   val emptyDF = sparkSession.emptyDataFrame
 
   val res = new SessionsQProcessor(cdrData, cdrData,cdrData,Timestamp.valueOf(LocalDateTime.of(2020,4, 6, 0, 0, 0, 0)) ).getData
 
-  res.show(false)
+  //res.show(false)
 
   val failedLoginReader = new TextReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.20200411020101.csv")
 
-  val flProc = new FailedLoginProcessor(failedLoginReader = failedLoginReader, citiesData = transactionData.cities, hotspotData= orderdDBData.wlanHotspot )
+  val errorCodes = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv", header = false, schema = Some(ErrorCodes.loginErrorStruct), delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
 
-  flProc.getData.show(false)
+  val flProc = new FailedLoginProcessor(failedLoginReader = failedLoginReader, citiesData = transactionData.cities, hotspotData= orderdDBData.wlanHotspot, errorCodes = errorCodes)
+
+  //flProc.getData.show(false)
 
   //when()
 
