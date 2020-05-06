@@ -3,8 +3,16 @@ package com.tmobile.sit.ignite.hotspot.processors.udfs
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneId}
 import java.time.temporal.ChronoUnit
-
+import sys.process._
 import com.tmobile.sit.ignite.hotspot.processors.SessionMetrics
+
+object DirtyStuff{
+  val encode = (encoderPath: String,data: String) => {
+    s"${encoderPath} ${data}" !!
+  }
+
+}
+
 
 object TimeCalculations {
   val toQuarters = (a: Timestamp, e: Timestamp, volumeRatio: Double) => {

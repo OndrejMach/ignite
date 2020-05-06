@@ -7,6 +7,7 @@ import org.apache.spark.sql.types.{IntegerType, TimestampType}
 import java.sql.{Date, Timestamp}
 
 import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.hotspot.processors.staging.OderdDBPRocessingOutputs
 
 case class SessionDOutputs(sessionD:DataFrame, wlanHotspotData: DataFrame)
 
