@@ -45,7 +45,7 @@ object CDRStructures {
         wlan_user_account_id=getLong(arr(13)),
         country_code=Some(arr(14)),
         login_type=Some(arr(15)),
-        msisdn=Some(arr(16)),
+        msisdn=if (arr(16).length > 0) Some(arr(16)) else None,
         venue_type=Some(arr(17)),
         venue=Some(arr(18)),
         english_city_name=Some(arr(19))

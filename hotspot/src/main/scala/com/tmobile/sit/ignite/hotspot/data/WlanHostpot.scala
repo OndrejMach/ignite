@@ -180,7 +180,7 @@ object WlanHotspotTypes {
  */
 
   case class WlanHotspotStage(
-                               hotspot_id: Option[Long],
+                               //hotspot_id: Option[Long],
                                hotspot_ident_code: Option[String],
                                hotspot_timezone: Option[String],
                                hotspot_venue_type_code: Option[String],

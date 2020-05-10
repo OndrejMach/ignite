@@ -1,22 +1,18 @@
 package com.tmobile.sit.ignite.hotspot
 
 import java.sql.{Date, Timestamp}
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDate
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.CommonStructures
-import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
-import com.tmobile.sit.ignite.hotspot.data.{ErrorCodes, FUTURE, InterimDataStructures, OrderDBInputData, OrderDBStructures}
-import com.tmobile.sit.ignite.hotspot.processors.{ExchangeRatesProcessor, FailedLoginProcessor, FailedTransactionsProcessor, SessionDProcessor, SessionsQProcessor}
-import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
-import com.tmobile.sit.ignite.common.data.CommonTypes
-import com.tmobile.sit.ignite.hotspot.data.FailedLoginsStructure.FailedLogin
-import com.tmobile.sit.ignite.hotspot.dirtystuff.DES3Proprietary
+import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OrderDBInputData}
+import com.tmobile.sit.ignite.hotspot.processors.ExchangeRatesProcessor
 import com.tmobile.sit.ignite.hotspot.processors.staging.{CDRProcessor, OrderDBProcessor}
-import com.tmobile.sit.ignite.hotspot.writers.{CDRStageWriter, OrderDBStageFilenames, OrderDBStageWriter, SessionDWriter}
+import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
+import com.tmobile.sit.ignite.hotspot.writers.{CDRStageWriter, OrderDBStageFilenames, OrderDBStageWriter}
 
 
 object Application extends Logger{
@@ -34,8 +30,6 @@ object Application extends Logger{
 
   implicit val sparkSession = getSparkSession()
   implicit val processingDate = WLAN_HOTSPOT_ODATE
-
-  import sparkSession.implicits._
 
 
 
@@ -57,8 +51,8 @@ object Application extends Logger{
     //OrderDB
 
     val settings: Settings = Settings(
-      OrderDBConfig(wlanHotspotFile = Some("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/cptm_ta_d_wlan_hotspot.csv"),
-        orderDBFile = Some("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.MPS.DAY.2020040*.csv"),
+      OrderDBConfig(wlanHotspotFile = Some("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_hotspot.csv"),
+        orderDBFile = Some("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.MPS.DAY.20200509030701.csv"),
         errorCodesFile = Some("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_error_code.csv")
       ))
 
@@ -67,7 +61,7 @@ object Application extends Logger{
     val orderdDBData = orderDBProcessor.processData()
     //CDR
 
-    val inputFileCDR = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.CDR.DAY.2020040*.csv"
+    val inputFileCDR = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.CDR.DAY.2020050*.csv"
     val reader = new TextReader(inputFileCDR)
 
     val processor = new CDRProcessor(reader, FILE_DATE)
