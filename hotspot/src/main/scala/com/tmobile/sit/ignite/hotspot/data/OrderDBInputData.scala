@@ -9,7 +9,9 @@ class OrderDBInputData(orderDBConfig: OrderDBConfig)(implicit  sparkSession: Spa
   val dataHotspotReader = CSVReader(path = orderDBConfig.wlanHotspotFile.get,
     header = false,
     delimiter = "~",
-    schema = Some(WlanHotspotTypes.wlanHotspotStructure))
+    schema = Some(WlanHotspotTypes.wlanHotspotStructure),
+    quote = ""
+  )
 
   val inputMPSReader = new TextReader(orderDBConfig.orderDBFile.get)
 

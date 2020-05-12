@@ -9,7 +9,7 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.CommonStructures
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
 import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OrderDBInputData}
-import com.tmobile.sit.ignite.hotspot.processors.ExchangeRatesProcessor
+import com.tmobile.sit.ignite.hotspot.processors.{ExchangeRatesProcessor, SessionDProcessor}
 import com.tmobile.sit.ignite.hotspot.processors.staging.{CDRProcessor, OrderDBProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.hotspot.writers.{CDRStageWriter, OrderDBStageFilenames, OrderDBStageWriter}
@@ -22,11 +22,11 @@ object Application extends Logger{
 
   val PROCESSING_DATE = Date.valueOf(LocalDate.now())
 
-  val WLAN_HOTSPOT_ODATE = Date.valueOf(LocalDate.of(2020, 4, 7))
+  val WLAN_HOTSPOT_ODATE = Date.valueOf(LocalDate.of(2020, 5, 8))
 
   val outputFile = "/Users/ondrejmachacek/tmp/hotspot/exchangeRates.csv"
   val inputFile = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/CUP_exchangerates_d_20200408_1.csv"
-  val FILE_DATE = Date.valueOf(LocalDate.now())
+  val FILE_DATE =Date.valueOf("2020-05-09") // Date.valueOf(LocalDate.now())
 
   implicit val sparkSession = getSparkSession()
   implicit val processingDate = WLAN_HOTSPOT_ODATE
@@ -72,9 +72,17 @@ object Application extends Logger{
   }
 
   def doProcessingCore(): Unit = {
-    /*
-    val sessionD = new SessionDProcessor(cdrData = cdrData, orderdDBData = orderdDBData, WLAN_HOTSPOT_ODATE).processData()
 
+    val hotspotData = sparkSession.read.parquet("/Users/ondrejmachacek/tmp/hotspot/cptm_ta_d_wlan_hotspot")
+    val cdrData = sparkSession.read.parquet("/Users/ondrejmachacek/tmp/hotspot/cptm_ta_q_wlan_cdr").filter("year='2020' and  month='5' and day = '8'")
+
+    val sessionD = new SessionDProcessor(cdrData = cdrData, wlanHotspotStageData = hotspotData, WLAN_HOTSPOT_ODATE).processData()
+
+    CSVWriter(path = "/Users/ondrejmachacek/tmp/hotspot/session_d.csv", data = sessionD.sessionD,delimiter = "|" ).writeData()
+
+
+
+    /*
     //FailedTransactions
     val orderDBplus1Data = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_f_wlan_orderdb.20200409.csv", schema = Some(OrderDBStructures.orderDBStruct),header = false, delimiter = "|" ).read()
 

@@ -1,17 +1,16 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
-import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OutputStructures}
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{concat, count, first, lit, monotonically_increasing_id, sum, upper, when}
-import org.apache.spark.sql.types.{IntegerType, TimestampType}
-import java.sql.{Date, Timestamp}
+import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.hotspot.processors.staging.OderdDBPRocessingOutputs
+import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OutputStructures}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{IntegerType, TimestampType}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class SessionDOutputs(sessionD:DataFrame, wlanHotspotData: DataFrame)
 
-class SessionDProcessor(cdrData: DataFrame, orderdDBData: OderdDBPRocessingOutputs,processingDate: Date )(implicit sparkSession: SparkSession) extends Logger{
+class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, processingDate: Date )(implicit sparkSession: SparkSession) extends Logger{
   import sparkSession.implicits._
 
   private val cdrAggregates = {
@@ -50,10 +49,12 @@ class SessionDProcessor(cdrData: DataFrame, orderdDBData: OderdDBPRocessingOutpu
   }
 
   private val wlanHotspotData = {
+    val maxHotspotID  = wlanHotspotStageData.select(max($"wlan_hotspot_id")).first().getLong(0)
+
     logger.info("Filtering wlan hotspot data for today")
-    val todayDataHotspot = orderdDBData.wlanHotspot.filter($"valid_to" >= lit(processingDate).cast(TimestampType))
+    val todayDataHotspot = wlanHotspotStageData.filter($"valid_to" >= lit(processingDate).cast(TimestampType))
     logger.info("Filtering wlan hotspot data for history")
-    val oldDataHotspot = orderdDBData.wlanHotspot.filter(!($"valid_to" >= lit(processingDate).cast(TimestampType)))
+    val oldDataHotspot = wlanHotspotStageData.filter(!($"valid_to" >= lit(processingDate).cast(TimestampType)))
 
     val aggColumns = cdrAggregates.columns.map("agg_" + _)
 
@@ -71,7 +72,7 @@ class SessionDProcessor(cdrData: DataFrame, orderdDBData: OderdDBPRocessingOutpu
     logger.info("Preparing new wlanHostpot data from CDR aggregates")
     toProvision
       .withColumn("wlan_hotspot_id", monotonically_increasing_id())
-      .withColumn("wlan_hotspot_id", $"wlan_hotspot_id" + lit(orderdDBData.maxHotspotID))
+      .withColumn("wlan_hotspot_id", $"wlan_hotspot_id" + lit(maxHotspotID))
       .withColumn("wlan_hotspot_desc" ,lit( "Hotspot not assigned"))
       .withColumn("country_code", upper($"country_code"))
       .withColumn("wlan_provider_code", $"agg_wlan_provider_code")

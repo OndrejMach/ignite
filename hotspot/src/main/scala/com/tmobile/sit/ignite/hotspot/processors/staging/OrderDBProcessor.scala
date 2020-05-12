@@ -91,7 +91,7 @@ class OrderDBProcessor(orderDBInputData: OrderDBInputData, maxDate: Timestamp, e
       merge
         .filter(!($"wlan_hotspot_ident_code".isNotNull && ($"hotspot_ident_code".isNull || $"valid_to" < lit(maxDate).cast(TimestampType))))
         .withColumn("wlan_hotspot_ident_code", getField("wlan_hotspot_ident_code", "hotspot_ident_code"))
-        .withColumn("valid_from", getField("valid_from_n", "valid_from"))
+        .withColumn("valid_from", getField("valid_from", "valid_from_n"))
         .withColumn("valid_to", getField("valid_to_n", "valid_to"))
         .withColumn("hotspot_timezone", getField("hotspot_timezone", "wlan_hotspot_timezone"))
         .withColumn("hotspot_venue_type_code", getField("hotspot_venue_type_code", "wlan_venue_type_code"))
