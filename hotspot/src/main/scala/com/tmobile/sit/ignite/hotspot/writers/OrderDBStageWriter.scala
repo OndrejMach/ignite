@@ -6,10 +6,10 @@ import com.tmobile.sit.ignite.hotspot.processors.staging.OderdDBPRocessingOutput
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 case class OrderDBStageFilenames(
-                                  wlanHotspot: String = "/Users/ondrejmachacek/tmp/hotspot/cptm_ta_d_wlan_hotspot",
-                                  errorCodes: String = "/Users/ondrejmachacek/tmp/hotspot/cptm_ta_d_wlan_error_code",
-                                  mapVoucher: String = "/Users/ondrejmachacek/tmp/hotspot/cptm_ta_f_wlif_map_voucher",
-                                  orderDb: String = "/Users/ondrejmachacek/tmp/hotspot/cptm_ta_f_wlan_orderdb")
+                                  wlanHotspot: String = "/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_d_wlan_hotspot",
+                                  errorCodes: String = "/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_d_wlan_error_code",
+                                  mapVoucher: String = "/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_f_wlif_map_voucher",
+                                  orderDb: String = "/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_f_wlan_orderdb")
 
 
 class OrderDBStageWriter(data: OderdDBPRocessingOutputs, filenames: OrderDBStageFilenames) (implicit sparkSession: SparkSession) extends Writer {

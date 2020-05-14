@@ -26,17 +26,19 @@ class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implici
       .select("city_code")
       .distinct()
       .join(cityData, Seq("city_code"), "left_outer")
-      .filter(col("city_id").isNull)
+      .filter(col("city_id").isNull && col("city_code").isNotNull)
       .withColumn("city_id", monotonically_increasing_id() + lit(maxCityId))
       .withColumn("city_desc", upper(col("city_code")))
       .withColumn("city_ldesc", lit("new"))
       .withColumn("load_date", lit(processingDate).cast(TimestampType))
       .withColumn("entry_id", lit(1))
-      .select("city_id","city_code", "city_desc","city_ldesc","entry_id","load_date" )
+      .select("city_id", "city_code", "city_desc", "city_ldesc","entry_id","load_date")
   }
 
   val allCities = {
     logger.info(s"Preparing new cities data, new cities count: ${newCities.count()}")
-    newCities.union(cityData)
+    newCities
+      .union(cityData)
+      //.select("city_id", "city_code", "city_desc", "city_ldesc")
   }
 }

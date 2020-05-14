@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
-import java.sql.Date
+import java.sql.{Date, Timestamp}
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.common.processing.{NormalisedExchangeRates, translateHours}
@@ -11,11 +11,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 case class FailedTransactionOutput(cities: DataFrame, vouchers: DataFrame, orderDBH:DataFrame, failedTransactions: DataFrame)
 
 
-class FailedTransactionsProcessor( oldCitiesData: DataFrame,oldVoucherData: DataFrame ,wlanHotspot: DataFrame, orderDBData: DataFrame,orderDBDataPLus1: DataFrame  ,normalisedExchangeRates: NormalisedExchangeRates)
+class FailedTransactionsProcessor( oldCitiesData: DataFrame,oldVoucherData: DataFrame ,wlanHotspot: DataFrame, orderDBData: DataFrame,normalisedExchangeRates: NormalisedExchangeRates)
                                  (implicit sparkSession: SparkSession, processingDate: Date) extends Logger {
   import sparkSession.implicits._
 
-  private val wlanOrderDBDataPreprocessed = new WlanAndOrderDBData(wlanHotspotData = wlanHotspot, orderDbDataActual = orderDBData, orderDBDataDayPLus1 = orderDBDataPLus1)
+  private val wlanOrderDBDataPreprocessed = new WlanAndOrderDBData(wlanHotspotData = wlanHotspot, orderDbDataActual = orderDBData)
 
 
   private  val wlanHotspotOrderDB = {
@@ -48,8 +48,13 @@ class FailedTransactionsProcessor( oldCitiesData: DataFrame,oldVoucherData: Data
     logger.info("Preparing vouchers data")
     val voucherData = new VoucherData(wlanOrderDBExchangeRatesdata = wlanHotspotOrderDBWithExchangeRates, oldVoucherData = oldVoucherData )
     logger.info("Extracting transactions data")
-    val transactionsData = new TransactionsData(wlanHostspotOrderDBExchangeRates = wlanHotspotOrderDBWithExchangeRates, citiesData = citiesData, voucherData = voucherData)
+    val transactionsData = new TransactionsData(
+      wlanHostspotOrderDBExchangeRates = wlanHotspotOrderDBWithExchangeRates,
+      citiesData = citiesData,
+      voucherData = voucherData,
+      processingDatePlus1 = Date.valueOf(processingDate.toLocalDate.plusDays(1)))
+      .getTransactionData()
     logger.info("Preparing final output")
-    FailedTransactionOutput(citiesData.allCities,voucherData.allVouchers,transactionsData.getTransactionData().orderDBH,transactionsData.getTransactionData().failedTransaction)
+    FailedTransactionOutput(citiesData.allCities,voucherData.allVouchersForPrint,transactionsData.orderDBH,transactionsData.failedTransaction)
   }
 }

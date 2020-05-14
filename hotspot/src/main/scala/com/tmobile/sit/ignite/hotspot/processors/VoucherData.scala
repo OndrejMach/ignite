@@ -2,8 +2,9 @@ package com.tmobile.sit.ignite.hotspot.processors
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.FailedTransactionsDataStructures
+import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, lit, max, monotonically_increasing_id}
+import org.apache.spark.sql.functions.{col, lit, max, monotonically_increasing_id, udf}
 
 class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataFrame) extends  Logger{
   private val voucherData = {
@@ -14,7 +15,7 @@ class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataF
       .withColumnRenamed("wlan_voucher_desc", "voucher_type")
       // .withColumnRenamed("duration", "voucher_duration")
       .drop("entry_id", "load_date")
-      .sort("natco", "voucher_type", "amount", "duration")
+    .sort("natco", "voucher_type", "amount", "duration")
   }
 
   private val maxVoucherID = {
@@ -37,7 +38,22 @@ class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataF
 
   val allVouchers= {
     logger.info("Merging new vouchers with the old ones, assigning new voucher IDs")
-    newVouchers.union(voucherData.select("wlan_voucher_id", FailedTransactionsDataStructures.COLUMNS_VOUCHER: _*))
+    newVouchers
+      .union(voucherData.select("wlan_voucher_id", FailedTransactionsDataStructures.COLUMNS_VOUCHER: _*))
+  }
+
+  val allVouchersForPrint = {
+
+    val remove0s = udf {n: Double => DirtyStuff.removeTrailing0s(n)}
+
+    logger.info("Preparing vouchers for output")
+    allVouchers
+      .withColumn("amount",remove0s(col("amount")) )
+      //.withColumn("vat",remove0s(col("vat")) )
+      .withColumn("conversion",remove0s(col("conversion")))
+      .withColumnRenamed("voucher_type", "wlan_voucher_desc")
+      .withColumnRenamed("natco","tmo_country_code")
+      .withColumnRenamed("amount","price")
   }
 
 }

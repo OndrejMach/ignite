@@ -5,12 +5,12 @@ import java.sql.Timestamp
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.processors.udfs.TimeCalculations
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.{DateType, DoubleType, LongType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class SessionMetrics(quarterID: Long, volume: Double, duration: Long, start_flag: Int, end_flag: Int)
 
-class SessionsQProcessor(dataCDRsActual: DataFrame, dataCDRsminus1Day: DataFrame, dataCDRsplus1Day: DataFrame, processingDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
+class SessionsQProcessor(dataCDRs: DataFrame, processingDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
 
   private val preprocessedData = {
     import org.apache.spark.sql.functions.udf
@@ -18,11 +18,10 @@ class SessionsQProcessor(dataCDRsActual: DataFrame, dataCDRsminus1Day: DataFrame
     val toQuartersUDF = udf(TimeCalculations.toQuarters)
 
     val toProcess =
-      dataCDRsActual
-      .union(dataCDRsminus1Day)
-      .union(dataCDRsplus1Day)
+      dataCDRs
 
-    val upperDateLimit = Timestamp.valueOf(processingDate.toLocalDateTime.plusDays(1))
+
+    val upperDateLimit = Timestamp.valueOf(processingDate.toLocalDateTime.plusDays(-1))
 
     toProcess
       .withColumn("quarter_of_an_hour_id", (($"session_start_ts" - ($"session_start_ts" % 900)) % 86400) / 60)
@@ -30,17 +29,24 @@ class SessionsQProcessor(dataCDRsActual: DataFrame, dataCDRsminus1Day: DataFrame
       .withColumn("wlan_provider_code", $"hotspot_owner_id")
       .withColumn("wlan_user_provider_code", $"user_provider_id")
       .withColumn("end_quarter", $"session_start_ts" + 900 - ($"session_start_ts" % 900))
-      .withColumn("volume_per_sec", when($"session_duration" =!= lit(0), $"session_volume".cast(DoubleType) / $"session_duration").otherwise(lit(0.0)))
-      .withColumn("session_start_ts", from_unixtime($"session_start_ts"))
-      .withColumn("session_event_ts", from_unixtime($"session_event_ts"))
-      .filter(!((col("session_start_ts") >= lit(upperDateLimit)) || (col("session_event_ts") <= lit(processingDate))))
-      .withColumn("quarterSplit", toQuartersUDF($"session_start_ts", $"session_event_ts", $"volume_per_sec"))
+      //.withColumn("volume_per_sec", when($"session_duration" =!= lit(0), $"session_volume".cast(DoubleType) / $"session_duration".cast(DoubleType)).otherwise(lit(0.0).cast(DoubleType)))
+      .withColumn("session_start_ts", from_unixtime($"session_start_ts"-lit(2*3600))) //-lit(2*3600)
+      .withColumn("session_event_ts", from_unixtime($"session_event_ts"-lit(2*3600))) //-lit(2*3600)
+
+      .filter((col("session_event_ts") > lit(processingDate).cast(TimestampType)) )
+      .withColumn("normalisedStart",
+        when($"session_start_ts" < lit(processingDate).cast(TimestampType),lit(processingDate).cast(TimestampType))
+          .otherwise($"session_start_ts"))
+      .withColumn("quarterSplit", toQuartersUDF($"session_start_ts", $"session_event_ts", $"session_volume", $"session_duration", lit(processingDate).cast(TimestampType)))
       .withColumn("metrics", explode($"quarterSplit"))
       .drop("quarterSplit")
       .withColumn("quarter_of_an_hour_id",$"metrics".getItem("quarterID"))
-      .withColumn("volume",$"metrics".getItem("volume"))
-      .withColumn("duration", $"metrics".getItem("duration"))
+      .withColumn("volume",$"metrics".getItem("volume").cast(LongType))
+      .withColumn("duration", ($"metrics".getItem("duration")/lit(60)).cast(LongType))
       .withColumn("start_flag", $"metrics".getItem("start_flag"))
+      .withColumn("start_flag",
+        when($"session_start_ts" < lit(processingDate).cast(TimestampType),lit(0))
+          .otherwise($"start_flag"))
       .withColumn("end_flag",$"metrics".getItem("end_flag") )
       .drop("metrics")
   }
@@ -55,7 +61,7 @@ class SessionsQProcessor(dataCDRsActual: DataFrame, dataCDRsminus1Day: DataFrame
       .sort(aggKey.head, aggKey.tail :_*)
       .groupBy(aggKey.head, aggKey.tail :_*)
       .agg(
-        first("terminate_cause_id").alias("terminate_cause_id"),
+        //first("terminate_cause_id").alias("terminate_cause_id"),
         sum("volume").alias("session_volume"),
         sum("duration").alias("session_duration"),
         sum("start_flag").alias("num_of_session_start"),
