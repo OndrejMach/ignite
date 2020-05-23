@@ -9,16 +9,27 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.{CommonStructures, CommonTypes}
 import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
 import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
-import com.tmobile.sit.ignite.hotspot.data.{FUTURE, InterimDataStructures, OrderDBInputData, OutputStructures}
-import com.tmobile.sit.ignite.hotspot.processors.{ExchangeRatesProcessor, FailedTransactionsProcessor, SessionDProcessor, SessionsQProcessor}
+import com.tmobile.sit.ignite.hotspot.data._
+import com.tmobile.sit.ignite.hotspot.processors._
 import com.tmobile.sit.ignite.hotspot.processors.staging.{CDRProcessor, OrderDBProcessor}
-import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.hotspot.writers.{CDRStageWriter, OrderDBStageFilenames, OrderDBStageWriter}
 import org.apache.spark.sql.SaveMode
 
 
-object Application extends Logger{
+object Application extends Logger {
+
+  //val now = LocalDateTime.now()
+  //val pd = LocalDateTime.of(now.getYear, now.getMonth, now.getDayOfMonth,0,0,0)
+
+  //val pd = LocalDateTime.of(now.getYear, now.getMonth, now.getDayOfMonth,0,0,0)
+
+
+  //val test = TimeCalculations.toQuarters(Timestamp.valueOf(pd.minusMinutes(12)), Timestamp.valueOf(pd.plusMinutes(32)), 3000, 4,Timestamp.valueOf(pd))
+
+  //test.foreach(print(_))
+
+  // System.exit(0)
 
   val MIN_REQUEST_DATE = Timestamp.valueOf("2017-01-01 00:00:00")
   val MAX_DATE = Date.valueOf("4712-12-31")
@@ -29,7 +40,7 @@ object Application extends Logger{
 
   val outputFile = "/Users/ondrejmachacek/tmp/common/exchangeRates.csv"
   val inputFile = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/CUP_exchangerates_d_20200508_1.csv.gz"
-  val FILE_DATE =Date.valueOf("2020-05-09") // Date.valueOf(LocalDate.now())
+  val FILE_DATE = Date.valueOf("2020-05-09") // Date.valueOf(LocalDate.now())
 
   implicit val sparkSession = getSparkSession()
   implicit val processingDate = WLAN_HOTSPOT_ODATE
@@ -56,7 +67,7 @@ object Application extends Logger{
         errorCodesFile = Some("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_error_code.csv")
       ))
 
-    val orderDBProcessor = new OrderDBProcessor(orderDBInputData = OrderDBInputData(settings.orderDBFiles), maxDate = FUTURE,"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out")
+    val orderDBProcessor = new OrderDBProcessor(orderDBInputData = OrderDBInputData(settings.orderDBFiles), maxDate = FUTURE, "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out")
 
     val orderdDBData = orderDBProcessor.processData()
     //CDR
@@ -67,8 +78,10 @@ object Application extends Logger{
     val processor = new CDRProcessor(reader, FILE_DATE)
 
     val cdrData = processor.processData()
-    new CDRStageWriter(path ="/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr", data = cdrData).writeData()
-    new OrderDBStageWriter(data = orderdDBData, filenames = OrderDBStageFilenames() ).writeData()
+    new CDRStageWriter(path = "/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr", data = cdrData).writeData()
+    new OrderDBStageWriter(data = orderdDBData, filenames = OrderDBStageFilenames()).writeData()
+
+
   }
 
   def doProcessingCore(): Unit = {
@@ -83,12 +96,12 @@ object Application extends Logger{
     //sessionD.wlanHotspotData.write.mode(SaveMode.Overwrite).parquet("/Users/ondrejmachacek/tmp/hotspot/cptm_ta_d_wlan_hotspot") TODO
 
     CSVWriter(path = "/Users/ondrejmachacek/tmp/hotspot/out/session_d.csv",
-      data = sessionD.sessionD.select(OutputStructures.SESSION_D_OUTPUT_COLUMNS.head, OutputStructures.SESSION_D_OUTPUT_COLUMNS.tail :_*),
-      delimiter = "|" ).writeData()
+      data = sessionD.sessionD.select(OutputStructures.SESSION_D_OUTPUT_COLUMNS.head, OutputStructures.SESSION_D_OUTPUT_COLUMNS.tail: _*),
+      delimiter = "|").writeData()
 
     //FailedTransactions
     val orderDB = sparkSession.read.parquet("/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_f_wlan_orderdb").filter("year='2020' and  month='5' and (day = '9' or day = '8')")
-      //CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_f_wlan_orderdb.20200409.csv", schema = Some(OrderDBStructures.orderDBStruct),header = false, delimiter = "|" ).read()
+    //CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_f_wlan_orderdb.20200409.csv", schema = Some(OrderDBStructures.orderDBStruct),header = false, delimiter = "|" ).read()
 
     val cityData = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/common/cptm_ta_d_city.csv", header = false, schema = Some(InterimDataStructures.CITY_STRUCT), delimiter = "|").read()
 
@@ -96,37 +109,37 @@ object Application extends Logger{
       CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv", header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|").read()
 
 
-    val exchRatesFinal = CSVReader(path =outputFile, delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss", header = false,schema = Some(CommonStructures.exchangeRatesStructure )).read()
+    val exchRatesFinal = CSVReader(path = outputFile, delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss", header = false, schema = Some(CommonStructures.exchangeRatesStructure)).read()
 
     val transactionData = new FailedTransactionsProcessor(orderDBData = orderDB,
       wlanHotspot = sessionD.wlanHotspotData,
       oldCitiesData = cityData,
       oldVoucherData = voucherData,
-      normalisedExchangeRates= new NormalisedExchangeRates(exchRatesFinal.as[CommonTypes.ExchangeRates],MIN_REQUEST_DATE)).processData()
+      normalisedExchangeRates = new NormalisedExchangeRates(exchRatesFinal.as[CommonTypes.ExchangeRates], MIN_REQUEST_DATE)).processData()
 
-    CSVWriter(path="/Users/ondrejmachacek/tmp/hotspot/out/cities.csv",
+    CSVWriter(path = "/Users/ondrejmachacek/tmp/hotspot/out/cities.csv",
       delimiter = "|",
       writeHeader = true,
-      data = transactionData.cities.select(OutputStructures.CITIES_OUTPUT_COLUMNS.head,OutputStructures.CITIES_OUTPUT_COLUMNS.tail :_* ))
+      data = transactionData.cities.select(OutputStructures.CITIES_OUTPUT_COLUMNS.head, OutputStructures.CITIES_OUTPUT_COLUMNS.tail: _*))
       .writeData()
 
     CSVWriter(path = "/Users/ondrejmachacek/tmp/hotspot/out/cptm_ta_d_wlan_voucher.csv",
       delimiter = "|",
       writeHeader = true,
       data = transactionData.vouchers
-        .select(OutputStructures.VOUCHER_OUTPUT_COLUMNS.head, OutputStructures.VOUCHER_OUTPUT_COLUMNS.tail :_*),
+        .select(OutputStructures.VOUCHER_OUTPUT_COLUMNS.head, OutputStructures.VOUCHER_OUTPUT_COLUMNS.tail: _*),
       timestampFormat = "yyyy-MM-dd HH:mm:ss")
       .writeData()
 
     CSVWriter(path = "/Users/ondrejmachacek/tmp/hotspot/out/cptm_ta_x_wlan_failed_transac.20200508.csv",
-      data = transactionData.failedTransactions.select(OutputStructures.FAILED_TRANSACTIONS_COLUMNS.head, OutputStructures.FAILED_TRANSACTIONS_COLUMNS.tail :_*),
+      data = transactionData.failedTransactions.select(OutputStructures.FAILED_TRANSACTIONS_COLUMNS.head, OutputStructures.FAILED_TRANSACTIONS_COLUMNS.tail: _*),
       delimiter = "|",
       writeHeader = true,
       timestampFormat = "yyyy-MM-dd HH:mm:ss")
       .writeData()
 
     CSVWriter(path = "/Users/ondrejmachacek/tmp/hotspot/out/cptm_ta_x_wlan_orderdb_h.20200508.csv",
-      data = transactionData.orderDBH.select(OutputStructures.ORDERDB_H_COLUMNS.head, OutputStructures.ORDERDB_H_COLUMNS.tail :_*),
+      data = transactionData.orderDBH.select(OutputStructures.ORDERDB_H_COLUMNS.head, OutputStructures.ORDERDB_H_COLUMNS.tail: _*),
       delimiter = "|",
       writeHeader = true,
       timestampFormat = "yyyy-MM-dd HH:mm:ss")
@@ -134,34 +147,54 @@ object Application extends Logger{
 
     //cdrData.show(false)
 
-    val cdr3Days = sparkSession.read.parquet("/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr").filter("year='2020' and  month='5' and (day = '8' or day = '7' or day= '9')")
+    val cdr3Days = sparkSession.read.parquet("/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr").filter("year='2020' and  month='5' and (day = '8' or day = '7' or day= '6')")
 
 
-    val res = new SessionsQProcessor(cdr3Days, Timestamp.valueOf(LocalDateTime.of(2020,5, 8, 0, 0, 0, 0)) ).getData
+    val res = new SessionsQProcessor(cdr3Days, Timestamp.valueOf(LocalDateTime.of(2020, 5, 7, 0, 0, 0, 0).minusHours(2))).getData
 
     CSVWriter(
-      path = "/Users/ondrejmachacek/tmp/hotspot/out/cptm_ta_x_wlan_session_q.20200508.csv",
+      path = "/Users/ondrejmachacek/tmp/hotspot/out/cptm_ta_x_wlan_session_q.20200507.csv",
       delimiter = "|",
       writeHeader = true,
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
-      data = res.select(OutputStructures.SESSION_Q_COLUMNS.head, OutputStructures.SESSION_Q_COLUMNS.tail :_*)
+      data = res.select(OutputStructures.SESSION_Q_COLUMNS.head, OutputStructures.SESSION_Q_COLUMNS.tail: _*)
     ).writeData()
 
 
+    val failedLoginReader = new TextReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.*.csv")
+    val errorCodes = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv", header = false, schema = Some(ErrorCodes.loginErrorStruct), delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
 
-    //res.show(false)
-    /*
-        val failedLoginReader = new TextReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.20200411020101.csv")
+    val flProc = new FailedLoginProcessor(failedLoginReader = failedLoginReader, citiesData = transactionData.cities, hotspotData = hotspotData, errorCodes = errorCodes).getData
 
-        val errorCodes = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv", header = false, schema = Some(ErrorCodes.loginErrorStruct), delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
+    flProc
+      .select(OutputStructures.FAILED_LOGINS_OUTPUT_COLUMNS.head, OutputStructures.FAILED_LOGINS_OUTPUT_COLUMNS.tail: _*)
+      .repartition(1)
+      .write
+      .partitionBy("year", "month", "day")
+      .mode(SaveMode.Append)
+      .parquet("/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_x_wlan_failed_login")
 
-        val flProc = new FailedLoginProcessor(failedLoginReader = failedLoginReader, citiesData = transactionData.cities, hotspotData= orderdDBData.wlanHotspot, errorCodes = errorCodes)
+    val data = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/sd/cptm_ta_x_wlan_session_d.2020*", header = false, delimiter = "|", dateFormat = "yyyy-MM-dd")
+      .read()
+      .toDF(OutputStructures.SESSION_D_OUTPUT_COLUMNS :+ "e" :+ "l": _*)
 
-        val sessionDOutFile = "/Users/ondrejmachacek/tmp/hotspot/CPTM_TA_X_WLAN_SESSION_D_Daily_20200407.csv"
+    val winaProcessor = new WinaExportsProcessor(data)
+    CSVWriter(
+      path = "/Users/ondrejmachacek/tmp/hotspot/out/dwh_verkehrsmd_wlan_SPARK.csv",
+      delimiter = "|",
+      writeHeader = true,
+      timestampFormat = "yyyy-MM-dd HH:mm:ss",
+      data = winaProcessor.getTCOMData
+    ).writeData()
 
-        new SessionDWriter(path = sessionDOutFile, data = sessionD.sessionD).writeData()
+    CSVWriter(
+      path = "/Users/ondrejmachacek/tmp/hotspot/out/dwh_verkehrsmd_wlan_tmd_SPARK.csv",
+      delimiter = "|",
+      writeHeader = true,
+      timestampFormat = "yyyy-MM-dd HH:mm:ss",
+      data = winaProcessor.getTMDData
+    ).writeData()
 
-         */
   }
 
   def main(args: Array[String]): Unit = {

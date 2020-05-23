@@ -58,5 +58,14 @@ object OutputStructures {
     "num_of_session_start","num_of_session_stop",
     "num_of_session_active","num_subscriber")
 
-  //Seq("currency_code", "exchange_rate_code", "exchange_rate_avg", "exchange_rate_sell", "exchange_rate_buy", "faktv","faktn","period_from", "period_to", "valid_from","valid_to", "entry_id", "load_date")
-}
+
+  val FAILED_LOGINS_OUTPUT_COLUMNS = Seq(
+    "login_datetime","login_hour","hotspot_id",
+    "hotspot_ident_code","city_id",
+    "city_name","hotspot_provider_code",
+    "hotspot_venue_code","hotspot_venue_type_code",
+    "hotspot_country_code","user_provider",
+    "account_type_id","login_type",
+    "login_error_code","num_of_failed_logins",
+    "year", "month", "day")
+  }
