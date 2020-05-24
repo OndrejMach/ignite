@@ -1,6 +1,6 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
-import java.sql.{Date, Timestamp}
+import java.sql.Date
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.common.processing.{NormalisedExchangeRates, translateHours}

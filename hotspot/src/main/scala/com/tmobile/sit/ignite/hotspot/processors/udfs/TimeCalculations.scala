@@ -4,9 +4,9 @@ import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneId, ZoneOffset}
 import java.time.temporal.ChronoUnit
 
-import sys.process._
-import com.tmobile.sit.ignite.hotspot.processors.SessionMetrics
+import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.SessionMetrics
 
+import sys.process._
 import scala.annotation.strictfp
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

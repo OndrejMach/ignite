@@ -1,10 +1,10 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, lit, max, monotonically_increasing_id, upper}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.TimestampType
 
 class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implicit processingDate: Date) extends Logger {

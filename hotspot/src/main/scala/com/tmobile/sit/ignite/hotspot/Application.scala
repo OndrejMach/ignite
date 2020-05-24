@@ -8,9 +8,10 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.data.{CommonStructures, CommonTypes}
 import com.tmobile.sit.ignite.common.processing.NormalisedExchangeRates
-import com.tmobile.sit.ignite.hotspot.config.{OrderDBConfig, Settings}
+import com.tmobile.sit.ignite.hotspot.config.{Settings, Setup}
 import com.tmobile.sit.ignite.hotspot.data._
 import com.tmobile.sit.ignite.hotspot.processors._
+import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.{ExchangeRatesActualProcessor, FailedLoginProcessor, FailedTransactionsProcessor, SessionDProcessor, SessionsQProcessor, WinaExportsProcessor}
 import com.tmobile.sit.ignite.hotspot.processors.staging.{CDRProcessor, OrderDBProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.{ExchangeRatesReader, TextReader}
 import com.tmobile.sit.ignite.hotspot.writers.{CDRStageWriter, OrderDBStageFilenames, OrderDBStageWriter}
@@ -19,45 +20,25 @@ import org.apache.spark.sql.SaveMode
 
 object Application extends Logger {
 
-  //val now = LocalDateTime.now()
-  //val pd = LocalDateTime.of(now.getYear, now.getMonth, now.getDayOfMonth,0,0,0)
-
-  //val pd = LocalDateTime.of(now.getYear, now.getMonth, now.getDayOfMonth,0,0,0)
-
-
-  //val test = TimeCalculations.toQuarters(Timestamp.valueOf(pd.minusMinutes(12)), Timestamp.valueOf(pd.plusMinutes(32)), 3000, 4,Timestamp.valueOf(pd))
-
-  //test.foreach(print(_))
-
-  // System.exit(0)
-
-  val MIN_REQUEST_DATE = Timestamp.valueOf("2017-01-01 00:00:00")
-  val MAX_DATE = Date.valueOf("4712-12-31")
-
-  val PROCESSING_DATE = Date.valueOf(LocalDate.now())
-
-  val WLAN_HOTSPOT_ODATE = Date.valueOf(LocalDate.of(2020, 5, 8))
-
-  val outputFile = "/Users/ondrejmachacek/tmp/common/exchangeRates.csv"
-  val inputFile = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/CUP_exchangerates_d_20200508_1.csv.gz"
-  val FILE_DATE = Date.valueOf("2020-05-09") // Date.valueOf(LocalDate.now())
-
   implicit val sparkSession = getSparkSession()
-  implicit val processingDate = WLAN_HOTSPOT_ODATE
 
+  implicit val settings = new Setup().settings
+
+/*
   def processExchangeRates() = {
     val exchangeRatesReader = new ExchangeRatesReader(inputFile)
     val oldExchangeFilesReader = CSVReader(path = outputFile, schema = Some(CommonStructures.exchangeRatesStructure), header = false, delimiter = "|")
     val oldData = oldExchangeFilesReader.read()
     CSVWriter(data = oldExchangeFilesReader.read(), path = outputFile + ".previous", delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").writeData()
 
-    val exchangeRatesProcessor = new ExchangeRatesProcessor(exchangeRatesReader, oldExchangeFilesReader, MAX_DATE)
+    val exchangeRatesProcessor = new ExchangeRatesActualProcessor(exchangeRatesReader, oldExchangeFilesReader, MAX_DATE)
 
     val exchRatesFinal = exchangeRatesProcessor.runProcessing()
 
     CSVWriter(data = exchRatesFinal, path = outputFile, delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").writeData()
   }
-
+*/
+  /*
   def doStage(): Unit = {
     //OrderDB
 
@@ -83,6 +64,8 @@ object Application extends Logger {
 
 
   }
+
+
 
   def doProcessingCore(): Unit = {
 
@@ -164,7 +147,7 @@ object Application extends Logger {
     val failedLoginReader = new TextReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.*.csv")
     val errorCodes = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv", header = false, schema = Some(ErrorCodes.loginErrorStruct), delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
 
-    val flProc = new FailedLoginProcessor(failedLoginReader = failedLoginReader, citiesData = transactionData.cities, hotspotData = hotspotData, errorCodes = errorCodes).getData
+    val flProc = new FailedLoginProcessor(failedLogins = failedLoginReader, citiesData = transactionData.cities, hotspotData = hotspotData, errorCodes = errorCodes).getData
 
     flProc
       .select(OutputStructures.FAILED_LOGINS_OUTPUT_COLUMNS.head, OutputStructures.FAILED_LOGINS_OUTPUT_COLUMNS.tail: _*)
@@ -196,14 +179,17 @@ object Application extends Logger {
     ).writeData()
 
   }
-
+  */
   def main(args: Array[String]): Unit = {
 
-    args(0) match {
-      case "exchangeRates" => processExchangeRates()
-      case "stage" => doStage()
-      case "core" => doProcessingCore()
-      case _ => logger.error("Processing mode unspecified")
+    val processor = args(0) match {
+      case "exchangeRates" => new ExchangeRatesProcessor()
+      case "input" => new InputFilesProcessor()
+      case "stage" => new StageFilesProcessor()
+      case "wina_reports" => new WinaReportsProcessor()
+      case _ => new HelperProcessor()
     }
+    processor.process()
+
   }
 }

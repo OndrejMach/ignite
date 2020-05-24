@@ -1,11 +1,11 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{first, lit, max, when, min, last}
+import org.apache.spark.sql.functions.{last, lit, when}
 import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class WlanAndOrderDBData(wlanHotspotData: DataFrame, orderDbDataActual: DataFrame)(implicit sparkSession: SparkSession, processingDate: Date) extends Logger {
 

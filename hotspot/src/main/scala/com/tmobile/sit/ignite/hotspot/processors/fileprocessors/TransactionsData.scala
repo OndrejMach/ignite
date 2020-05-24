@@ -1,14 +1,13 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.common.processing.translateHours
 import com.tmobile.sit.ignite.hotspot.data.FailedTransactionsDataStructures
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{concat, count, first, lit, max, min, round, sum, udf, when}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StringType, TimestampType}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class TransactionOutputs(orderDBH: DataFrame, failedTransaction: DataFrame)
 

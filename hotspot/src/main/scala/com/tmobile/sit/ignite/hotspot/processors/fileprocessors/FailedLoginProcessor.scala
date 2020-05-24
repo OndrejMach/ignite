@@ -1,13 +1,13 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.Reader
 import com.tmobile.sit.ignite.hotspot.data.FailedLoginsStructure.FailedLogin
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class FailedLoginProcessor(failedLoginReader: Reader, hotspotData: DataFrame, citiesData: DataFrame, errorCodes: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
+class FailedLoginProcessor(failedLogins: DataFrame, hotspotData: DataFrame, citiesData: DataFrame, errorCodes: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._
 
@@ -34,8 +34,8 @@ class FailedLoginProcessor(failedLoginReader: Reader, hotspotData: DataFrame, ci
 
 
   private lazy val rawData = {
-    val ret = failedLoginReader
-      .read()
+    val ret = failedLogins
+      //.read()
       .filter($"value".startsWith("D;"))
       .as[String]
       .map(i => FailedLogin(i)).toDF()
@@ -106,9 +106,12 @@ class FailedLoginProcessor(failedLoginReader: Reader, hotspotData: DataFrame, ci
         //first("hotspot_city_name").alias("hotspot_city_name")
       )
       .withColumnRenamed("hotspot_city_name", "city_name")
+      /*
       .withColumn("year", year($"login_datetime"))
       .withColumn("month", month($"login_datetime"))
       .withColumn("day", dayofmonth($"login_datetime"))
+
+       */
       .na.fill("UNDEFINED", Seq("user_provider"))
 
     ret

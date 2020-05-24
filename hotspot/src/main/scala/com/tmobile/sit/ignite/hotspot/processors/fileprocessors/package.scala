@@ -1,6 +1,6 @@
-package com.tmobile.sit.ignite.hotspot
+package com.tmobile.sit.ignite.hotspot.processors
 
-package object processors {
+package object fileprocessors {
   def getString(s: String): Option[String] = if (s.isEmpty) None else Some(s)
 
   def getDouble(s: String): Option[Double] = if (s.isEmpty) None else {

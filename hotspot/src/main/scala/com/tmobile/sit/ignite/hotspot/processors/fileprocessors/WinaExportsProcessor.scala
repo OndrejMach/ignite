@@ -1,11 +1,11 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
 import java.time.LocalDate
 
-import org.apache.spark.sql.functions.{date_add, datediff, dayofweek, lit, max, sum, when}
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DateType, LongType}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 class WinaExportsProcessor(sessionDData: DataFrame)(implicit sparkSession: SparkSession) {
 

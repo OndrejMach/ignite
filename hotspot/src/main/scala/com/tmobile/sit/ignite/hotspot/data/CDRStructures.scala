@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.data
 
-import com.tmobile.sit.ignite.hotspot.processors.{getDouble, getLong, getString}
+import com.tmobile.sit.ignite.hotspot.processors.fileprocessors._
 
 object CDRStructures {
   case class CDRInput(

@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.hotspot.data
 
 import java.sql.Timestamp
-import com.tmobile.sit.ignite.hotspot.processors.{getDouble, getLong, getString}
+import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.{getDouble, getLong, getString}
 import org.apache.spark.sql.types._
 
 object OrderDBStructures {

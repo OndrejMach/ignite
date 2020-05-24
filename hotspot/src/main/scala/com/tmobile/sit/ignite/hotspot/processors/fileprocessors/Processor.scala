@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame

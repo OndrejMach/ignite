@@ -1,10 +1,10 @@
-package com.tmobile.sit.ignite.hotspot.processors
+package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.FailedTransactionsDataStructures
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, lit, max, monotonically_increasing_id, udf}
+import org.apache.spark.sql.functions._
 
 class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataFrame) extends  Logger{
   private val voucherData = {
