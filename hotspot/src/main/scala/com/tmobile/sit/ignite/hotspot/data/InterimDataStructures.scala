@@ -8,9 +8,9 @@ object InterimDataStructures {
       StructField("city_id", LongType, true),
       StructField("city_code", StringType, true),
       StructField("city_desc", StringType, true),
-      StructField("city_ldesc", StringType, true),
-      StructField("entry_id", LongType, true),
-      StructField("load_date", TimestampType, true)
+      StructField("city_ldesc", StringType, true)
+     // StructField("entry_id", LongType, true),
+     // StructField("load_date", TimestampType, true)
     )
   }
 

@@ -110,9 +110,9 @@ object WlanHotspotTypes {
                           parent_ident_code: Option[String],
                           bandwidth: Option[String],
                           valid_from: Option[Timestamp],
-                          valid_to: Option[Timestamp],
-                          entry_id: Option[Long],
-                          load_date: Option[Timestamp]
+                          valid_to: Option[Timestamp]
+                          //entry_id: Option[Long],
+                          //load_date: Option[Timestamp]
                         )
 /*
   object WlanHostpot{

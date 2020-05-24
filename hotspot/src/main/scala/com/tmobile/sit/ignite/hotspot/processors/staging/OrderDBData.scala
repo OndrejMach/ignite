@@ -6,30 +6,29 @@ import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures
 import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures.{ErrorCode, OrderDBInput}
 import org.apache.spark.sql.functions.{col, desc, lit}
 import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
-class OrderDBData(orderDbReader: Reader, inputHotspot: Reader, oldErrorCodes: Reader)(implicit sparkSession: SparkSession) extends Logger {
+class OrderDBData(orderDbReader: DataFrame, inputHotspot: DataFrame, oldErrorCodes: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._
 
-  val allOldErrorCodes = oldErrorCodes.read()
+  lazy val allOldErrorCodes = oldErrorCodes
 
-  val fullData: Dataset[OrderDBStructures.OrderDBInput] = {
+  lazy val fullData: Dataset[OrderDBStructures.OrderDBInput] = {
     logger.info("Getting OrderDB full input")
     orderDbReader
-      .read()
       .filter(col("value").startsWith("D;"))
       .as[String]
       .map(OrderDBInput(_))
   }
 
-  val errorCodesDaily: Dataset[OrderDBStructures.ErrorCode] = {
+  lazy val errorCodesDaily: Dataset[OrderDBStructures.ErrorCode] = {
     logger.info("Getting error codes")
     fullData
       .map(ErrorCode(_))
   }
 
-  val newErrorCodes = errorCodesDaily.join(
+  lazy val newErrorCodes = errorCodesDaily.join(
     allOldErrorCodes.select("error_code").withColumn("old", lit(1)),
     Seq("error_code"),
     "left_outer"
@@ -38,12 +37,12 @@ class OrderDBData(orderDbReader: Reader, inputHotspot: Reader, oldErrorCodes: Re
     .drop("old")
 
 
-  val hotspotFile = {
+  lazy val hotspotFile = {
     logger.info("Reading old hotspot file (cptm_ta_d_wlan_hotspot)")
-    inputHotspot.read()
+    inputHotspot
   }
 
-  val hotspotIDsSorted = {
+  lazy val hotspotIDsSorted = {
     logger.info("Getting hotspots sorted")
     hotspotFile
       .select(col("wlan_hotspot_id")

@@ -120,9 +120,7 @@ object OrderDBStructures {
                         error_message: Option[String],
                         error_desc: Option[String],
                         valid_from: Option[Timestamp],
-                        valid_to: Option[Timestamp],
-                        entry_id: Option[Long],
-                        load_date: Option[Timestamp]
+                        valid_to: Option[Timestamp]
                       )
 
   object ErrorCode {
@@ -132,9 +130,7 @@ object OrderDBStructures {
         error_message = if (!entry.error_code.isDefined) Some("UNKNOWN") else Some(entry.error_code.get.toUpperCase),
         error_desc = Some("UNKNOWN"),
         valid_from = Some(LOAD_DATE),
-        valid_to = Some(FUTURE),
-        entry_id = Some(ENTRY_ID),
-        load_date = Some(LOAD_DATE)
+        valid_to = Some(FUTURE)
       )
     }
   }

@@ -1,26 +1,25 @@
 package com.tmobile.sit.ignite.hotspot.data
 
-import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.hotspot.config.{InputConfig, StageConfig}
 import com.tmobile.sit.ignite.hotspot.readers.TextReader
 import org.apache.spark.sql.SparkSession
 
 class OrderDBInputData(stageConfig: StageConfig, inputConfig: InputConfig)(implicit  sparkSession: SparkSession) {
-  val dataHotspotReader = CSVReader(path = stageConfig.wlan_hotspot_filename.get,
-    header = false,
-    delimiter = "~",
-    schema = Some(WlanHotspotTypes.wlanHotspotStructure),
-    quote = ""
-  )
+  val dataHotspot = sparkSession.read.parquet(stageConfig.wlan_hotspot_filename.get)
 
-  val inputMPSReader = new TextReader(inputConfig.CDR_filename.get)
+  val inputMPS = new TextReader(inputConfig.MPS_filename.get).read()
 
-  val oldErrorCodesReader =
-    CSVReader(schema = Some(OrderDBStructures.errorCodesStructure),
+  val oldErrorCodes = sparkSession.read.parquet(stageConfig.error_codes_filename.get).persist()
+
+
+    /*CSVReader(schema = Some(OrderDBStructures.errorCodesStructure),
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
       path = stageConfig.error_codes_filename.get,
       header = false,
       delimiter = "|")
+    .read()
+
+     */
 }
 
 object OrderDBInputData {

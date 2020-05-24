@@ -66,6 +66,5 @@ object OutputStructures {
     "hotspot_venue_code","hotspot_venue_type_code",
     "hotspot_country_code","user_provider",
     "account_type_id","login_type",
-    "login_error_code","num_of_failed_logins",
-    "year", "month", "day")
+    "login_error_code","num_of_failed_logins")
   }

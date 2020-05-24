@@ -155,13 +155,13 @@ class OrderDBProcessor(orderDBInputData: OrderDBInputData, maxDate: Timestamp, e
 
   def processData(): OderdDBPRocessingOutputs = {
     logger.info("Preparing input data - orderDB, wlanhotspot data, error codes and old error codes list file")
-    val data = new OrderDBData(orderDbReader = orderDBInputData.inputMPSReader, oldErrorCodes = orderDBInputData.oldErrorCodesReader, inputHotspot = orderDBInputData.dataHotspotReader)
+    val data = new OrderDBData(orderDbReader = orderDBInputData.inputMPS, oldErrorCodes = orderDBInputData.oldErrorCodes, inputHotspot = orderDBInputData.dataHotspot)
     logger.info("Reading and filtering input data")
     val wlanHotspotNew = mapWlanHotspotStage(data.fullData)
     logger.info("Preprocessing input data")
     val preprocessedWlanHotspot = preprocessWlanHotspotStage(wlanHotspotNew)
     logger.info("Reading old wlan hotspot data")
-    val wlanHotspotOld = orderDBInputData.dataHotspotReader.read().as[WlanHotspotTypes.WlanHostpot]
+    val wlanHotspotOld = orderDBInputData.dataHotspot.as[WlanHotspotTypes.WlanHostpot]
     //wlanHotspotOld.show(false)
     logger.info("Joining new wlan hotspot data with the old wlan hotspot set")
     val maxId = data.hotspotIDsSorted.first().getLong(0)

@@ -27,7 +27,15 @@ class InputFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       val cdrData = processor.processData()
       logger.info("CDR data processed, ready for writing")
       new CDRStageWriter(path = settings.stageConfig.wlan_cdr_file.get, data = cdrData).writeData()
-      new OrderDBStageWriter(data = orderdDBData, filenames = OrderDBStageFilenames()).writeData()
+      new OrderDBStageWriter(
+        data = orderdDBData,
+        filenames = OrderDBStageFilenames(
+          wlanHotspot = settings.stageConfig.wlan_hotspot_filename.get,
+          errorCodes = settings.stageConfig.error_codes_filename.get,
+          mapVoucher = settings.stageConfig.map_voucher_filename.get,
+          orderDb = settings.stageConfig.orderDB_filename.get
+        )
+      ).writeData()
 
     }
 }

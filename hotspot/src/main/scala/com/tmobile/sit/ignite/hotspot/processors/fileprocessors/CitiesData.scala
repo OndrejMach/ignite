@@ -17,7 +17,12 @@ class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implici
 
   private val maxCityId = {
     logger.info("Calculating actual max city_id")
-    cityData.select(max("city_id")).first().getLong(0)
+    val sel = cityData.select(max("city_id"))
+
+    print(cityData.count())
+    sel.show(false)
+
+    sel.first().getLong(0)
   }
 
   private val newCities = {
@@ -30,15 +35,15 @@ class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implici
       .withColumn("city_id", monotonically_increasing_id() + lit(maxCityId))
       .withColumn("city_desc", upper(col("city_code")))
       .withColumn("city_ldesc", lit("new"))
-      .withColumn("load_date", lit(processingDate).cast(TimestampType))
-      .withColumn("entry_id", lit(1))
-      .select("city_id", "city_code", "city_desc", "city_ldesc","entry_id","load_date")
+      //.withColumn("load_date", lit(processingDate).cast(TimestampType))
+     // .withColumn("entry_id", lit(1))
+      .select("city_id", "city_code", "city_desc", "city_ldesc")
   }
 
   val allCities = {
     logger.info(s"Preparing new cities data, new cities count: ${newCities.count()}")
     newCities
       .union(cityData)
-      //.select("city_id", "city_code", "city_desc", "city_ldesc")
+    //.select("city_id", "city_code", "city_desc", "city_ldesc")
   }
 }
