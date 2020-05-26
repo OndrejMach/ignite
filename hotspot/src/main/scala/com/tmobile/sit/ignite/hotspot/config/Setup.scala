@@ -60,7 +60,8 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
       appConfig = AppConfig(
         processing_date = Some(getProcessingDate(serviceConf.getString("config.processing_date"))),
         DES_encoder_path = serviceConf.getString("config.3DES_encoder_path"), //3DES_encoder_path
-        wina_reports_day = serviceConf.getString("config.wina_reports_day")
+        wina_reports_day = serviceConf.getString("config.wina_reports_day"),
+        input_date = Some(getProcessingDate(serviceConf.getString("config.input_date")))
       )
     )
   }

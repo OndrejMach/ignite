@@ -14,7 +14,7 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
   import sparkSession.implicits._
 
   private val cdrAggregates = {
-  logger.info("Geting CDR data Aggregates")
+  logger.info(s"Geting CDR data Aggregates - input size: ${cdrData.count()}")
     cdrData
       .withColumn("wlan_hotspot_ident_code", when($"hotspot_id".isNotNull, $"hotspot_id").otherwise(concat(lit("undefined_"), $"hotspot_owner_id")))
       .withColumn("stop_ticket", when($"terminate_cause_id".equalTo(lit(1001)), 1).otherwise(0))

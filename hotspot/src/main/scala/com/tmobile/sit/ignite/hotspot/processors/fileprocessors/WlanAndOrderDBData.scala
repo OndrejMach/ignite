@@ -14,6 +14,7 @@ class WlanAndOrderDBData(wlanHotspotData: DataFrame, orderDbDataActual: DataFram
   val hotspotData = {
     logger.info("Preparing WLAN hotspot data for processing")
     wlanHotspotData
+        .distinct()
       .select("wlan_hotspot_id", "wlan_hotspot_ident_code", "wlan_venue_type_code", "wlan_venue_code", "wlan_provider_code", "country_code", "city_code", "valid_from", "valid_to")
       .sort("wlan_hotspot_ident_code", "valid_from", "valid_to")
       .groupBy("wlan_hotspot_ident_code")
@@ -33,6 +34,7 @@ class WlanAndOrderDBData(wlanHotspotData: DataFrame, orderDbDataActual: DataFram
   val allOrderDB = {
     logger.info("Preparing orderDB data for processing")
     orderDbDataActual
+        .distinct()
      // .union(orderDBDataDayPLus1)
       .filter($"ta_request_date" === lit(processingDate).cast(DateType))
       .filter($"result_code".isNotNull && !$"result_code".equalTo(lit("")))

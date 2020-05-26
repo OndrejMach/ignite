@@ -24,7 +24,8 @@ case class StageConfig(stage_folder: Option[String],
 case class AppConfig(
                       processing_date: Option[Timestamp],
                       DES_encoder_path: Option[String],
-                      wina_reports_day: Option[String]
+                      wina_reports_day: Option[String],
+                      input_date: Option[Timestamp]
                     )
 
 case class InputConfig(

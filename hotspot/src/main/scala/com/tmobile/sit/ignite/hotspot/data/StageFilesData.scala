@@ -16,15 +16,15 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
     logger.info(s"Reading wlan hotspot file from ${settings.stageConfig.wlan_hotspot_filename.get}")
     sparkSession
     .read
-    .parquet(settings.stageConfig.wlan_hotspot_filename.get) //"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_d_wlan_hotspot")
+    .parquet(settings.stageConfig.wlan_hotspot_filename.get).cache() //"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_d_wlan_hotspot")
   }
 
   lazy val cdrData = {
-    logger.info(s"Reading cdr file from ${settings.stageConfig.wlan_cdr_file.get}")
+    logger.info(s"Reading cdr file from ${settings.stageConfig.wlan_cdr_file.get} year='${processingDate.getYear}',month='${processingDate.getMonthValue}',day='${processingDate.getDayOfMonth}'")
     sparkSession
       .read
       .parquet(settings.stageConfig.wlan_cdr_file.get) //"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr")
-      .filter(s"year='${processingDate.getDayOfYear}' and  month='${processingDate.getMonth}' and day = '${processingDate.getDayOfMonth}'")
+      .filter(s"year='${processingDate.getYear}' and  month='${processingDate.getMonthValue}' and day = '${processingDate.getDayOfMonth}'")
   }
 
   lazy val orderDB = {
@@ -33,7 +33,7 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
       .read
       .parquet(settings.stageConfig.orderDB_filename.get)//"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_f_wlan_orderdb")
       .filter(s"(year='${processingDatePlus1.getYear}' or year='${processingDate.getYear}') and  " +
-        s"(month='${processingDate.getMonth}' or month='${processingDatePlus1.getMonth}') and " +
+        s"(month='${processingDate.getMonthValue}' or month='${processingDatePlus1.getMonthValue}') and " +
         s"(day = '${processingDatePlus1.getDayOfMonth}' or day = '${processingDate.getDayOfMonth}')")
   }
 
@@ -47,10 +47,10 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
 
   lazy val voucherData = {//sparkSession.read.parquet("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv")
     logger.info(s"Reading voucher data from ${settings.stageConfig.wlan_voucher.get}")
-    sparkSession
-        .read
-        .parquet(settings.stageConfig.wlan_voucher.get)
-    //CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv", header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|").read()
+    //sparkSession
+    //    .read
+    //    .parquet(settings.stageConfig.wlan_voucher.get)
+    CSVReader(path = settings.stageConfig.wlan_voucher.get, header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|").read()
   }
 
 
@@ -67,7 +67,7 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
       .read
       .parquet(settings.stageConfig.wlan_cdr_file.get)//"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr")
       .filter(s"(year='${processingDatePlus1.getYear}' or year='${processingDate.getYear}' or year='${processingDateMinus1.getYear}') and  " +
-        s"(month='${processingDate.getMonth}' or month='${processingDatePlus1.getMonth}' or month='${processingDateMinus1.getMonth}') and " +
+        s"(month='${processingDate.getMonthValue}' or month='${processingDatePlus1.getMonthValue}' or month='${processingDateMinus1.getMonthValue}') and " +
         s"(day = '${processingDatePlus1.getDayOfMonth}' or day = '${processingDate.getDayOfMonth}' or day = '${processingDateMinus1.getDayOfMonth}')")
   }
 
@@ -76,7 +76,7 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
     new TextReader(path = settings.inputConfig.failed_login_filename.get).read()//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.*.csv")
   }
   val loginErrorCodes =
-    CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv",
+    CSVReader(path = settings.stageConfig.login_errors.get,//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv",
       header = false, schema = Some(ErrorCodes.loginErrorStruct),
       delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
 

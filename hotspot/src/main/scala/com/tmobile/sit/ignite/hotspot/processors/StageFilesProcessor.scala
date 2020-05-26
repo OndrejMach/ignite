@@ -26,9 +26,9 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
   override def process(): Unit = {
     import sparkSession.implicits._
     val MIN_REQUEST_DATE = Timestamp.valueOf("2017-01-01 00:00:00")
-
     val processingDateTime = settings.appConfig.processing_date.get.toLocalDateTime
-    implicit val processinDate = Date.valueOf(LocalDate.of(processingDateTime.getYear, processingDateTime.getMonth, processingDateTime.getDayOfMonth))
+    implicit val processinDate = Date.valueOf(LocalDate.of(processingDateTime.getYear, processingDateTime.getMonthValue, processingDateTime.getDayOfMonth))
+
 
     logger.info(s"Starting processing for date ${processinDate}")
     logger.info(s"Initialising stage files")
@@ -40,11 +40,14 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
         .processData()
 
     logger.info(s"Processing transaction data")
-    val transactionData = new FailedTransactionsProcessor(orderDBData = stageData.orderDB,
+    val transactionData = new FailedTransactionsProcessor(
+      orderDBData = stageData.orderDB,
       wlanHotspot = hotspotNew,
       oldCitiesData = stageData.cityData,
       oldVoucherData = stageData.voucherData,
-      normalisedExchangeRates = new NormalisedExchangeRates(stageData.exchRatesFinal.as[CommonTypes.ExchangeRates], MIN_REQUEST_DATE)).processData()
+      normalisedExchangeRates = new NormalisedExchangeRates(stageData.exchRatesFinal.as[CommonTypes.ExchangeRates],
+        MIN_REQUEST_DATE))
+      .processData()
 
     logger.info("Processing SessionQ")
     val sessionQ = new SessionsQProcessor(
@@ -72,8 +75,7 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       failedLogins = flProc
     )
    logger.info("Writing stage files to disk")
-    val writer = new StageFilesWriter(resultData)
-    writer.writeData()
+    new StageFilesWriter(resultData).writeData()
 
 
 

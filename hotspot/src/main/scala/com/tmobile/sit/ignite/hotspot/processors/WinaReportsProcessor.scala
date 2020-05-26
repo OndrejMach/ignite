@@ -8,10 +8,12 @@ import org.apache.spark.sql.{SaveMode, SparkSession}
 class WinaReportsProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
   override def process(): Unit = {
     val data = new WinaReportsInputData()
-
+    logger.info("Preparing calculation of Wina Reports")
     val winaProcessor = new WinaExportsProcessor(data.data)
 
-    winaProcessor.getTCOMData.write.mode(SaveMode.Overwrite).parquet(settings.outputConfig.wina_report.get)
-    winaProcessor.getTMDData.write.mode(SaveMode.Overwrite).parquet(settings.outputConfig.wina_report_tmd.get)
+    logger.info("Writing TCOM data")
+    winaProcessor.getTCOMData.repartition(1).write.mode(SaveMode.Overwrite).parquet(settings.outputConfig.wina_report.get)
+    logger.info("Writing TMD data")
+    winaProcessor.getTMDData.repartition(1).write.mode(SaveMode.Overwrite).parquet(settings.outputConfig.wina_report_tmd.get)
   }
 }

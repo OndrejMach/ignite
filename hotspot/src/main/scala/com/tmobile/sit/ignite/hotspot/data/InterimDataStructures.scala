@@ -25,9 +25,9 @@ object InterimDataStructures {
       StructField("vat", DoubleType, true),
       StructField("conversion", DoubleType, true),
       StructField("valid_from", TimestampType, true),
-      StructField("valid_to", TimestampType, true),
-      StructField("entry_id", LongType, true),
-      StructField("load_date", TimestampType, true)
+      StructField("valid_to", TimestampType, true)
+     // StructField("entry_id", LongType, true),
+     // StructField("load_date", TimestampType, true)
     )
   }
 

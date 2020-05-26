@@ -19,9 +19,6 @@ class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implici
     logger.info("Calculating actual max city_id")
     val sel = cityData.select(max("city_id"))
 
-    print(cityData.count())
-    sel.show(false)
-
     sel.first().getLong(0)
   }
 

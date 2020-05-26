@@ -21,7 +21,7 @@ class SessionsQProcessor(dataCDRs: DataFrame, processingDate: Timestamp)(implici
     val toQuartersUDF = udf(TimeCalculations.toQuartersUnixTime)
 
     val toProcess =
-      dataCDRs
+      dataCDRs//.distinct()
 
     val inter = toProcess
       .withColumn("wlan_hotspot_ident_code", when($"hotspot_id".isNotNull, $"hotspot_id").otherwise(concat(lit("undefined_"), $"hotspot_owner_id")))

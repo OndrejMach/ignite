@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.hotspot.processors
 import java.sql.Date
 import java.time.LocalDate
 
-import com.tmobile.sit.ignite.hotspot.config.{AppConfig, InputConfig, Settings, StageConfig}
+import com.tmobile.sit.ignite.hotspot.config.Settings
 import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OrderDBInputData}
 import com.tmobile.sit.ignite.hotspot.processors.staging.{CDRProcessor, OrderDBProcessor}
 import com.tmobile.sit.ignite.hotspot.readers.TextReader
@@ -20,7 +20,7 @@ class InputFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       logger.info("Preparing CDR input file parser")
       val reader = new TextReader(settings.inputConfig.CDR_filename.get)
 
-      val date = settings.appConfig.processing_date.get.toLocalDateTime
+      val date = settings.appConfig.input_date.get.toLocalDateTime
       logger.info("Inirialising processor for CDRs")
       val processor = new CDRProcessor(reader, Date.valueOf(LocalDate.of(date.getYear, date.getMonth, date.getDayOfMonth)))
       logger.info("Processing CDR data")

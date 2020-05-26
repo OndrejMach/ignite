@@ -120,16 +120,11 @@ class OrderDBProcessor(orderDBInputData: OrderDBInputData, maxDate: Timestamp, e
       .select(oldHotspot.columns.head, oldHotspot.columns.tail: _*)
       .distinct()
 
-
     logger.info(s"unique newGuys count: ${newGuys.select("wlan_hotspot_ident_code").distinct().count()}")
 
     val testRun = newGuys.select("wlan_hotspot_ident_code").join(oldHotspot.select("wlan_hotspot_ident_code").distinct(), Seq("wlan_hotspot_ident_code"), "inner").count()
 
     logger.info(s"GUYS PRESENT IN THE OLD HOTSPOT ${testRun}")
-
-    oldHotspot.printSchema()
-    newGuys.printSchema()
-    toUnion.printSchema()
 
     logger.info(s"New guys for the  wlan hotspot data count: ${newGuys.count()}")
     oldHotspot.toDF()
