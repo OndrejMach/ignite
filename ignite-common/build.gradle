@@ -4,26 +4,47 @@ version '1.0-SNAPSHOT'
 apply plugin: 'scala'
 
 sourceCompatibility = 1.8
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            credentials {
+                username NEXUS3_USERNAME
+                password NEXUS3_PASSWORD
+            }
+            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+    }
+}
+
 
 repositories {
-   jcenter()
-   mavenCentral()
-   mavenLocal()
+    mavenLocal()
+
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
     maven {
         credentials {
             username NEXUS3_USERNAME
             password NEXUS3_PASSWORD
         }
-        url uri("https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/")
-        //metadataSources {
-        //    mavenPom()
-        //    artifact()
-        // }
-        //https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/spark_common/spark_common/1.8/spark_common-1.8.jar
-        //artifactUrls "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/spark_common/spark_common/1.8/spark_common-1.8.jar"
+        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
     }
-
+    maven {
+        credentials {
+            username NEXUS3_USERNAME
+            password NEXUS3_PASSWORD
+        }
+        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+    }
 }
+
 
 dependencies {
     implementation 'com.tmobile.sit:spark_common:1.8@jar'
