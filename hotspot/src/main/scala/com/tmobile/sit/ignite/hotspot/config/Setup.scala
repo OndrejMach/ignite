@@ -50,12 +50,25 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
         failed_transactions = serviceConf.getString("config.stage.failed_transactions"),
         orderDB_H = serviceConf.getString("config.stage.orderDB_H"),
         session_q = serviceConf.getString("config.stage.session_q"),
-        failed_logins = serviceConf.getString("config.stage.failed_logins")//login_errors
+        failed_logins = serviceConf.getString("config.stage.failed_logins"),
+        country = serviceConf.getString("config.stage.country")//login_errors
       ),
       outputConfig = OutputConfig(
         output_folder = serviceConf.getString("config.output.output_folder"),
         wina_report = serviceConf.getString("config.output.wina_report"),
-        wina_report_tmd = serviceConf.getString("config.output.wina_report_tmd")
+        wina_report_tmd = serviceConf.getString("config.output.wina_report_tmd"),
+        sessio_d = serviceConf.getString("config.output.sessio_d"),
+        orderDB_h = serviceConf.getString("config.output.orderDB_h"),
+        session_q = serviceConf.getString("config.output.session_q"),
+        error_code = serviceConf.getString("config.output.error_code"),
+        hotspot_ta_d = serviceConf.getString("config.output.hotspot_ta_d"),
+        voucher = serviceConf.getString("config.output.voucher"),
+        city = serviceConf.getString("config.output.city"),
+        country = serviceConf.getString("config.output.country"),
+        failed_trans = serviceConf.getString("config.output.failed_trans"),
+        failed_login = serviceConf.getString("config.output.failed_login"),
+        login_error = serviceConf.getString("config.output.login_error"),
+        hotspot_vi_d = serviceConf.getString("config.output.hotspot_vi_d")
       ),
       appConfig = AppConfig(
         processing_date = Some(getProcessingDate(serviceConf.getString("config.processing_date"))),

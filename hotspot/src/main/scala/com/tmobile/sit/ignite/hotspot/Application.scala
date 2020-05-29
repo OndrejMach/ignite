@@ -187,6 +187,7 @@ object Application extends Logger {
       case "input" => new InputFilesProcessor()
       case "stage" => new StageFilesProcessor()
       case "wina_reports" => new WinaReportsProcessor()
+      case "output" => new OutputsProcessor()
       case _ => new HelperProcessor()
     }
     processor.process()

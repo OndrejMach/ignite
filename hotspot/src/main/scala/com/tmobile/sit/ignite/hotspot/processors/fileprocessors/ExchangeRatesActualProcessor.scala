@@ -4,7 +4,7 @@ import java.sql.{Date, Timestamp}
 import java.time.LocalDateTime
 
 import com.tmobile.sit.common.readers.Reader
-import com.tmobile.sit.ignite.hotspot.data.{ExchangeRates, OutputStructures}
+import com.tmobile.sit.ignite.hotspot.data.{ExchangeRates, StageStructures}
 import org.apache.spark.sql.functions.{col, lit, round, when}
 import org.apache.spark.sql.types.{DateType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
@@ -71,7 +71,7 @@ class ExchangeRatesActualProcessor(exchangeRatesReader: Reader, prevExchangeRate
       .withColumn("exchange_rate_sell", round($"exchange_rate_sell", 6))
       .withColumn("entry_id", lit(0))
       .withColumn("load_date", lit(Timestamp.valueOf(LocalDateTime.now())))
-      .select(OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.head, OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.tail: _*)
+      .select(StageStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.head, StageStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.tail: _*)
   }
 
   def historise(newExchangeRates: DataFrame, oldDataExchangeRates: DataFrame) : DataFrame = {
@@ -87,7 +87,7 @@ class ExchangeRatesActualProcessor(exchangeRatesReader: Reader, prevExchangeRate
 
       joined.withColumn("valid_to", when(col("valid_from") < col("new_valid_from"),col("new_valid_from")).otherwise(col("valid_to")))
       //.drop("old_valid_from")
-      .select(OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.head, OutputStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.tail: _*)
+      .select(StageStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.head, StageStructures.EXCHANGE_RATES_OUTPUT_COLUMNS.tail: _*)
   }
 
   override def runProcessing(): DataFrame = {

@@ -77,30 +77,5 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
    logger.info("Writing stage files to disk")
     new StageFilesWriter(resultData).writeData()
 
-
-
-    /*
-    val data = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/sd/cptm_ta_x_wlan_session_d.2020*", header = false, delimiter = "|", dateFormat = "yyyy-MM-dd")
-      .read()
-      .toDF(OutputStructures.SESSION_D_OUTPUT_COLUMNS :+ "e" :+ "l": _*)
-
-    val winaProcessor = new WinaExportsProcessor(data)
-    CSVWriter(
-      path = "/Users/ondrejmachacek/tmp/hotspot/out/dwh_verkehrsmd_wlan_SPARK.csv",
-      delimiter = "|",
-      writeHeader = true,
-      timestampFormat = "yyyy-MM-dd HH:mm:ss",
-      data = winaProcessor.getTCOMData
-    ).writeData()
-
-    CSVWriter(
-      path = "/Users/ondrejmachacek/tmp/hotspot/out/dwh_verkehrsmd_wlan_tmd_SPARK.csv",
-      delimiter = "|",
-      writeHeader = true,
-      timestampFormat = "yyyy-MM-dd HH:mm:ss",
-      data = winaProcessor.getTMDData
-    ).writeData()
-
-     */
   }
 }

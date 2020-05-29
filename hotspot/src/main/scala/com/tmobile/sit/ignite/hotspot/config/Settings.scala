@@ -18,7 +18,8 @@ case class StageConfig(stage_folder: Option[String],
                        failed_transactions: Option[String],
                        orderDB_H: Option[String],
                        session_q: Option[String],
-                       failed_logins: Option[String]
+                       failed_logins: Option[String],
+                       country: Option[String]
                       )
 
 case class AppConfig(
@@ -35,18 +36,30 @@ case class InputConfig(
                         exchange_rates_filename: Option[String],
                         failed_login_filename: Option[String]
                       )
+
 case class OutputConfig(
                          output_folder: Option[String],
                          wina_report_tmd: Option[String],
-                         wina_report: Option[String]
+                         wina_report: Option[String],
+                         sessio_d: Option[String],
+                         orderDB_h: Option[String],
+                         session_q: Option[String],
+                         error_code: Option[String],
+                         hotspot_ta_d: Option[String],
+                         voucher: Option[String],
+                         city: Option[String],
+                         country: Option[String],
+                         failed_trans: Option[String],
+                         failed_login: Option[String],
+                         login_error: Option[String],
+                         hotspot_vi_d: Option[String]
                        )
 
-case class Settings (
+case class Settings(
                      inputConfig: InputConfig,
                      outputConfig: OutputConfig,
                      appConfig: AppConfig,
                      stageConfig: StageConfig
-                   ) extends GenericSettings
-{
+                   ) extends GenericSettings {
   override def isAllDefined: Boolean = true
 }

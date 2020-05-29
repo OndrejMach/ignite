@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter
 
 import com.tmobile.sit.common.writers.{CSVWriter, Writer}
 import com.tmobile.sit.ignite.hotspot.config.Settings
-import com.tmobile.sit.ignite.hotspot.data.OutputStructures
+import com.tmobile.sit.ignite.hotspot.data.StageStructures
 import com.tmobile.sit.ignite.hotspot.processors.StageData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
@@ -28,7 +28,7 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
       .withColumn("date", lit(settings.appConfig.processing_date.get.toLocalDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"))))
       .repartition(1)
       .write
-      .mode(SaveMode.Overwrite)
+      .mode(SaveMode.Append)
       .partitionBy("date")
       .parquet(filename)
     // handleTmp(tmpPath, filename)
@@ -36,12 +36,13 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
 
 
   def writeData() = {
+    import sparkSession.implicits._
 
     logger.info(s"Writing SessionD file to ${settings.stageConfig.session_d.get}")
     writeParitionedByProcessingDate(
       stageData
         .sessionD
-        .select(OutputStructures.SESSION_D_OUTPUT_COLUMNS.head, OutputStructures.SESSION_D_OUTPUT_COLUMNS.tail: _*),
+        .select(StageStructures.SESSION_D_OUTPUT_COLUMNS.head, StageStructures.SESSION_D_OUTPUT_COLUMNS.tail: _*),
       settings.stageConfig.session_d.get
     )
 
@@ -49,7 +50,7 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
     CSVWriter(path = settings.stageConfig.city_data.get, //"/Users/ondrejmachacek/tmp/hotspot/out/cities.csv",
       delimiter = "|",
       writeHeader = true,
-      data = stageData.cities.select(OutputStructures.CITIES_OUTPUT_COLUMNS.head, OutputStructures.CITIES_OUTPUT_COLUMNS.tail: _*))
+      data = stageData.cities.select(StageStructures.CITIES_OUTPUT_COLUMNS.head, StageStructures.CITIES_OUTPUT_COLUMNS.tail: _*))
       .writeData()
 
 
@@ -58,34 +59,40 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
       path = settings.stageConfig.wlan_voucher.get,
       delimiter = "|",
       writeHeader = true,
+      timestampFormat = "yyyy-MM-dd HH:mm:ss",
+      dateFormat = "yyyy-MM-dd",
       data = stageData.vouchers
-        .select(OutputStructures.VOUCHER_OUTPUT_COLUMNS.head, OutputStructures.VOUCHER_OUTPUT_COLUMNS.tail: _*)
+        .select(StageStructures.VOUCHER_OUTPUT_COLUMNS.head, StageStructures.VOUCHER_OUTPUT_COLUMNS.tail: _*)
     ).writeData()
 
     logger.info(s"Writing failed transactions to ${settings.stageConfig.failed_transactions.get}")
     writeParitionedByProcessingDate(data = stageData.failedTransactions
-      .select(OutputStructures.FAILED_TRANSACTIONS_COLUMNS.head, OutputStructures.FAILED_TRANSACTIONS_COLUMNS.tail: _*),
+      .select(StageStructures.FAILED_TRANSACTIONS_COLUMNS.head, StageStructures.FAILED_TRANSACTIONS_COLUMNS.tail: _*),
       filename = settings.stageConfig.failed_transactions.get
     )
 
     logger.info(s"Writing orderDB_H to ${settings.stageConfig.orderDB_H.get}")
     writeParitionedByProcessingDate(
-      data = stageData.orderDBH.select(OutputStructures.ORDERDB_H_COLUMNS.head, OutputStructures.ORDERDB_H_COLUMNS.tail: _*),
+      data = stageData.orderDBH.select(StageStructures.ORDERDB_H_COLUMNS.head, StageStructures.ORDERDB_H_COLUMNS.tail: _*),
       filename = settings.stageConfig.orderDB_H.get
     )
 
     logger.info(s"Writing Session_Q to ${settings.stageConfig.session_q.get}")
     writeParitionedByProcessingDate(
-      data = stageData.sessionQ.select(OutputStructures.SESSION_Q_COLUMNS.head, OutputStructures.SESSION_Q_COLUMNS.tail: _*),
+      data = stageData.sessionQ.select(StageStructures.SESSION_Q_COLUMNS.head, StageStructures.SESSION_Q_COLUMNS.tail: _*),
       filename = settings.stageConfig.session_q.get
     )
 
     logger.info(s"Writing failed logins to ${settings.stageConfig.failed_logins.get}")
-    writeParitionedByProcessingDate(
-      data = stageData.failedLogins
-        .select(OutputStructures.FAILED_LOGINS_OUTPUT_COLUMNS.head, OutputStructures.FAILED_LOGINS_OUTPUT_COLUMNS.tail: _*),
-      filename = settings.stageConfig.failed_logins.get
-    )
+    stageData.failedLogins
+      .select(StageStructures.FAILED_LOGINS_OUTPUT_COLUMNS.head, StageStructures.FAILED_LOGINS_OUTPUT_COLUMNS.tail: _*)
+      .withColumn("year", year($"login_datetime"))
+      .withColumn("month", month($"login_datetime"))
+      .withColumn("day", dayofmonth($"login_datetime"))
+      .write
+      .mode(SaveMode.Append)
+      .parquet(settings.stageConfig.failed_logins.get)
+
 
     logger.info(s"Writing new hotspot data")
     writeParquet(data = stageData.hotspotNew, filename = settings.stageConfig.wlan_hotspot_filename.get)

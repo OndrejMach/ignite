@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.hotspot.data.{FUTURE, OutputStructures}
+import com.tmobile.sit.ignite.hotspot.data.{FUTURE, StageStructures}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -88,7 +88,7 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
 
 
   def processData(): (DataFrame, DataFrame) = {
-    (cdrAggregates.select(OutputStructures.SESSION_D_OUTPUT_COLUMNS.head, OutputStructures.SESSION_D_OUTPUT_COLUMNS.tail :_*), wlanHotspotData)
+    (cdrAggregates.select(StageStructures.SESSION_D_OUTPUT_COLUMNS.head, StageStructures.SESSION_D_OUTPUT_COLUMNS.tail :_*), wlanHotspotData)
   }
 
 }
