@@ -2,17 +2,17 @@ group 'ignite'
 //version '1.0-SNAPSHOT'
 version='1.0'
 
-apply plugin: 'scala'
-apply plugin: 'com.github.johnrengelman.shadow'
-
-shadowJar {
-    zip64 true
-}
-
 buildscript {
     repositories {
         maven {
             url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            credentials {
+                username NEXUS3_USERNAME
+                password NEXUS3_PASSWORD
+            }
+            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
         }
     }
     dependencies {
@@ -20,18 +20,72 @@ buildscript {
     }
 }
 
+
+apply plugin: 'scala'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    zip64 true
+}
+
+//buildscript {
+ //   repositories {
+ //       maven {
+ //           url "https://plugins.gradle.org/m2/"
+ //       }
+ //   }
+ //   dependencies {
+ //       classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+  //  }
+//}
+
 sourceCompatibility = 1.8
 
 allprojects {
     repositories {
-        jcenter()
+        mavenLocal()
+
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            credentials {
+                username NEXUS3_USERNAME
+                password NEXUS3_PASSWORD
+            }
+            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+        }
+        maven {
+            credentials {
+                username NEXUS3_USERNAME
+                password NEXUS3_PASSWORD
+            }
+            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+        }
     }
 }
 
 repositories {
-    jcenter()
     mavenLocal()
-    mavenCentral()
+
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
+    maven {
+        credentials {
+            username NEXUS3_USERNAME
+            password NEXUS3_PASSWORD
+        }
+        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+    }
+    maven {
+        credentials {
+            username NEXUS3_USERNAME
+            password NEXUS3_PASSWORD
+        }
+        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+    }
+
 }
 
 dependencies {

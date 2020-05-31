@@ -1,7 +1,6 @@
 group 'ignite'
 version '1.0-SNAPSHOT'
 
-
 apply plugin: 'scala'
 
 sourceCompatibility = 1.8
@@ -21,6 +20,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.tmobile.sit:spark_common:1.8'
     compile project(":ignite-common")
-    implementation 'com.tmobile.sit:spark_common:1.8@jar'
+    //implementation 'com.tmobile.sit:spark_common:1.8'
 }

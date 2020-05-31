@@ -10,11 +10,12 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 //case class SessionDAndWlanHostpotOutputs(sessionD:DataFrame, wlanHotspotData: DataFrame)
 
-class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, processingDate: Date )(implicit sparkSession: SparkSession) extends Logger{
+class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
+
   import sparkSession.implicits._
 
   private val cdrAggregates = {
-  logger.info(s"Geting CDR data Aggregates - input size: ${cdrData.count()}")
+    logger.info(s"Geting CDR data Aggregates - input size: ${cdrData.count()}")
     cdrData
       .withColumn("wlan_hotspot_ident_code", when($"hotspot_id".isNotNull, $"hotspot_id").otherwise(concat(lit("undefined_"), $"hotspot_owner_id")))
       .withColumn("stop_ticket", when($"terminate_cause_id".equalTo(lit(1001)), 1).otherwise(0))
@@ -49,46 +50,89 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
   }
 
   private val wlanHotspotData = {
-    val maxHotspotID  = wlanHotspotStageData.select(max($"wlan_hotspot_id")).first().getLong(0)
+    val maxHotspotID = wlanHotspotStageData.select(max($"wlan_hotspot_id")).first().getLong(0)
 
     logger.info("Filtering wlan hotspot data for today")
     val todayDataHotspot = wlanHotspotStageData.filter($"valid_to" >= lit(processingDate).cast(TimestampType))
     logger.info("Filtering wlan hotspot data for history")
-    val oldDataHotspot = wlanHotspotStageData.filter(!($"valid_to" >= lit(processingDate).cast(TimestampType)))
+    val oldDataHotspot = wlanHotspotStageData.filter(($"valid_to".isNull) || ($"valid_to" < lit(processingDate).cast(TimestampType)))
 
-    val aggColumns = cdrAggregates.columns.map("agg_" + _)
+    logger.info(s"Today HOTSPOT data count: ${todayDataHotspot.count()}")
+    logger.info(s"Old HOTSPOT data count: ${oldDataHotspot.count()}")
+
+    //cdrAggregates.printSchema()
+
+    // val aggColumns = cdrAggregates.columns.map("agg_" + _)
+
+    val uniqueCDRs: DataFrame = cdrAggregates
+      .sort("wlan_hotspot_ident_code")
+      .groupBy("wlan_hotspot_ident_code")
+      .agg(
+        first("wlan_session_date").alias("wlan_session_date"),
+        first("wlan_user_provider_code").alias("wlan_user_provider_code"),
+        first("wlan_provider_code").alias("wlan_provider_code"),
+        first("wlan_user_account_id").alias("wlan_user_account_id"),
+        first("terminate_cause_id").alias("terminate_cause_id"),
+        first("login_type").alias("login_type"),
+        first("venue_type").alias("venue_type"),
+        first("venue").alias("venue"),
+        first("session_duration").alias("session_duration"),
+        first("session_volume").alias("session_volume"),
+        first("country_code").alias("country_code"),
+        first("english_city_name").alias("english_city_name"),
+        first("num_of_gen_stop_tickets").alias("num_of_gen_stop_tickets"),
+        first("num_of_stop_tickets").alias("num_of_stop_tickets"),
+        first("num_subscriber").alias("num_subscriber")
+      )
+
+      val toGo = uniqueCDRs.toDF(uniqueCDRs.columns.map("agg_" + _) :_*)
+
+    // val aggColumns =  uniqueCDRs.columns.map("agg_" + _)
 
     logger.info("Joining with CDR Aggregates")
     val sessionDOut = todayDataHotspot
-      .join(cdrAggregates.toDF(aggColumns: _*), $"wlan_hotspot_ident_code" === $"agg_wlan_hotspot_ident_code", "outer")
+      .join(toGo, $"wlan_hotspot_ident_code" === $"agg_wlan_hotspot_ident_code", "left_outer")
       .withColumn("wlan_venue_type_code", when(($"wlan_venue_type_code" =!= $"agg_venue_type") && $"agg_venue_type".isNotNull, $"agg_venue_type").otherwise($"wlan_venue_type_code"))
       .withColumn("wlan_venue_code", when(($"wlan_venue_code" =!= $"agg_venue") && $"agg_venue".isNotNull, $"agg_venue").otherwise($"wlan_venue_code"))
       .withColumn("city_code", when(($"city_code" =!= $"agg_english_city_name") && $"agg_english_city_name".isNotNull, $"agg_english_city_name").otherwise($"city_code"))
       .withColumn("valid_to", when($"agg_wlan_session_date".isNotNull, $"agg_wlan_session_date").otherwise(lit(FUTURE)))
+      .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
 
-    val both = sessionDOut.filter($"wlan_hotspot_id".isNotNull)
-    val toProvision = sessionDOut.filter($"wlan_hotspot_id".isNull)
+    val onlyCDRs = toGo.join(todayDataHotspot, $"wlan_hotspot_ident_code" === $"agg_wlan_hotspot_ident_code", "left_outer")
+
+    //val both = onlyCDRs.filter($"wlan_hotspot_id".isNotNull)
+
+    val toProvision = onlyCDRs.filter($"wlan_hotspot_id".isNull)
+
+    //toProvision.show(false)
+
+
+    logger.info(s"With HOTSPOT_ID data count: ${sessionDOut.count()}")
+    logger.info(s"With HOTSPOT_ID data count: ${toProvision.count()}")
 
     logger.info("Preparing new wlanHostpot data from CDR aggregates")
-    toProvision
+    val provisioned = toProvision
       .withColumn("wlan_hotspot_id", monotonically_increasing_id())
       .withColumn("wlan_hotspot_id", $"wlan_hotspot_id" + lit(maxHotspotID))
-      .withColumn("wlan_hotspot_desc" ,lit( "Hotspot not assigned"))
+      .withColumn("wlan_hotspot_desc", lit("Hotspot not assigned"))
       .withColumn("country_code", upper($"country_code"))
       .withColumn("wlan_provider_code", $"agg_wlan_provider_code")
       .withColumn("valid_from", $"agg_wlan_session_date".cast(TimestampType))
-      .na.fill("undefined", Seq("wlan_venue_type_code", "wlan_venue_code","city_code"))
+      .na.fill("undefined", Seq("wlan_venue_type_code", "wlan_venue_code", "city_code"))
+      .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
 
     logger.info("Getting the new WLanHotspot Data")
-    both
-      .union(toProvision)
-      .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail :_*)
+    val ret = provisioned
+      .union(sessionDOut)
       .union(oldDataHotspot)
+
+    logger.info(s"New HOTSPOT file row count: ${ret.count()}")
+    ret
   }
 
 
   def processData(): (DataFrame, DataFrame) = {
-    (cdrAggregates.select(StageStructures.SESSION_D_OUTPUT_COLUMNS.head, StageStructures.SESSION_D_OUTPUT_COLUMNS.tail :_*), wlanHotspotData)
+    (cdrAggregates.select(StageStructures.SESSION_D_OUTPUT_COLUMNS.head, StageStructures.SESSION_D_OUTPUT_COLUMNS.tail: _*), wlanHotspotData)
   }
 
 }

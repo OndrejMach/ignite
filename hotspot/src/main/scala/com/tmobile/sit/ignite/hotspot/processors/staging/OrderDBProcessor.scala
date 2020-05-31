@@ -25,9 +25,9 @@ class OrderDBProcessor(orderDBInputData: OrderDBInputData, maxDate: Timestamp, e
       data
         .filter(i => !(i.result_code.get == "KO" && !i.error_code.isDefined) && !(i.reduced_amount.isDefined && !i.campaign_name.isDefined))
         .map(i => OrderDBStage(i))
-        .withColumn("email", when($"email".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out"), $"email"), "[\n\r]", "")))
-        .withColumn("username", when($"username".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out"), $"username"), "[\n\r]", "")))
-        .withColumn("ma_name", when($"ma_name".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out"), $"ma_name"), "[\n\r]", "")))
+        .withColumn("email", when($"email".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit(encoderPath), $"email"), "[\n\r]", "")))
+        .withColumn("username", when($"username".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit(encoderPath), $"username"), "[\n\r]", "")))
+        .withColumn("ma_name", when($"ma_name".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit(encoderPath), $"ma_name"), "[\n\r]", "")))
         .as[OrderDBStage]
 
     logger.info(s"Filtered data size ${ret.count()}")

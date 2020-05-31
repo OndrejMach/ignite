@@ -22,7 +22,7 @@ class InputFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
 
       val date = settings.appConfig.input_date.get.toLocalDateTime
       logger.info("Inirialising processor for CDRs")
-      val processor = new CDRProcessor(reader, Date.valueOf(LocalDate.of(date.getYear, date.getMonth, date.getDayOfMonth)))
+      val processor = new CDRProcessor(reader, Date.valueOf(LocalDate.of(date.getYear, date.getMonth, date.getDayOfMonth)),settings.appConfig.DES_encoder_path.get)
       logger.info("Processing CDR data")
       val cdrData = processor.processData()
       logger.info("CDR data processed, ready for writing")

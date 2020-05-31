@@ -10,7 +10,8 @@ import org.apache.spark.sql.functions.{dayofmonth, from_unixtime, lit, month, to
 import org.apache.spark.sql.types.{DateType, StringType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class CDRProcessor(cdrFileReader: Reader, fileDate: Date)(implicit sparkSession: SparkSession) extends Logger{
+class CDRProcessor(cdrFileReader: Reader, fileDate: Date, encoderPath: String)(implicit sparkSession: SparkSession) extends Logger{
+
   def processData(): DataFrame = {
     import sparkSession.implicits._
 
@@ -24,7 +25,7 @@ class CDRProcessor(cdrFileReader: Reader, fileDate: Date)(implicit sparkSession:
       .withColumn("wlan_session_date", to_date($"ts").cast(DateType))
       .withColumn("user_name", lit("565C4BB4137DD2BFC1D2EA5EBC70ADB3"))
       .withColumn("user_name_extension", lit(null).cast(StringType))
-      .withColumn("msisdn", when($"msisdn".isNotNull,encoder3des(lit("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out"), $"msisdn") ).otherwise(lit(null).cast(StringType)))
+      .withColumn("msisdn", when($"msisdn".isNotNull,encoder3des(lit(encoderPath), $"msisdn") ).otherwise(lit(null).cast(StringType)))
       .na.fill(-1, Seq("wlan_user_account_id"))
       .withColumn("wlan_user_provider_code", lit(null).cast(StringType))
       .na.fill("undefined", Seq("hotspot_owner_id"))
