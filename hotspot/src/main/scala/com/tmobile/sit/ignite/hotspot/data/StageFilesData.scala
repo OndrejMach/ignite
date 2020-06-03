@@ -7,6 +7,12 @@ import com.tmobile.sit.ignite.hotspot.config.Settings
 import com.tmobile.sit.ignite.hotspot.readers.TextReader
 import org.apache.spark.sql.SparkSession
 
+/**
+ * wrapper class for stage data needed for stage file calculation
+ * @param sparkSession
+ * @param settings - configuration parameters
+ */
+
 class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) extends Logger{
   private val processingDate = settings.appConfig.processing_date.get.toLocalDateTime
   private val processingDatePlus1 = processingDate.plusDays(1)

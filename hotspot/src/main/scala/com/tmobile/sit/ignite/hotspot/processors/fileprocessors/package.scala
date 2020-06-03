@@ -1,5 +1,9 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
+/**
+ * some helper methods for mostly data transformation
+ */
+
 package object fileprocessors {
   def getString(s: String): Option[String] = if (s.isEmpty) None else Some(s)
 

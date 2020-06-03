@@ -1,6 +1,8 @@
 package com.tmobile.sit.ignite.hotspot.data
 
-import com.tmobile.sit.ignite.common.data.CommonStructures
+/**
+ * definition of output columns - before printed-out they are transformed to capital letters.
+ */
 
 object OutputStructures {
   val ORDED_DB_H = Seq(

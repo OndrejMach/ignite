@@ -10,20 +10,31 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.annotation.strictfp
 
+/**
+ * supportin case class holding values for each 15-minuts split
+ */
 case class SessionMetrics(quarterID: Long, volume: Double, duration: Long, start_flag: Int, end_flag: Int)
 
+/**
+ * This class calculates SessionQ data which is basically split of all active sessions into 15-minutes chunks. Metrics such as duration of volume are interpolated based on theoretical throuput per second.
+ * These junks are then aggregated based on certain criteria and returned as a result.
+ * @param dataCDRs - input CDRs
+ * @param processingDate - date for processing
+ * @param sparkSession
+ */
 @strictfp
 class SessionsQProcessor(dataCDRs: DataFrame, processingDate: Timestamp)(implicit sparkSession: SparkSession) extends Logger {
 
   private val preprocessedData = {
     import org.apache.spark.sql.functions.udf
     import sparkSession.implicits._
+    logger.info("preparing input data - technical columns, data types transormation and split into 15 minutes chunks")
     val toQuartersUDF = udf(TimeCalculations.toQuartersUnixTime)
-
+/*
     val toProcess =
       dataCDRs//.distinct()
-
-    val inter = toProcess
+*/
+    val inter = dataCDRs
       .withColumn("wlan_hotspot_ident_code", when($"hotspot_id".isNotNull, $"hotspot_id").otherwise(concat(lit("undefined_"), $"hotspot_owner_id")))
       .withColumn("wlan_provider_code", $"hotspot_owner_id")
       .withColumn("wlan_user_provider_code", $"user_provider_id")
@@ -54,7 +65,7 @@ class SessionsQProcessor(dataCDRs: DataFrame, processingDate: Timestamp)(implici
       "wlan_user_provider_code", "wlan_provider_code",
       "wlan_hotspot_ident_code", "wlan_user_account_id",
       "terminate_cause_id", "login_type")
-
+    logger.info("Doing final aggregation.")
     preprocessedData
       .sort(aggKey.head, aggKey.tail: _*)
       .groupBy(aggKey.head, aggKey.tail: _*)

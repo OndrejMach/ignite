@@ -10,6 +10,12 @@ import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.ExchangeRatesAct
 import com.tmobile.sit.ignite.hotspot.readers.ExchangeRatesReader
 import org.apache.spark.sql.SparkSession
 
+/**
+ * Processor class orchestrating all the steps for exchange rates calculation
+ * @param sparkSession
+ * @param settings
+ */
+
 class ExchangeRatesProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
   val MAX_DATE = Date.valueOf("4712-12-31")
 

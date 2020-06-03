@@ -4,6 +4,12 @@ import java.sql.Timestamp
 
 import com.tmobile.sit.common.config.GenericSettings
 
+/**
+ * Wrapper classes for configuration parameters.
+ * The structure basically follows the schema of the application configuration file. Classes also implement couple of supporting methods helping with validity checks or printing the values.
+ */
+
+
 abstract class FilesConfig extends GenericSettings {
   def isAllDefined: Boolean = {
     val fields = this.getClass.getDeclaredFields

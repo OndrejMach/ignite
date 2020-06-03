@@ -11,6 +11,13 @@ case class OrderDBStageFilenames(
                                   mapVoucher: String,
                                   orderDb: String )
 
+/**
+ * Writing data related to OrderDB structures.
+ * @param data
+ * @param filenames
+ * @param sparkSession
+ */
+
 
 class OrderDBStageWriter(data: OderdDBPRocessingOutputs, filenames: OrderDBStageFilenames) (implicit sparkSession: SparkSession) extends Writer {
   override def writeData(): Unit = {

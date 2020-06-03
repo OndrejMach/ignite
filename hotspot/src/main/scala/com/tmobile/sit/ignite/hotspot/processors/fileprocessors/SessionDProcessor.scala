@@ -8,7 +8,13 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-//case class SessionDAndWlanHostpotOutputs(sessionD:DataFrame, wlanHotspotData: DataFrame)
+/**
+ * Class for Session D data calculation
+ * @param cdrData - data from the CDR input
+ * @param wlanHotspotStageData - wlan hotspot data
+ * @param processingDate - data date for calculation
+ * @param sparkSession
+ */
 
 class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
 
@@ -46,6 +52,7 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
         count("*").alias("num_of_stop_tickets")
       )
       .withColumn("num_subscriber", lit(1).cast(IntegerType))
+
 
   }
 

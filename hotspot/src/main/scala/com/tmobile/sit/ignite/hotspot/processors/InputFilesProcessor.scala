@@ -10,6 +10,12 @@ import com.tmobile.sit.ignite.hotspot.readers.TextReader
 import com.tmobile.sit.ignite.hotspot.writers.{CDRStageWriter, OrderDBStageFilenames, OrderDBStageWriter}
 import org.apache.spark.sql.SparkSession
 
+/**
+ * Orchestration for processing of the input files
+ * @param sparkSession
+ * @param settings
+ */
+
 class InputFilesProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
     def process(): Unit = {
       logger.info("Initialising orderDB processor")

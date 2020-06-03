@@ -6,14 +6,18 @@ import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
+/**
+ * this class gets all known vouchers from the data
+ * @param wlanOrderDBExchangeRatesdata - info about transactions enriched with exchange rates
+ * @param oldVoucherData - currently known vouchers.
+ */
 class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataFrame) extends  Logger{
   private val voucherData = {
     logger.info("Preparing old voucher data")
-    oldVoucherData//CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv", header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|")
+    oldVoucherData
       .withColumnRenamed("tmo_country_code", "natco")
       .withColumnRenamed("price", "amount")
       .withColumnRenamed("wlan_voucher_desc", "voucher_type")
-      // .withColumnRenamed("duration", "voucher_duration")
       .drop("entry_id", "load_date")
     .sort("natco", "voucher_type", "amount", "duration")
   }
@@ -26,7 +30,6 @@ class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataF
   private val newVouchers = {
     logger.info("Getting new vouchers from WlanHotspot and OrderDB data")
     wlanOrderDBExchangeRatesdata
-      //.withColumnRenamed("duration", "voucher_duration")
       .sort(FailedTransactionsDataStructures.KEY_COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.KEY_COLUMNS_VOUCHER.tail: _*)
       .dropDuplicates(FailedTransactionsDataStructures.KEY_COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.KEY_COLUMNS_VOUCHER.tail: _*)
       .select(FailedTransactionsDataStructures.COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.COLUMNS_VOUCHER.tail: _*)
@@ -49,7 +52,6 @@ class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataF
     logger.info("Preparing vouchers for output")
     allVouchers
       .withColumn("amount",remove0s(col("amount")) )
-      //.withColumn("vat",remove0s(col("vat")) )
       .withColumn("conversion",remove0s(col("conversion")))
       .withColumnRenamed("voucher_type", "wlan_voucher_desc")
       .withColumnRenamed("natco","tmo_country_code")

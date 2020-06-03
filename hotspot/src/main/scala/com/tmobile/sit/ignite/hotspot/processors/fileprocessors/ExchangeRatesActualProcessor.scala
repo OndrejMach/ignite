@@ -9,6 +9,15 @@ import org.apache.spark.sql.functions.{col, lit, round, when}
 import org.apache.spark.sql.types.{DateType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
+/**
+ * this class calculates new exchange rates - basically it outdates old records and adds new ones from input file. This means history of exchanges rates is always there.
+ * @param exchangeRatesReader - reader for new exchange rates file
+ * @param prevExchangeRatesReader - actual exchange rates reader - this file is overwritten
+ * @param maxDate - maxdate for FUTURE definition :)
+ * @param sparkSession
+ */
+
+
 class ExchangeRatesActualProcessor(exchangeRatesReader: Reader, prevExchangeRatesReader: Reader, maxDate: Date)(implicit sparkSession: SparkSession) extends Processor {
 
   private def processExchangeRates(in: Dataset[ExchangeRates], periodFrom: Timestamp, periodTo: Timestamp, maxDate: Date): DataFrame = {

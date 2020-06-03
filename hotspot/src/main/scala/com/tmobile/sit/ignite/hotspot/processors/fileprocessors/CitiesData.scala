@@ -7,6 +7,12 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.TimestampType
 
+/**
+ * a wrapper class for data used during city processing. Important note here is that city file is overwritten.
+ * @param wlanAndOrderDBData - wlan and orderDB data calculated previously
+ * @param oldCitieData - old cities data
+ * @param processingDate - date for which data is valid
+ */
 class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implicit processingDate: Date) extends Logger {
 
   private val cityData = {

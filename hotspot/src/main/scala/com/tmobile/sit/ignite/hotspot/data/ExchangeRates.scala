@@ -6,6 +6,11 @@ import java.time.format.DateTimeFormatter
 
 import com.tmobile.sit.common.Logger
 
+/**
+ * reading input file for exchange rates. It has a header which does not follow the format of the body lines, that's why it must be read as text and then stored in a case class.
+ *
+ */
+
 case class ExchangeRates(row_id: Option[String],
                          ratetype: Option[String],
                          fromcurrency: Option[String],

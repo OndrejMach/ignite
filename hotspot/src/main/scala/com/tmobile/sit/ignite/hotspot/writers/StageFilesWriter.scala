@@ -9,6 +9,13 @@ import com.tmobile.sit.ignite.hotspot.processors.StageData
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
+/**
+ * Writing all stage files.
+ * @param stageData
+ * @param sparkSession
+ * @param settings
+ */
+
 class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession, settings: Settings) extends Writer {
 
   private def writeParquet(data: DataFrame, filename: String) = {

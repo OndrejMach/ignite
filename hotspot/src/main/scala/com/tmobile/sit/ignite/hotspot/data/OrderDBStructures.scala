@@ -4,6 +4,10 @@ import java.sql.Timestamp
 import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.{getDouble, getLong, getString}
 import org.apache.spark.sql.types._
 
+/**
+ * data structure definition for OrderDB- related data.
+ */
+
 object OrderDBStructures {
   val errorCodesStructure = StructType(
     Seq(
@@ -12,8 +16,6 @@ object OrderDBStructures {
       StructField("error_desc", StringType, true),
       StructField("valid_from", TimestampType, true),
       StructField("valid_to", TimestampType, true)
-      //StructField("entry_id", LongType, true),
-     // StructField("load_date", TimestampType, true)
     )
   )
 

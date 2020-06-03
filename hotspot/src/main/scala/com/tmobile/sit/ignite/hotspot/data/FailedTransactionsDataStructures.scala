@@ -1,5 +1,9 @@
 package com.tmobile.sit.ignite.hotspot.data
 
+/**
+ * Supporting definitions of columns and aggregation keys for Failed transactions processing
+ */
+
 object FailedTransactionsDataStructures {
   val KEY_COLUMNS_VOUCHER = Seq("natco", "voucher_type", "amount", "voucher_duration")
   val COLUMNS_VOUCHER = Seq("wlan_voucher_code", "voucher_type", "natco", "duration", "amount", "vat", "conversion", "valid_from", "valid_to")

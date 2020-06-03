@@ -5,6 +5,13 @@ import com.tmobile.sit.ignite.hotspot.config.{InputConfig, StageConfig}
 import com.tmobile.sit.ignite.hotspot.readers.TextReader
 import org.apache.spark.sql.SparkSession
 
+/**
+ * wrapper class for data required by OrderDB input processing. It reads MPS, hotspot data and error codes.
+ * @param stageConfig - stage configuration parameters - basically paths to files
+ * @param inputConfig - the same for input
+ * @param sparkSession - implicit sparkSession
+ */
+
 class OrderDBInputData(stageConfig: StageConfig, inputConfig: InputConfig)(implicit  sparkSession: SparkSession) {
   val dataHotspot = sparkSession.read.parquet(stageConfig.wlan_hotspot_filename.get).cache()
 

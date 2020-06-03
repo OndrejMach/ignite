@@ -7,6 +7,15 @@ import org.apache.spark.sql.functions.{last, lit, when}
 import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * Data preparation of the orderDB and wlan hotspot data
+ * @param wlanHotspotData - guess what this is ;)
+ * @param orderDbDataActual - actual orderDB data
+ * @param sparkSession
+ * @param processingDate
+ */
+
+
 class WlanAndOrderDBData(wlanHotspotData: DataFrame, orderDbDataActual: DataFrame)(implicit sparkSession: SparkSession, processingDate: Date) extends Logger {
 
   import sparkSession.implicits._

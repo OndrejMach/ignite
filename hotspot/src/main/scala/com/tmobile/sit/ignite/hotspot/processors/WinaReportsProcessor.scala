@@ -5,6 +5,12 @@ import com.tmobile.sit.ignite.hotspot.data.WinaReportsInputData
 import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.WinaExportsProcessor
 import org.apache.spark.sql.{SaveMode, SparkSession}
 
+/**
+ * Orchestrator class for Wina reports
+ * @param sparkSession
+ * @param settings
+ */
+
 class WinaReportsProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
   override def process(): Unit = {
     val data = new WinaReportsInputData()

@@ -3,6 +3,9 @@ package com.tmobile.sit.ignite.hotspot.data
 import com.tmobile.sit.ignite.hotspot.config.Settings
 import org.apache.spark.sql.SparkSession
 
+/** input datafor wina reports - Session_D basically
+
+ */
 class WinaReportsInputData(implicit sparkSession: SparkSession, settings: Settings) {
 
   private val processingDate = settings.appConfig.processing_date.get.toLocalDateTime

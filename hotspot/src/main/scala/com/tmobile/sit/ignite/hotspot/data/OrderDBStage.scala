@@ -5,6 +5,11 @@ import java.time.{LocalDate, LocalDateTime}
 import java.time.format.DateTimeFormatter
 import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures.OrderDBInput
 
+/**
+ * preparing orderDB stage file form the MPS input basically. There is a bit weird logic for getting information about hotspot (information is stored as a sub-structure with a different delimiter). Maybe it would be worth figuring out some other
+ * data format supporting sub-structures. Anyway These classes prepare OrderDB stage data for further processing.
+ */
+
 case class OrderDBStage(
                          ta_id: Option[String],
                          ta_request_date: Option[Date],

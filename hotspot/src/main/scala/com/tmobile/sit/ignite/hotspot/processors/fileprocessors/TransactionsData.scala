@@ -11,11 +11,21 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class TransactionOutputs(orderDBH: DataFrame, failedTransaction: DataFrame)
 
+/**
+ * this class calculates transaction data - meand it gets orderDB data joined with hotspot and exchange rates, vouchers and cities and generates outputs which are related to financial transactions - OrderDB_H and failed transactions.
+ * @param wlanHostspotOrderDBExchangeRates -orderDB data joined with hotspot and exchange rates.
+ * @param voucherData - currently known vouchers
+ * @param citiesData - known cities
+ * @param processingDatePlus1
+ * @param sparkSession
+ */
+
 class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData: VoucherData, citiesData: CitiesData, processingDatePlus1: Date)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._
 
-  private val citiesToJoin =
+  private val citiesToJoin = {
+    logger.info("Preparing cities for lookup")
     citiesData
       .allCities
       .select("city_id", "city_code")
@@ -24,6 +34,7 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
       .groupBy("city_code")
       .agg(max("city_id").alias("city_id"))
     .na.fill("-1", Seq("city_code"))
+  }
 
 
   private val transactionsData = {
@@ -31,9 +42,7 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
     val vouchers = voucherData.allVouchers
       .filter(($"valid_from" < lit(processingDatePlus1).cast(TimestampType)) && ($"valid_to" >= lit(processingDatePlus1).cast(TimestampType)))
 
-    //println(s"VOUCHERS COUNT: ${vouchers.count()}")
-
-    val ret = wlanHostspotOrderDBExchangeRates
+    wlanHostspotOrderDBExchangeRates
       .join(
         vouchers.select("wlan_voucher_id", FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER: _*),
         FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER,
@@ -41,12 +50,8 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
       .withColumn("reduced_amount", when($"reduced_amount".isNotNull, $"reduced_amount").otherwise($"amount"))
       .withColumn("discount_rel", concat(((($"amount" - $"reduced_amount") * 100) / round($"amount", 2)).cast(StringType), lit("%")))
       .na.fill("No Discount", Seq("campaign_name"))
-
-    //println(s"DATA COUNT: ${ret.count()}")
-    ret
   }
 
-  //transactionsData.show(false)
 
   private val orderDBH = {
     logger.info("Calculating orderDB_H output from OK transactions")
@@ -56,14 +61,11 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
     val padPerc = udf {s: String => DirtyStuff.padPercentage(s)}
 
     val aggregation = OKTransactions
-      //.withColumn("request_hour", $"ta_request_datetime")
       .groupBy(FailedTransactionsDataStructures.KEY_AGG_ORDERDB_H.head, FailedTransactionsDataStructures.KEY_AGG_ORDERDB_H.tail: _*)
       .agg(
         first("conversion").alias("conversion"),
-        //first("city_id").alias("city_id"),
         count("*").alias("num_of_transactions"),
         sum("number_miles").alias("num_flight_miles"),
-        //tech columns
         sum("amount").alias("sum_amount"),
         sum("reduced_amount").alias("sum_red_amount"),
         max("ta_request_datetime").alias("request_hour")
@@ -90,31 +92,22 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
       .join(citiesToJoin, Seq("city_code"), "left_outer")
   }
 
-  //orderDBH.show(false)
-
   private val failedTrans = {
     logger.info("Calculating failed transactions output")
     val failedTransactions = transactionsData.filter($"result_code".equalTo("KO"))
 
-    //println(s"FAILED TRANSACTIONS: ${failedTransactions.count()}")
 
-    val ret = failedTransactions
-      //.withColumn("request_hour", $"ta_request_datetime")
+    failedTransactions
       .sort(FailedTransactionsDataStructures.KEY_AGG_FAILED_TRANSAC.head, FailedTransactionsDataStructures.KEY_AGG_FAILED_TRANSAC.tail: _*)
       .groupBy(FailedTransactionsDataStructures.KEY_AGG_FAILED_TRANSAC.head, FailedTransactionsDataStructures.KEY_AGG_FAILED_TRANSAC.tail: _*)
       .agg(
         count("*").alias("num_of_failed_transac"),
         sum("number_miles").alias("num_flight_miles"),
         max("ta_request_datetime").alias("request_hour")
-        //first("city_id").alias("city_id")
       )
       .withColumn("wlan_voucher_type", $"voucher_type")
       .na.fill("-1", Seq("city_code"))
       .join(citiesToJoin, Seq("city_code"), "left_outer")
-
-    //println(s"FAILED TRANSACTIONS RESULT: ${ret.count()}")
-
-    ret
   }
 
   def getTransactionData() = {

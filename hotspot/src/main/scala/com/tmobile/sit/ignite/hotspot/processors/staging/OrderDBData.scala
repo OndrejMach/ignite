@@ -8,7 +8,15 @@ import org.apache.spark.sql.functions.{col, desc, lit}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
-class OrderDBData(orderDbReader: DataFrame, inputHotspot: DataFrame, oldErrorCodes: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
+/**
+ * wrapper class for orderDB supporting data
+ * @param orderDb - orderDB data
+ * @param inputHotspot - input hotspot data
+ * @param oldErrorCodes - error codes data
+ * @param sparkSession
+ */
+
+class OrderDBData(orderDb: DataFrame, inputHotspot: DataFrame, oldErrorCodes: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._
 
@@ -16,7 +24,7 @@ class OrderDBData(orderDbReader: DataFrame, inputHotspot: DataFrame, oldErrorCod
 
   lazy val fullData: Dataset[OrderDBStructures.OrderDBInput] = {
     logger.info("Getting OrderDB full input")
-    orderDbReader
+    orderDb
       .filter(col("value").startsWith("D;"))
       .as[String]
       .map(OrderDBInput(_))

@@ -1,5 +1,9 @@
 package com.tmobile.sit.ignite.hotspot.data
 
+/**
+ * Data structures for failed logins input file.
+ */
+
 object FailedLoginsStructure {
 
   case class FailedLogin(

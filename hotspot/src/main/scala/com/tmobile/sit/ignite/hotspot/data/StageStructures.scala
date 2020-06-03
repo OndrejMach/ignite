@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.hotspot.data
 
 import com.tmobile.sit.ignite.common.data.CommonStructures
 
+/**
+ * output columns for stage files.
+ */
+
 object StageStructures {
   val ERROR_CODES = Seq("error_code", "error_message", "error_desc", "valid_from", "valid_to")
   val MAP_VOUCHER = Seq("wlan_ta_id", "wlan_request_date", "wlan_username", "wlif_username", "wlif_realm_code", "year", "month", "day")

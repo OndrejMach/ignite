@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.hotspot.data
 
 import org.apache.spark.sql.types.{DoubleType, LongType, StringType, StructField, StructType, TimestampType}
 
+/**
+ * Data definition for City and Voucher files required during processing
+ */
+
 object InterimDataStructures {
   val CITY_STRUCT = StructType {
     Seq(
@@ -9,8 +13,6 @@ object InterimDataStructures {
       StructField("city_code", StringType, true),
       StructField("city_desc", StringType, true),
       StructField("city_ldesc", StringType, true)
-     // StructField("entry_id", LongType, true),
-     // StructField("load_date", TimestampType, true)
     )
   }
 
@@ -26,8 +28,6 @@ object InterimDataStructures {
       StructField("conversion", DoubleType, true),
       StructField("valid_from", TimestampType, true),
       StructField("valid_to", TimestampType, true)
-     // StructField("entry_id", LongType, true),
-     // StructField("load_date", TimestampType, true)
     )
   }
 

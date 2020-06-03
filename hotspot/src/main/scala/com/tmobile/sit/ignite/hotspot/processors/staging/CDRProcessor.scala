@@ -10,11 +10,19 @@ import org.apache.spark.sql.functions.{dayofmonth, from_unixtime, lit, month, to
 import org.apache.spark.sql.types.{DateType, StringType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * preparing CDR input files for stage
+ * @param cdrFileReader - CDRs data reader
+ * @param fileDate - data date
+ * @param encoderPath - path to 3DES encoder
+ * @param sparkSession
+ */
+
 class CDRProcessor(cdrFileReader: Reader, fileDate: Date, encoderPath: String)(implicit sparkSession: SparkSession) extends Logger{
 
   def processData(): DataFrame = {
     import sparkSession.implicits._
-
+    logger.info("Preparing CDR data.")
     val encoder3des = udf(DirtyStuff.encode)
 
     val data = cdrFileReader.read().as[String]

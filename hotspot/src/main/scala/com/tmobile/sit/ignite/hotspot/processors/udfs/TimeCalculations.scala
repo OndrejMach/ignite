@@ -11,6 +11,11 @@ import scala.annotation.strictfp
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+/**
+ * very nice functions helping for shaping our outputs into EVL structure and content. The best is 15 minutes session split for sessionQ - method "toQuartersUnixTime"
+ */
+
+
 object DirtyStuff{
   val encode = (encoderPath: String,data: String) => {
     s"${encoderPath} ${data}" !!

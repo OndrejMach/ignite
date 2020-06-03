@@ -6,10 +6,19 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.common.processing.{NormalisedExchangeRates, translateHours}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-//import org.apache.spark.sql.functions.udf
 
 case class FailedTransactionOutput(cities: DataFrame, vouchers: DataFrame, orderDBH:DataFrame, failedTransactions: DataFrame)
 
+/**
+ * Class for failed transactions processing. It returns new City data, new vouchers, orderDBH and failed transactions. The name is a bit misleading, but thats how this was structured in EVL.
+ * @param oldCitiesData - current city data
+ * @param oldVoucherData - current vouchers.
+ * @param wlanHotspot - current hotspot data
+ * @param orderDBData - orderDB data from the MPS input
+ * @param normalisedExchangeRates - normalised exchange rates
+ * @param sparkSession
+ * @param processingDate - date for data calculation
+ */
 
 class FailedTransactionsProcessor( oldCitiesData: DataFrame,oldVoucherData: DataFrame ,wlanHotspot: DataFrame, orderDBData: DataFrame,normalisedExchangeRates: NormalisedExchangeRates)
                                  (implicit sparkSession: SparkSession, processingDate: Date) extends Logger {

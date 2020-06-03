@@ -12,11 +12,24 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, IntegerType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * in this class all the output files are generated. Basically its only two steps - read stage, write output. Except for orderDBH where tiny logic is done hased on the transaction type
+ * @param sparkSession
+ * @param settings
+ */
+
 class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
+  private val UTF8CHAR = "\ufeff"
+
   private def writeOutput(data: DataFrame, filename: String, delimiter: String = "|") = {
     logger.info(s"Writing output file: ${filename}")
+    val firstColumn = data.columns(0)
+
     CSVWriter(
-      data = data.columnsToUpperCase().repartition(1),
+      data = data
+        .columnsToUpperCase()
+        .withColumnRenamed(firstColumn,UTF8CHAR+firstColumn)
+        .repartition(1),
       writeHeader = true,
       delimiter = delimiter,
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
@@ -28,6 +41,7 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
 
   private def adaptOrderDBH(data: DataFrame) = {
     import sparkSession.implicits._
+    logger.info("Tweaking OrderDBH monetary values based on the transaction type")
     data
       .select(OutputStructures.ORDED_DB_H.head, OutputStructures.ORDED_DB_H.tail: _*)
       .withColumn("neg", when($"wlan_transac_type_id" === lit(1), lit(-1).cast(IntegerType)).otherwise(lit(1).cast(IntegerType)))

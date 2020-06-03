@@ -1,7 +1,10 @@
 package com.tmobile.sit.ignite.hotspot.data
 
 import java.sql.Timestamp
-import java.time.{LocalDate, LocalDateTime}
+
+/**
+ * data definition for wlan_hotspot file
+ */
 
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType, TimestampType}
 

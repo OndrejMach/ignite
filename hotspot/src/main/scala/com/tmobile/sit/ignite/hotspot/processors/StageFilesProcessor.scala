@@ -11,6 +11,17 @@ import com.tmobile.sit.ignite.hotspot.processors.fileprocessors._
 import com.tmobile.sit.ignite.hotspot.writers.StageFilesWriter
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * wrapper class for all stage data calculated
+ * @param sessionD
+ * @param hotspotNew
+ * @param cities
+ * @param vouchers
+ * @param failedTransactions
+ * @param orderDBH
+ * @param sessionQ
+ * @param failedLogins
+ */
 case class StageData(
                       sessionD: DataFrame,
                       hotspotNew: DataFrame,
@@ -21,6 +32,12 @@ case class StageData(
                       sessionQ: DataFrame,
                       failedLogins: DataFrame
                     )
+
+/**
+ * Consolidation for stage files processing
+ * @param sparkSession
+ * @param settings
+ */
 
 class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
   override def process(): Unit = {

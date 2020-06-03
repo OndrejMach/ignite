@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite
 
 import org.apache.spark.sql.SparkSession
 
+/**
+ * Only for getting spark session
+ */
+
 package object hotspot {
   def getSparkSession() = {
     val ret = SparkSession.builder()

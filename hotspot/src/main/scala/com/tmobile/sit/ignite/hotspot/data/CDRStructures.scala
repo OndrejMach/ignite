@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.hotspot.data
 
 import com.tmobile.sit.ignite.hotspot.processors.fileprocessors._
 
+/**
+ * Case classes for input CDR structure. Helps with reading the input file as it does not have a valid csv structure and must be read as a generic text.
+ */
+
 object CDRStructures {
   case class CDRInput(
                        data_code: Option[String],

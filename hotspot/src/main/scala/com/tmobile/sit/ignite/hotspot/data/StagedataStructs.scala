@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.hotspot.data
 
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
+/**
+ * definition of country code input data
+ */
+
 object StagedataStructs {
   val country_code_structure = StructType(
     Seq(

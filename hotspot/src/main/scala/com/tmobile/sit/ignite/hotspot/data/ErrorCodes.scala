@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite.hotspot.data
 
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType, TimestampType}
 
+/**
+ * Case classes for error code file read during processing.
+ */
+
 object ErrorCodes {
   val loginErrorStruct = StructType (
     Seq(
@@ -9,8 +13,6 @@ object ErrorCodes {
       StructField("error_desc", StringType,true),
       StructField("valid_from", TimestampType,true),
       StructField("valid_to", TimestampType,true)
-      // StructField("entry_id", LongType,true),
-      // StructField("load_date", TimestampType,true)
     )
   )
   val error_codes_struct = StructType (
@@ -20,8 +22,6 @@ object ErrorCodes {
       StructField("error_desc", StringType,true),
       StructField("valid_from", TimestampType,true),
       StructField("valid_to", TimestampType,true)
-      // StructField("entry_id", LongType,true),
-      // StructField("load_date", TimestampType,true)
     )
   )
 }

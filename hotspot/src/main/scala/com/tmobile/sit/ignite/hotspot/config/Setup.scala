@@ -7,6 +7,12 @@ import java.time.format.DateTimeFormatter
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.config.ServiceConfig
 
+/**
+ * this class helps to read parameters from the configuration file and stores them to the wrapper case classes. Path to configuration file may be provided as a parameter.
+ * @param configFile
+ */
+
+
 class Setup(configFile: String = "hotspot.conf") extends Logger {
 
   private def getProcessingDate(s: Option[String]): Timestamp = {
