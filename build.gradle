@@ -97,10 +97,6 @@ dependencies {
 }
 
 
-
-
-//def mainProjects = [':Common',':FirewallLogReader',':MTXCDRReader',':HackedPBX', ':MLClassifier', ':MLModelTraining', ':CDRcsvToParquet']
-
 subprojects.each { subproject -> evaluationDependsOn(subproject.path)}
 /*
 task allJar(type: Jar, dependsOn: subprojects.assemble) {

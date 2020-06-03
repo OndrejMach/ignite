@@ -4,23 +4,9 @@ version '1.0-SNAPSHOT'
 apply plugin: 'scala'
 
 sourceCompatibility = 1.8
-repositories {
-   maven {
-       credentials {
-            username NEXUS3_USERNAME
-            password NEXUS3_PASSWORD
-        }
-        url uri("https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/")
-        //metadataSources {
-        //    mavenPom()
-        //    artifact()
-        }
-        //https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/spark_common/spark_common/1.8/spark_common-1.8.jar
-        //artifactUrls "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/spark_common/spark_common/1.8/spark_common-1.8.jar"/   }
-}
 
 dependencies {
-    implementation 'com.tmobile.sit:spark_common:1.8'
-    compile project(":ignite-common")
     //implementation 'com.tmobile.sit:spark_common:1.8'
+    compile project(":ignite-common")
+    implementation 'com.tmobile.sit:spark_common:1.8'
 }

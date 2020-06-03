@@ -4,6 +4,15 @@ import java.sql.Timestamp
 
 import com.tmobile.sit.common.config.GenericSettings
 
+abstract class FilesConfig extends GenericSettings {
+  def isAllDefined: Boolean = {
+    val fields = this.getClass.getDeclaredFields
+    fields.foreach(_.setAccessible(true))
+    fields.map(_.get(this).asInstanceOf[Option[String]]).map(f => f.isDefined && !f.isEmpty).reduce(_ && _)
+  }
+}
+
+
 case class StageConfig(stage_folder: Option[String],
                        wlan_hotspot_filename: Option[String],
                        error_codes_filename: Option[String],
@@ -20,14 +29,18 @@ case class StageConfig(stage_folder: Option[String],
                        session_q: Option[String],
                        failed_logins: Option[String],
                        country: Option[String]
-                      )
+                      ) extends FilesConfig
 
 case class AppConfig(
                       processing_date: Option[Timestamp],
                       DES_encoder_path: Option[String],
                       wina_reports_day: Option[String],
                       input_date: Option[Timestamp]
-                    )
+                    ) extends GenericSettings {
+  override def isAllDefined = {
+    processing_date.isDefined && DES_encoder_path.isDefined && wina_reports_day.isDefined && input_date.isDefined
+  }
+}
 
 case class InputConfig(
                         input_folder: Option[String],
@@ -35,7 +48,7 @@ case class InputConfig(
                         CDR_filename: Option[String],
                         exchange_rates_filename: Option[String],
                         failed_login_filename: Option[String]
-                      )
+                      ) extends FilesConfig
 
 case class OutputConfig(
                          output_folder: Option[String],
@@ -53,7 +66,7 @@ case class OutputConfig(
                          failed_login: Option[String],
                          login_error: Option[String],
                          hotspot_vi_d: Option[String]
-                       )
+                       ) extends FilesConfig
 
 case class Settings(
                      inputConfig: InputConfig,
@@ -62,4 +75,16 @@ case class Settings(
                      stageConfig: StageConfig
                    ) extends GenericSettings {
   override def isAllDefined: Boolean = true
+
+  override def printAllFields(): Unit = {
+    logger.info(s"${Console.RED}INPUT PARAMETERS:${Console.RESET}")
+    inputConfig.printAllFields()
+    logger.info(s"${Console.RED}OUTPUT PARAMETERS:${Console.RESET}")
+    outputConfig.printAllFields()
+    logger.info(s"${Console.RED}REFERENCE DATA PARAMETERS:${Console.RESET}")
+    stageConfig.printAllFields()
+    logger.info(s"${Console.RED}APPLICATION PARAMETERS:${Console.RESET}")
+    appConfig.printAllFields()
+  }
+
 }

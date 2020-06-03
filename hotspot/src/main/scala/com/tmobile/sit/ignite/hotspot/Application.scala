@@ -11,7 +11,11 @@ object Application extends Logger {
 
   implicit val settings = new Setup().settings
 
+  //settings.printAllFields()
+
   def main(args: Array[String]): Unit = {
+
+    settings.printAllFields()
 
     val processor = args(0) match {
       case "exchangeRates" => new ExchangeRatesProcessor()

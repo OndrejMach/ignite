@@ -7,7 +7,7 @@ LOG="-Dlog4j.configuration=file:log4j.properties"
 
 current_date=`date +'%Y%m%d'`
 processing_date=`date -d"$PROCESSING_DATE - 1 day" "+%Y%m%d"`
-DES_encoder_path="a.out"
+DES_encoder_path="./a.out"
 #Input Paths
 input_folder="/user/talend_ewhr/hotspot_prototype/input/"
 #stage paths
@@ -58,14 +58,11 @@ do
 
   cd $tmp
   hdfs dfs -get ${output_folder}*
-  scp -r * hadoop@10.105.178.122:/WLAN/
-  $ARCHIVE_FILE=${processing_date}.tar.gz
+  scp -r * hadoop@10.105.178.122:/WLAN/SCALA_Test_Data/
+  ARCHIVE_FILE="${processing_date}-${i}.tar.gz"
   tar cvfz $ARCHIVE_FILE *
   mv $ARCHIVE_FILE ../archive/
   rm -r ${tmp}*
   hdfs dfs -rm -r ${output_folder}/*
-
+  cd ..
 done
-
-
-

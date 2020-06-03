@@ -140,7 +140,7 @@ class OrderDBProcessor(orderDBInputData: OrderDBInputData, maxDate: Timestamp, e
       .withColumn("wlif_realm_code", when($"username".contains("@"), $"tmp_username".getItem(1)))
       .withColumn("wlan_username", trim($"username"))
       .na.fill("#", Seq("wlan_username"))
-      .withColumn("wlan_username", when($"wlan_username".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out"), $"wlan_username"), "[\n\r]", "")))
+      .withColumn("wlan_username", when($"wlan_username".equalTo(lit("#")), lit("#")).otherwise(regexp_replace(encoder3des(lit(encoderPath), $"wlan_username"), "[\n\r]", "")))
       .withColumn("wlan_ta_id", $"transaction_id")
       .withColumn("wlan_request_date", to_timestamp(concat($"transaction_date", $"transaction_time"), "yyyyMMddHHmmss"))
       .withColumn("year", year($"wlan_request_date"))
