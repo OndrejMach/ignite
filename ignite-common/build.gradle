@@ -3,6 +3,24 @@ version '1.0-SNAPSHOT'
 
 apply plugin: 'scala'
 sourceCompatibility = 1.8
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            credentials {
+                username NEXUS3_USERNAME
+                password NEXUS3_PASSWORD
+            }
+            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+    }
+}
+
 
 repositories {
     mavenLocal()
