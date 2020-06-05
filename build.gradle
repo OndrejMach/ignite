@@ -80,38 +80,3 @@ dependencies {
 }
 
 
-//subprojects.each { subproject -> evaluationDependsOn(subproject.path)}
-
-//subprojects {
-//    apply plugin: 'com.github.johnrengelman.shadow'
-//    shadowJar {
-//        zip64 true
-//    }
-
-//}
-/*
-task allJar(type: Jar, dependsOn: subprojects.assemble) {
-    manifest.attributes("Main-Class": 'com.openbean.bd.pbxfraud.FraudDetection')
-    baseName = 'FraudDetection'
-    version = version + "_" + new Date().format('yyyyMMdd')
-    def propertyFile = file "Application/src/main/resources/About.properties"
-    def props = new Properties()
-    propertyFile.withReader { props.load(it) }
-    println "Before setProperty:"
-    println props.getProperty('releaseDate')
-    props.setProperty('version', version)
-    props.setProperty('releaseDate', new Date().format('yyyy-MM-dd-HH:mm:ss'))
-    propertyFile.withWriter {
-        props.store(it, null)
-    }
-
-    subprojects.each { subproject ->
-        from subproject.configurations.archives.allArtifacts.files.collect {
-            zipTree(it)
-        }
-    }
-
-
-}
-
- */
