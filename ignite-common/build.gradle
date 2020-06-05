@@ -1,24 +1,8 @@
 group 'ignite'
 version '1.0-SNAPSHOT'
 
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        maven {
-            credentials {
-                username NEXUS3_USERNAME
-                password NEXUS3_PASSWORD
-            }
-            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
-        }
-    }
-}
 apply plugin: 'scala'
-//apply plugin: 'com.github.johnrengelman.shadow'
 sourceCompatibility = 1.8
-
 
 repositories {
     mavenLocal()
@@ -66,9 +50,9 @@ dependencies {
     compile 'com.github.fommil.netlib:all:1.1.2'
 
 
-    testCompile 'org.scalatest:scalatest_2.11:3.0.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
-    testCompile 'org.apache.spark:spark-hive_2.11:2.3.0'
+    //testCompile 'org.scalatest:scalatest_2.11:3.0.0'
+    //testCompile 'junit:junit:4.12'
+   // testCompile 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
+    //testCompile 'org.apache.spark:spark-hive_2.11:2.3.0'
 
 }

@@ -57,7 +57,8 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
         orderDB_H = serviceConf.getString("config.stage.orderDB_H"),
         session_q = serviceConf.getString("config.stage.session_q"),
         failed_logins = serviceConf.getString("config.stage.failed_logins"),
-        country = serviceConf.getString("config.stage.country")//login_errors
+        country = serviceConf.getString("config.stage.country"),
+        failed_logins_input = serviceConf.getString("config.stage.failed_logins_input")//login_errors
       ),
       outputConfig = OutputConfig(
         output_folder = serviceConf.getString("config.output.output_folder"),

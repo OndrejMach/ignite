@@ -34,7 +34,8 @@ case class StageConfig(stage_folder: Option[String],
                        orderDB_H: Option[String],
                        session_q: Option[String],
                        failed_logins: Option[String],
-                       country: Option[String]
+                       country: Option[String],
+                       failed_logins_input: Option[String]
                       ) extends FilesConfig
 
 case class AppConfig(

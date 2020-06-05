@@ -27,8 +27,8 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
 
     CSVWriter(
       data = data
-        .columnsToUpperCase()
         .withColumnRenamed(firstColumn,UTF8CHAR+firstColumn)
+        .columnsToUpperCase()
         .repartition(1),
       writeHeader = true,
       delimiter = delimiter,
@@ -63,6 +63,7 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
   override def process(): Unit = {
     val processingDate = settings.appConfig.processing_date.get.toLocalDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
     val processingT = settings.appConfig.processing_date.get.toLocalDateTime
+    logger.info(s"Starting processing for processing date ${processingDate} in the OUTPUT mode")
     logger.info("Writing output file for session_D")
     writeOutput(
       data = sparkSession
@@ -100,7 +101,8 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
     logger.info("Writing output file for hotspot_ta_d")
     writeOutput(
       data = hotspot,
-      filename = settings.outputConfig.hotspot_ta_d.get
+      filename = settings.outputConfig.hotspot_ta_d.get,
+      delimiter = "~"
     )
 
     logger.info("Writing output file for hotspot_vi_d")
@@ -108,7 +110,8 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
       data = hotspot
         .filter(col("valid_to") >= lit(com.tmobile.sit.ignite.hotspot.data.FUTURE).cast(TimestampType))
         .select(OutputStructures.HOTSPOT_VI_D.head, OutputStructures.HOTSPOT_VI_D.tail: _*),
-      filename = settings.outputConfig.hotspot_vi_d.get
+      filename = settings.outputConfig.hotspot_vi_d.get,
+      delimiter = "~"
     )
 
     logger.info("Writing output file for voucher")
@@ -162,8 +165,7 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
     writeOutput(
       data = sparkSession
         .read
-        .parquet(settings.stageConfig.failed_logins.get)
-        .filter(s"year=${processingT.getYear} and month=${processingT.getMonthValue} and day=${processingT.getDayOfMonth}")
+        .parquet(settings.stageConfig.failed_logins.get + s"/date=${processingDate}")
         .withColumnRenamed("login_datetime", "login_date")
         .select(OutputStructures.FAILED_LOGINS.head, OutputStructures.FAILED_LOGINS.tail: _*),
       filename = settings.outputConfig.failed_login.get

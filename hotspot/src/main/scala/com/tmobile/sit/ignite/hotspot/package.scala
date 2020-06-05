@@ -19,6 +19,7 @@ package object hotspot {
       .config("spark.executor.extraJavaOptions", "-XX:InitiatingHeapOccupancyPercent=35")
       .config("spark.dynamicAllocation.enabled", "true")
       .config("spark.app.name", "hotspot processing")
+      .config("spark.sql.sources.partitionOverwriteMode","dynamic")
       .getOrCreate()
 
     //println(ret.sparkContext.uiWebUrl)

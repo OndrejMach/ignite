@@ -13,6 +13,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * wrapper class for all stage data calculated
+ *
  * @param sessionD
  * @param hotspotNew
  * @param cities
@@ -20,7 +21,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
  * @param failedTransactions
  * @param orderDBH
  * @param sessionQ
- * @param failedLogins
  */
 case class StageData(
                       sessionD: DataFrame,
@@ -35,6 +35,7 @@ case class StageData(
 
 /**
  * Consolidation for stage files processing
+ *
  * @param sparkSession
  * @param settings
  */
@@ -47,7 +48,7 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
     implicit val processinDate = Date.valueOf(LocalDate.of(processingDateTime.getYear, processingDateTime.getMonthValue, processingDateTime.getDayOfMonth))
 
 
-    logger.info(s"Starting processing for date ${processinDate}")
+    logger.info(s"Starting processing for date ${processinDate} in the STAGE mode")
     logger.info(s"Initialising stage files")
     val stageData = new StageFilesData()
 
@@ -72,13 +73,11 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       Timestamp.valueOf(settings.appConfig.processing_date.get.toLocalDateTime.minusHours(2))
     ).getData
 
-    logger.info("Processing failed logins")
-    val flProc = new FailedLoginProcessor(
-      failedLogins = stageData.failedLogins,
-      citiesData = transactionData.cities,
-      hotspotData = stageData.hotspotData,
-      errorCodes = stageData.loginErrorCodes)
+    val failedLogins = new FailedLoginProcessor(failedLogins = stageData.faileLogins,
+      citiesData = stageData.cityData,
+      hotspotData = hotspotNew)
       .getData
+
 
     logger.info("Consolidating stage data")
     val resultData = StageData(
@@ -89,10 +88,10 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       failedTransactions = transactionData.failedTransactions,
       orderDBH = transactionData.orderDBH,
       sessionQ = sessionQ,
-      failedLogins = flProc
+      failedLogins = failedLogins
     )
-   logger.info("Writing stage files to disk")
-    new StageFilesWriter(resultData).writeData()
 
+    logger.info("Writing stage files to disk")
+    new StageFilesWriter(resultData).writeData()
   }
 }

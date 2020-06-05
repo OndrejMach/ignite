@@ -35,7 +35,7 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
       .withColumn("date", lit(settings.appConfig.processing_date.get.toLocalDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"))))
       .repartition(1)
       .write
-      .mode(SaveMode.Append)
+      .mode(SaveMode.Overwrite)
       .partitionBy("date")
       .parquet(filename)
     // handleTmp(tmpPath, filename)
@@ -91,14 +91,10 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
     )
 
     logger.info(s"Writing failed logins to ${settings.stageConfig.failed_logins.get}")
-    stageData.failedLogins
-      .select(StageStructures.FAILED_LOGINS_OUTPUT_COLUMNS.head, StageStructures.FAILED_LOGINS_OUTPUT_COLUMNS.tail: _*)
-      .withColumn("year", year($"login_datetime"))
-      .withColumn("month", month($"login_datetime"))
-      .withColumn("day", dayofmonth($"login_datetime"))
-      .write
-      .mode(SaveMode.Append)
-      .parquet(settings.stageConfig.failed_logins.get)
+    writeParitionedByProcessingDate(stageData.failedLogins
+      .select(StageStructures.FAILED_LOGINS_OUTPUT_COLUMNS.head, StageStructures.FAILED_LOGINS_OUTPUT_COLUMNS.tail: _*),
+      settings.stageConfig.failed_logins.get
+    )
 
 
     logger.info(s"Writing new hotspot data")

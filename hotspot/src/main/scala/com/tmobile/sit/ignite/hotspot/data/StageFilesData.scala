@@ -4,8 +4,9 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.common.data.CommonStructures
 import com.tmobile.sit.ignite.hotspot.config.Settings
-import com.tmobile.sit.ignite.hotspot.readers.TextReader
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.types.DateType
 
 /**
  * wrapper class for stage data needed for stage file calculation
@@ -77,15 +78,14 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
         s"(day = '${processingDatePlus1.getDayOfMonth}' or day = '${processingDate.getDayOfMonth}' or day = '${processingDateMinus1.getDayOfMonth}')")
   }
 
-  val failedLogins = {
-    logger.info(s"Reading failed login files ${settings.inputConfig.failed_login_filename.get}")
-    new TextReader(path = settings.inputConfig.failed_login_filename.get).read()//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/input/TMO.FAILEDLOGINS.DAY.*.csv")
-  }
   val loginErrorCodes =
     CSVReader(path = settings.stageConfig.login_errors.get,//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv",
       header = false, schema = Some(ErrorCodes.loginErrorStruct),
       delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
 
-
-
+  val faileLogins =
+    sparkSession
+    .read
+    .parquet(settings.stageConfig.failed_logins_input.get)
+    .filter(col("login_date") === lit(java.sql.Date.valueOf(processingDate.toLocalDate)).cast(DateType))
 }
