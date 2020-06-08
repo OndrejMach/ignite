@@ -8,11 +8,9 @@ import com.tmobile.sit.ignite.hotspot.processors._
  * Application object used for processing launch. based on the commandline parameters it executes either input, stage, output or wina reports calculation. Generally the order should be exchangeRates & input -> stage -> output -> wina_reports
  */
 object Application extends Logger {
-
-  implicit val sparkSession = getSparkSession()
-
   implicit val settings = new Setup().settings
 
+  implicit val sparkSession = getSparkSession(settings)
   //settings.printAllFields()
 
   def main(args: Array[String]): Unit = {

@@ -42,7 +42,9 @@ case class AppConfig(
                       processing_date: Option[Timestamp],
                       DES_encoder_path: Option[String],
                       wina_reports_day: Option[String],
-                      input_date: Option[Timestamp]
+                      input_date: Option[Timestamp],
+                      application_name: Option[String],
+                      master: Option[String]
                     ) extends GenericSettings {
   override def isAllDefined = {
     processing_date.isDefined && DES_encoder_path.isDefined && wina_reports_day.isDefined && input_date.isDefined
