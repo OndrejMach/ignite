@@ -125,10 +125,16 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
       .withColumn("country_code", upper($"country_code"))
       .withColumn("wlan_provider_code", $"agg_wlan_provider_code")
       .withColumn("valid_from", $"agg_wlan_session_date".cast(TimestampType))
+      .withColumn("wlan_hotspot_ident_code", when($"wlan_hotspot_ident_code".isNull,$"agg_wlan_hotspot_ident_code" ).otherwise($"wlan_hotspot_ident_code"))
       .na.fill("undefined", Seq("wlan_venue_type_code", "wlan_venue_code", "city_code"))
       .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
 
     logger.info("Getting the new WLanHotspot Data")
+
+    logger.info("PROVISIONED NULL HOTSPOTS: "+provisioned.filter("wlan_hotspot_ident_code is null").count())
+    logger.info("sessionDOut NULL HOTSPOTS: "+sessionDOut.filter("wlan_hotspot_ident_code is null").count())
+    logger.info("oldDataHotspot NULL HOTSPOTS: "+oldDataHotspot.filter("wlan_hotspot_ident_code is null").count())
+
     val ret = provisioned
       .union(sessionDOut)
       .union(oldDataHotspot)
