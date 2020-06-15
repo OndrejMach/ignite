@@ -53,14 +53,14 @@ dependencies {
     compile "org.scala-lang:scala-reflect:2.11.12"
     compile "org.scala-lang:scala-compiler:2.11.12"
 
-    compile 'org.apache.spark:spark-mllib_2.11:2.3.0'
-    compile 'org.apache.spark:spark-sql_2.11:2.3.0'
-    compile 'org.apache.spark:spark-streaming-flume-assembly_2.11:2.3.0'
-    compile 'org.apache.spark:spark-graphx_2.11:2.3.0'
-    compile 'org.apache.spark:spark-launcher_2.11:2.3.0'
-    compile 'org.apache.spark:spark-catalyst_2.11:2.3.0'
-    compile 'org.apache.spark:spark-streaming_2.11:2.3.0'
-    compile 'org.apache.spark:spark-core_2.11:2.3.0'
+    compile 'org.apache.spark:spark-mllib_2.11:2.4.5'
+    compile 'org.apache.spark:spark-sql_2.11:2.4.5'
+    compile 'org.apache.spark:spark-streaming-flume-assembly_2.11:2.4.5'
+    compile 'org.apache.spark:spark-graphx_2.11:2.4.5'
+    compile 'org.apache.spark:spark-launcher_2.11:2.4.5'
+    compile 'org.apache.spark:spark-catalyst_2.11:2.4.5'
+    compile 'org.apache.spark:spark-streaming_2.11:2.4.5'
+    compile 'org.apache.spark:spark-core_2.11:2.4.5'
 
     compile 'com.crealytics:spark-excel_2.11:0.13.1'
 
@@ -70,9 +70,9 @@ dependencies {
     compile 'com.github.fommil.netlib:all:1.1.2'
 
 
-    testCompile 'org.scalatest:scalatest_2.11:3.0.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
-    testCompile 'org.apache.spark:spark-hive_2.11:2.3.0'
+ //   testCompile 'org.scalatest:scalatest_2.11:3.0.0'
+ //   testCompile 'junit:junit:4.12'
+  //  testCompile 'com.holdenkarau:spark-testing-base_2.11:2.4.5_0.11.0'
+  //  testCompile 'org.apache.spark:spark-hive_2.11:2.4.5'
 
 }
