@@ -3,5 +3,4 @@ include 'ignite-common'
 include 'hotspot'
 include 'inflight'
 include 'rcse'
-include 'job-template'
-
+//include 'job-template'

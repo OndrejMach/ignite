@@ -46,9 +46,8 @@ dependencies {
     compile 'com.github.fommil.netlib:all:1.1.2'
 
 
-    testCompile 'org.scalatest:scalatest_2.11:3.0.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
-    testCompile 'org.apache.spark:spark-hive_2.11:2.3.0'
-
+    //testCompile 'org.scalatest:scalatest_2.11:3.0.0'
+   // testCompile 'junit:junit:4.12'
+   // testCompile 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
+   // testCompile 'org.apache.spark:spark-hive_2.11:2.3.0'
 }

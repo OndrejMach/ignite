@@ -1,27 +1,12 @@
-plugins {
-    id 'java'
-    id "com.digithurst.gradle.truststore" version "1.1.0"
-}
-
-apply plugin: 'scala'
 group 'ignite'
 version '1.0'
+apply plugin: 'scala'
 
 sourceCompatibility = 1.8
 
-repositories {
-    maven {
-        credentials {
-            username NEXUS3_USERNAME
-            password NEXUS3_PASSWORD
-        }
-        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
-    }
-
-}
 
 dependencies {
-    compile 'spark_common:spark_common:1.1'
     compile project(":ignite-common")
+    implementation 'com.tmobile.sit:spark_common:1.8'
 
 }
