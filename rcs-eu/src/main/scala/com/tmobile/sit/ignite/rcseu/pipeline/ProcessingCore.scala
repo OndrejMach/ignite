@@ -8,6 +8,7 @@ trait ProcessingCore {
 }
 
 class CoreLogicWithTransform extends ProcessingCore {
+  /*
   private def joinPeopleAndSalaryInfo(salaryInfo: DataFrame)(people: DataFrame) = {
     people.join(salaryInfo,Seq("id"), "inner")
   }
@@ -17,31 +18,15 @@ class CoreLogicWithTransform extends ProcessingCore {
       .agg(count("salary")
         .alias("count"))
   }
+ */
 
 
   override def process(preprocessedData: PreprocessedData): DataFrame = {
-    preprocessedData.peopleData
-      .transform(joinPeopleAndSalaryInfo(preprocessedData.salaryData))
-      .transform(aggregateOnSalary)
-  }
-}
 
-class CoreLogicWithChain extends ProcessingCore {
-  private def joinPeopleAndSalaryInfo(salaryInfo: DataFrame)(people: DataFrame) = {
-    people.join(salaryInfo,Seq("id"), "inner")
-  }
-  private def aggregateOnSalary(peopleWithSalary: DataFrame) : DataFrame = {
-    peopleWithSalary
-      .groupBy("salary", "address")
-      .agg(count("salary")
-        .alias("count"))
-  }
+    preprocessedData.activityData.show()
+    preprocessedData.provisionData.show()
+    preprocessedData.registerRequestsData.show()
 
-  override def process(preprocessedData: PreprocessedData): DataFrame = {
-
-    val pipeline = Function.chain(List(joinPeopleAndSalaryInfo(preprocessedData.salaryData)(_), aggregateOnSalary(_)))
-
-    preprocessedData.peopleData
-      .transform(pipeline)
+    preprocessedData.activityData
   }
 }

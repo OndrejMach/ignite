@@ -3,12 +3,12 @@ package com.tmobile.sit.ignite.rcseu
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.{CSVReader, Reader}
 import com.tmobile.sit.ignite.rcseu.config.Setup
-import com.tmobile.sit.ignite.rcseu.pipeline.{CoreLogicWithTransform, InputData, Pipeline, TemplateStage}
+import com.tmobile.sit.ignite.rcseu.pipeline.{CoreLogicWithTransform, InputData, Pipeline, Stage}
 
 case class Inputs(input1: Reader, input2: Reader, input3: Reader)
 
 
-object Processor extends App with Logger {
+object Application extends App with Logger {
   val conf = new Setup()
 
   if (!conf.settings.isAllDefined) {
@@ -23,11 +23,12 @@ object Processor extends App with Logger {
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
   val inputReaders = InputData(
-    people = new CSVReader(conf.settings.inputPathPeople.get, header = true),
-    salaryInfo = new CSVReader(conf.settings.inputPathSalaryInfo.get, header = true)
+    activity = new CSVReader(conf.settings.inputPath.get + "activity_*.csv", header = true, delimiter = "\t"),
+    provision = new CSVReader(conf.settings.inputPath.get + "provision_*.csv", header = true, delimiter = "\t"),
+    register_requests = new CSVReader(conf.settings.inputPath.get + "provision_*.csv", header = true, delimiter = "\t")
   )
 
-  val stage = new TemplateStage()
+  val stage = new Stage()
   val processingCore = new CoreLogicWithTransform()
 
   val pipeline = new Pipeline(inputReaders,stage,processingCore, conf.settings)

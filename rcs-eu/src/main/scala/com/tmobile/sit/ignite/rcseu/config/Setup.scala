@@ -10,9 +10,8 @@ class Setup(configFile: String = "job_template.conf")  {
 
     Settings(
       appName = Option(serviceConf.envOrElseConfig("configuration.appName.value"))
-      , inputPathPeople = Option(serviceConf.envOrElseConfig("configuration.inputPathPeople.value"))
-      , inputPathSalaryInfo = Option(serviceConf.envOrElseConfig("configuration.inputPathSalaryInfo.value"))
-      , outputPath = Option(serviceConf.envOrElseConfig("configuration.outputPath.value"))
-     )
+      , inputPath = Option(serviceConf.envOrElseConfig("configuration.inputPath.value"))
+      , outputPath = Option(serviceConf.envOrElseConfig("configuration.outputPath.value")
+      ))
   }
 }
