@@ -1,9 +1,7 @@
 package com.tmobile.sit.ignite.jobtemplate
 
-import com.tmobile.sit.common.readers.Reader
-import com.tmobile.sit.ignite.common.Lo
-import com.tmobile.sit.ignite.common.readers.Reader
-import com.tmobile.sit.ignite.common.writers.CSVWriter
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.common.readers.{CSVReader, Reader}
 import com.tmobile.sit.ignite.jobtemplate.config.Setup
 import com.tmobile.sit.ignite.jobtemplate.pipeline.{CoreLogicWithTransform, InputData, Pipeline, TemplateStage}
 
@@ -32,11 +30,7 @@ object Processor extends App with Logger {
   val stage = new TemplateStage()
   val processingCore = new CoreLogicWithTransform()
 
-
-  val resultWriter = new CSVWriter(conf.settings.outputPath.get, writeHeader = true)
-
-
-  val pipeline = new Pipeline(inputReaders,stage,processingCore,resultWriter)
+  val pipeline = new Pipeline(inputReaders,stage,processingCore, conf.settings)
 
   pipeline.run()
 

@@ -1,18 +1,18 @@
 package com.tmobile.sit.ignite.jobtemplate.pipeline
 
-import com.tmobile.sit.ignite.common.readers.Reader
-import com.tmobile.sit.ignite.common.writers.Writer
-import com.tmobile.sit.ignite.jobtemplate.Inputs
-import org.apache.spark.sql.DataFrame
+import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.jobtemplate.config.Settings
+import org.apache.spark.sql.SparkSession
 
-class Pipeline(inputData: InputData, stage: TemplateStageProcessing, core: ProcessingCore, writer: Writer) {
+class Pipeline(inputData: InputData, stage: TemplateStageProcessing, core: ProcessingCore, settings: Settings)(implicit sparkSession: SparkSession) {
   def run(): Unit = {
 
     val preprocessedData = PreprocessedData(stage.preprocessPeople(inputData.people.read()),stage.preprocessSalaryInfo(inputData.salaryInfo.read()) )
 
     val result = core.process(preprocessedData)
 
-    writer.writeData(result)
+
+    CSVWriter(data = result,settings.outputPath.get, writeHeader = true)
   }
 
 }
