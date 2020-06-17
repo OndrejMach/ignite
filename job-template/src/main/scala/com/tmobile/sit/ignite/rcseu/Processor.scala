@@ -1,9 +1,9 @@
-package com.tmobile.sit.ignite.jobtemplate
+package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.{CSVReader, Reader}
-import com.tmobile.sit.ignite.jobtemplate.config.Setup
-import com.tmobile.sit.ignite.jobtemplate.pipeline.{CoreLogicWithTransform, InputData, Pipeline, TemplateStage}
+import com.tmobile.sit.ignite.rcseu.config.Setup
+import com.tmobile.sit.ignite.rcseu.pipeline.{CoreLogicWithTransform, InputData, Pipeline, TemplateStage}
 
 case class Inputs(input1: Reader, input2: Reader, input3: Reader)
 

@@ -1,7 +1,7 @@
-package com.tmobile.sit.ignite.jobtemplate.pipeline
+package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.jobtemplate.config.Settings
+import com.tmobile.sit.ignite.rcseu.config.Settings
 import org.apache.spark.sql.SparkSession
 
 class Pipeline(inputData: InputData, stage: TemplateStageProcessing, core: ProcessingCore, settings: Settings)(implicit sparkSession: SparkSession) {
