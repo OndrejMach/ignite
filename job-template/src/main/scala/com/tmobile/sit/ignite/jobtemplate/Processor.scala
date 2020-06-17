@@ -1,12 +1,14 @@
 package com.tmobile.sit.ignite.jobtemplate
 
-import com.tmobile.sit.ignite.common.Logger
-import com.tmobile.sit.ignite.common.readers.{CSVReader, Reader}
+import com.tmobile.sit.common.readers.Reader
+import com.tmobile.sit.ignite.common.Lo
+import com.tmobile.sit.ignite.common.readers.Reader
 import com.tmobile.sit.ignite.common.writers.CSVWriter
 import com.tmobile.sit.ignite.jobtemplate.config.Setup
 import com.tmobile.sit.ignite.jobtemplate.pipeline.{CoreLogicWithTransform, InputData, Pipeline, TemplateStage}
 
 case class Inputs(input1: Reader, input2: Reader, input3: Reader)
+
 
 object Processor extends App with Logger {
   val conf = new Setup()
