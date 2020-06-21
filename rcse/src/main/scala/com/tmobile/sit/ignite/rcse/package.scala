@@ -6,15 +6,15 @@ package object rcse {
   def getSparkSession() = SparkSession.builder()
     //.appName("Test FWLog Reader")
     .master("local[*]")
-    .config("spark.executor.instances", "4")
+    .config("spark.executor.instances", "6")
     .config("spark.executor.memory", "4g")
-    .config("spark.executor.cores", "1")
+    .config("spark.executor.cores", "2")
     .config("spark.driver.memory", "10g")
     .config("spark.driver.maxResultSize", "10g")
     .config("spark.executor.JavaOptions", "-XX:+UseG1GC")
     .config("spark.executor.extraJavaOptions", "-XX:InitiatingHeapOccupancyPercent=35")
     .config("spark.dynamicAllocation.enabled", "true")
-    .config("spark.app.name", "inflight_processing")
+    .config("spark.app.name", "RCSE_processing")
     .getOrCreate()
 
 }

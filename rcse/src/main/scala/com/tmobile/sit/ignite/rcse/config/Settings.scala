@@ -6,5 +6,6 @@ case class Settings (
                       terminalPath: String,
                       tacPath: String,
                       maxDate: Date,
-                      outputPath: String
+                      outputPath: String,
+                    encoderPath: String
                     )
