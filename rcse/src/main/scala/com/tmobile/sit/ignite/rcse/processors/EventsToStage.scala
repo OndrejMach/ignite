@@ -6,7 +6,7 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
 import com.tmobile.sit.ignite.rcse.structures.Terminal
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType, TimestampType}
+import org.apache.spark.sql.types.{DateType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 
@@ -130,14 +130,11 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         $"rcse_client_vendor_sdesc" === $"client_vendor" && $"rcse_client_version_sdesc" === $"client_version", "left_outer")
       .drop("rcse_client_vendor_sdesc", "rcse_client_version_sdesc")
       .join(tacTerminal.select("tac_code", "terminal_id"), Seq("tac_code"), "left_outer")
-      .join(terminal.select("rcse_terminal_id", "terminal_id"), Seq("terminal_id"), "left_outer")
-      .withColumnRenamed("rcse_terminal_id", "rcse_terminal_id_terminal")
-      .join(terminal.select("tac_code", "rcse_terminal_id").sort().distinct(), Seq("tac_code"), "left_outer")
-      .withColumnRenamed("rcse_terminal_id", "rcse_terminal_id_tac")
-      .join(terminal.select("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc", "rcse_terminal_id"),
+      .join(terminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id"), Seq("terminal_id"), "left_outer")
+      .join(terminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct(), Seq("tac_code"), "left_outer")
+      .join(terminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")),
         $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
       .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")
-      .withColumnRenamed("rcse_terminal_id", "rcse_terminal_id_desc")
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
           .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
@@ -225,15 +222,186 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         .withColumn("rcse_terminal_vendor_sdesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_model_sdesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
+        .select(
+          lit(-1).as("rcse_terminal_id"),
+          $"tac_code",
+          $"terminal_id",
+          $"rcse_terminal_vendor_sdesc",
+          $"rcse_terminal_vendor_ldesc",
+          $"rcse_terminal_model_sdesc",
+          $"rcse_terminal_model_ldesc",
+          lit(load_date).as("modification_date")
+        )
+
+    //DIMENSION C
+    val maxTerminalSWId = terminalSW.select(max("rcse_terminal_sw_id")).collect()(0).getInt(0)
+    val dimensionC = withLookups
+      .filter($"rcse_terminal_sw_id".isNull)
       .select(
-        lit(-1).as("rcse_terminal_id"),
-        $"tac_code",
-        $"terminal_id",
-        $"rcse_terminal_vendor_sdesc",
-        $"rcse_terminal_vendor_ldesc",
-        $"rcse_terminal_model_sdesc",
-        $"rcse_terminal_model_ldesc",
+        lit(-1).as("rcse_terminal_sw_id"),
+        $"terminal_sw_version".as("rcse_terminal_sw_desc"),
         lit(load_date).as("modification_date")
+      )
+      .sort(desc("rcse_terminal_sw_desc"), desc("modification_date"))
+      .groupBy("rcse_terminal_sw_desc")
+      .agg(
+        first("rcse_terminal_sw_id").alias("rcse_terminal_sw_id"),
+        first("modification_date").alias("modification_date")
+      )
+      .withColumn("rcse_terminal_sw_id", monotonically_increasing_id() + lit(maxTerminalSWId))
+
+    //DIMENSION D
+    val dimensionD = withLookups
+      .select(
+        "date_id",
+        "natco_code",
+        "msisdn",
+        "imsi",
+        "rcse_event_type",
+        "rcse_subscribed_status_id",
+        "rcse_active_status_id",
+        "rcse_tc_status_id",
+        "tac_code",
+        "rcse_version",
+        "rcse_client_id",
+        "rcse_terminal_id",
+        "rcse_terminal_sw_id",
+        "terminal_id",
+        "client_vendor",
+        "client_version",
+        "terminal_vendor",
+        "terminal_model",
+        "terminal_sw_version"
+      )
+
+    val nonDM = regDER
+      .sort("msisdn", "rcse_event_type", "date_id")
+      .groupBy("msisdn", "rcse_event_type")
+      .agg(
+        first("date_id"),
+        first("imsi"),
+        first("rcse_subscribed_status_id"),
+        first("rcse_active_status_id"),
+        first("rcse_tc_status_id"),
+        first("imei"),
+        first("rcse_version"),
+        first("client_vendor"),
+        first("client_version"),
+        first("terminal_vendor"),
+        first("terminal_model"),
+        first("terminal_sw_version")
+      )
+      .withColumn("date_id", $"date_id".cast(DateType))
+      .withColumn("natco_code", lit("TMD"))
+      .withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
+      .withColumn("imsi", when($"imsi".isNotNull, encoder3des($"imsi")))
+      .withColumn("imei", when($"imei".isNotNull, $"imei".substr(0, 8)))
+      .withColumn("client_vendor", upper($"client_vendor"))
+      .withColumn("client_version", upper($"client_version"))
+      .withColumn("terminal_vendor", upper($"terminal_vendor"))
+      .withColumn("terminal_model", upper($"terminal_model"))
+      .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
+      .join(client.select("rcse_client_id", "rcse_client_vendor_sdesc", "rcse_client_version_sdesc"),
+        $"rcse_client_vendor_sdesc" === $"client_vendor" && $"rcse_client_version_sdesc" === $"client_version", "left_outer")
+      .drop("rcse_client_vendor_sdesc", "rcse_client_version_sdesc")
+      .join(tacTerminal.select("tac_code", "terminal_id"), Seq("tac_code"), "left_outer")
+      .join(terminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id"), Seq("terminal_id"), "left_outer")
+      .join(terminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct(), Seq("tac_code"), "left_outer")
+      .join(terminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")),
+        $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
+      .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")
+      .withColumn("rcse_terminal_id",
+        when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
+          .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
+            .otherwise($"rcse_terminal_id_desc")
+          )
+      )
+      .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
+      .join(terminalSW.select("rcse_terminal_sw_id", "rcse_terminal_sw_desc"), $"terminal_sw_version" === $"rcse_terminal_sw_desc", "left_outer")
+      .drop("rcse_terminal_sw_desc")
+      .select(
+        "date_id",
+        "natco_code",
+        "msisdn",
+        "imsi",
+        "rcse_event_type",
+        "rcse_subscribed_status_id",
+        "rcse_active_status_id",
+        "rcse_tc_status_id",
+        "tac_code",
+        "rcse_version",
+        "rcse_client_id",
+        "rcse_terminal_id",
+        "rcse_terminal_sw_id"
+      )
+
+    //Update terminal dimension
+    val cols = dimensionBOld.columns.map(i => i + "_old")
+    val newTerminal = terminal
+      .union(dimensionBNew)
+      .join(dimensionBOld.toDF(cols: _*), $"rcse_terminal_id" === $"rcse_terminal_id_old", "left_outer")
+      .withColumn("tac_code", when($"tac_code".isNull, $"tac_code_old"))
+      .withColumn("terminal_id", when($"terminal_id".isNull, $"terminal_id"))
+      .withColumn("rcse_terminal_vendor_sdesc", when($"rcse_terminal_vendor_sdesc".isNull, $"rcse_terminal_vendor_sdesc_old"))
+      .withColumn("rcse_terminal_vendor_ldesc", when($"rcse_terminal_vendor_ldesc".isNull, $"rcse_terminal_vendor_ldesc_old"))
+      .withColumn("rcse_terminal_model_sdesc", when($"rcse_terminal_model_sdesc".isNull, $"rcse_terminal_model_sdesc_old"))
+      .withColumn("rcse_terminal_model_ldesc", when($"rcse_terminal_model_ldesc".isNull, $"rcse_terminal_model_ldesc_old"))
+      .withColumn("modification_date", when($"modification_date".isNull, $"modification_date_old"))
+      .select(
+        "rcse_terminal_id",
+        "tac_code",
+        "terminal_id",
+        "rcse_terminal_vendor_sdesc",
+        "rcse_terminal_vendor_ldesc",
+        "rcse_terminal_model_sdesc",
+        "rcse_terminal_model_ldesc",
+        "modification_date"
+      )
+
+
+    val newClient = client.union(dimensionA)
+
+    //dimension output
+
+    val output =
+      dimensionD
+        .withColumn("date_id", $"date_id".cast(DateType))
+        .withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
+        .join(newClient.select("rcse_client_id_client", "rcse_client_vendor_sdesc", "rcse_client_version_sdesc"),
+          $"rcse_client_vendor_sdesc" === $"client_vendor" && $"rcse_client_version_sdesc" === $"client_version", "left_outer")
+        .drop("rcse_client_vendor_sdesc", "rcse_client_version_sdesc")
+        .withColumn("rcse_client_id", when($"rcse_client_id".isNull, $"rcse_client_id_client").otherwise($"rcse_client_id"))
+        .join(newTerminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id"), Seq("terminal_id"), "left_outer")
+        .join(newTerminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct(), Seq("tac_code"), "left_outer")
+        .join(newTerminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")),
+          $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
+        .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")
+        .withColumn("rcse_terminal_id",
+          when($"rcse_terminal_id".isNotNull, $"rcse_terminal_id")
+            .otherwise(
+              when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
+                .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
+                  .otherwise($"rcse_terminal_id_desc")
+                )
+            )
+        )
+        .join(terminalSW.select("rcse_terminal_sw_id_new", "rcse_terminal_sw_desc"), $"terminal_sw_version" === $"rcse_terminal_sw_desc", "left_outer")
+        .drop("rcse_terminal_sw_desc")
+        .withColumn("rcse_terminal_sw_id", when($"rcse_terminal_sw_id".isNull, $"rcse_terminal_sw_id_new").otherwise($"rcse_terminal_sw_id"))
+      .select(
+        "date_id",
+        "natco_code",
+        "msisdn",
+        "imsi",
+        "rcse_event_type",
+        "rcse_subscribed_status_id",
+        "rcse_active_status_id",
+        "rcse_tc_status_id",
+        "tac_code",
+        "rcse_version",
+        "rcse_client_id",
+        "rcse_terminal_id",
+        "rcse_terminal_sw_id"
       )
 
 
