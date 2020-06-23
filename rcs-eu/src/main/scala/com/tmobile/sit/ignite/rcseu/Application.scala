@@ -25,10 +25,11 @@ object Application extends App with Logger {
   val inputReaders = InputData(
     activity = new CSVReader(conf.settings.inputPath.get + "activity_*.csv", header = true, delimiter = "\t"),
     provision = new CSVReader(conf.settings.inputPath.get + "provision_*.csv", header = true, delimiter = "\t"),
-    register_requests = new CSVReader(conf.settings.inputPath.get + "provision_*.csv", header = true, delimiter = "\t")
+    register_requests = new CSVReader(conf.settings.inputPath.get + "register_request*.csv", header = true, delimiter = "\t")
   )
 
   val stage = new Stage()
+
   val processingCore = new CoreLogicWithTransform()
 
   val pipeline = new Pipeline(inputReaders,stage,processingCore, conf.settings)
