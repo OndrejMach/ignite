@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
+import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
 import com.tmobile.sit.ignite.rcse.structures.Terminal
 import org.apache.spark.sql.types.{DateType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
@@ -117,6 +118,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
     val encoder3des = udf(UDFs.encode)
 
+
     val withLookups = dmEventsOnly
       .withColumn("natco_code", lit("TMD"))
       .withColumn("imsi", when($"imsi".isNotNull, encoder3des(lit(settings.encoderPath), $"imsi")).otherwise($"imsi"))
@@ -126,15 +128,9 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .withColumn("client_vendor", upper($"terminal_vendor"))
       .withColumn("client_vendor", upper($"terminal_model"))
       .withColumn("client_vendor", upper($"terminal_sw_version"))
-      .join(client.select("rcse_client_id", "rcse_client_vendor_sdesc", "rcse_client_version_sdesc"),
-        $"rcse_client_vendor_sdesc" === $"client_vendor" && $"rcse_client_version_sdesc" === $"client_version", "left_outer")
-      .drop("rcse_client_vendor_sdesc", "rcse_client_version_sdesc")
-      .join(tacTerminal.select("tac_code", "terminal_id"), Seq("tac_code"), "left_outer")
-      .join(terminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id"), Seq("terminal_id"), "left_outer")
-      .join(terminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct(), Seq("tac_code"), "left_outer")
-      .join(terminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")),
-        $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
-      .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")
+      .clientLookup(client)
+      .tacLookup(tacTerminal)
+      .terminalLookup(terminal)
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
           .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
@@ -142,29 +138,14 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
-      .join(terminalSW.select("rcse_terminal_sw_id", "rcse_terminal_sw_desc"), $"terminal_sw_version" === $"rcse_terminal_sw_desc", "left_outer")
-      .drop("rcse_terminal_sw_desc")
+      .terminalSWLookup(terminalSW)
       .sort("msisdn", "date_id")
       .groupBy("msisdn")
       .agg(
         first("date_id"),
-        first("natco_code"),
-        first("imsi"),
-        first("rcse_event_type"),
-        first("rcse_subscribed_status_id"),
-        first("rcse_active_status_id"),
-        first("rcse_tc_status_id"),
-        first("tac_code"),
-        first("rcse_version"),
-        first("rcse_client_id"),
-        first("rcse_terminal_id"),
-        first("rcse_terminal_sw_id"),
-        first("terminal_id"),
-        first("client_vendor"),
-        first("client_version"),
-        first("terminal_vendor"),
-        first("terminal_model"),
-        first("terminal_sw_version")
+        (for (i <- EventsStage.withLookups if i != "msisdn" && i != "date_id") yield {
+          first(i)
+        }): _*
       ).persist()
 
     withLookups.show(false)
@@ -253,25 +234,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
     //DIMENSION D
     val dimensionD = withLookups
       .select(
-        "date_id",
-        "natco_code",
-        "msisdn",
-        "imsi",
-        "rcse_event_type",
-        "rcse_subscribed_status_id",
-        "rcse_active_status_id",
-        "rcse_tc_status_id",
-        "tac_code",
-        "rcse_version",
-        "rcse_client_id",
-        "rcse_terminal_id",
-        "rcse_terminal_sw_id",
-        "terminal_id",
-        "client_vendor",
-        "client_version",
-        "terminal_vendor",
-        "terminal_model",
-        "terminal_sw_version"
+        EventsStage.withLookups.head, EventsStage.withLookups.tail: _*
       )
 
     val nonDM = regDER
@@ -279,17 +242,9 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .groupBy("msisdn", "rcse_event_type")
       .agg(
         first("date_id"),
-        first("imsi"),
-        first("rcse_subscribed_status_id"),
-        first("rcse_active_status_id"),
-        first("rcse_tc_status_id"),
-        first("imei"),
-        first("rcse_version"),
-        first("client_vendor"),
-        first("client_version"),
-        first("terminal_vendor"),
-        first("terminal_model"),
-        first("terminal_sw_version")
+        (for (i <- EventsStage.input if i != "msisdn" && i != "rcse_event_type" && i != "date_id") yield {
+          first(i)
+        }): _*
       )
       .withColumn("date_id", $"date_id".cast(DateType))
       .withColumn("natco_code", lit("TMD"))
@@ -301,15 +256,9 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .withColumn("terminal_vendor", upper($"terminal_vendor"))
       .withColumn("terminal_model", upper($"terminal_model"))
       .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
-      .join(client.select("rcse_client_id", "rcse_client_vendor_sdesc", "rcse_client_version_sdesc"),
-        $"rcse_client_vendor_sdesc" === $"client_vendor" && $"rcse_client_version_sdesc" === $"client_version", "left_outer")
-      .drop("rcse_client_vendor_sdesc", "rcse_client_version_sdesc")
-      .join(tacTerminal.select("tac_code", "terminal_id"), Seq("tac_code"), "left_outer")
-      .join(terminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id"), Seq("terminal_id"), "left_outer")
-      .join(terminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct(), Seq("tac_code"), "left_outer")
-      .join(terminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")),
-        $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
-      .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")
+      .clientLookup(client)
+      .tacLookup(tacTerminal)
+      .terminalLookup(terminal)
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
           .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
@@ -317,22 +266,9 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
-      .join(terminalSW.select("rcse_terminal_sw_id", "rcse_terminal_sw_desc"), $"terminal_sw_version" === $"rcse_terminal_sw_desc", "left_outer")
-      .drop("rcse_terminal_sw_desc")
+      .terminalSWLookup(terminalSW)
       .select(
-        "date_id",
-        "natco_code",
-        "msisdn",
-        "imsi",
-        "rcse_event_type",
-        "rcse_subscribed_status_id",
-        "rcse_active_status_id",
-        "rcse_tc_status_id",
-        "tac_code",
-        "rcse_version",
-        "rcse_client_id",
-        "rcse_terminal_id",
-        "rcse_terminal_sw_id"
+        EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
       )
 
     //Update terminal dimension
@@ -367,15 +303,8 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       dimensionD
         .withColumn("date_id", $"date_id".cast(DateType))
         .withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
-        .join(newClient.select("rcse_client_id_client", "rcse_client_vendor_sdesc", "rcse_client_version_sdesc"),
-          $"rcse_client_vendor_sdesc" === $"client_vendor" && $"rcse_client_version_sdesc" === $"client_version", "left_outer")
-        .drop("rcse_client_vendor_sdesc", "rcse_client_version_sdesc")
-        .withColumn("rcse_client_id", when($"rcse_client_id".isNull, $"rcse_client_id_client").otherwise($"rcse_client_id"))
-        .join(newTerminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id"), Seq("terminal_id"), "left_outer")
-        .join(newTerminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct(), Seq("tac_code"), "left_outer")
-        .join(newTerminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")),
-          $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
-        .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")
+        .clientLookup(newClient)
+        .terminalLookup(newTerminal)
         .withColumn("rcse_terminal_id",
           when($"rcse_terminal_id".isNotNull, $"rcse_terminal_id")
             .otherwise(
@@ -385,26 +314,13 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
                 )
             )
         )
-        .join(terminalSW.select("rcse_terminal_sw_id_new", "rcse_terminal_sw_desc"), $"terminal_sw_version" === $"rcse_terminal_sw_desc", "left_outer")
-        .drop("rcse_terminal_sw_desc")
+        .terminalSWLookup(terminalSW)
         .withColumn("rcse_terminal_sw_id", when($"rcse_terminal_sw_id".isNull, $"rcse_terminal_sw_id_new").otherwise($"rcse_terminal_sw_id"))
-      .select(
-        "date_id",
-        "natco_code",
-        "msisdn",
-        "imsi",
-        "rcse_event_type",
-        "rcse_subscribed_status_id",
-        "rcse_active_status_id",
-        "rcse_tc_status_id",
-        "tac_code",
-        "rcse_version",
-        "rcse_client_id",
-        "rcse_terminal_id",
-        "rcse_terminal_sw_id"
-      )
+        .select(
+          EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
+        )
 
-
+    output.show(false)
   }
 
 }

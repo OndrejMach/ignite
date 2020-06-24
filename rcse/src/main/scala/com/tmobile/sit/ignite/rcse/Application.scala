@@ -1,10 +1,12 @@
 package com.tmobile.sit.ignite.rcse
 
-import java.sql.Date
-import java.time.LocalDate
+import java.sql.{Date, Timestamp}
+import java.time.{LocalDate, LocalDateTime}
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.{EventsToStage, TerminalDProcessor}
+import com.tmobile.sit.ignite.rcse.processors.{EventsToStage, TerminalDProcessor, ActiveUsersToStage}
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.DataFrame
 
 object Application extends App {
   implicit val sparkSession = getSparkSession()
@@ -17,5 +19,8 @@ object Application extends App {
     encoderPath = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out")
 
   //new TerminalDProcessor(settings).processData()
-  new EventsToStage(settings).processData()
+  //new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
+  new ActiveUsersToStage(Date.valueOf(LocalDate.now())).processData()
+
+
 }
