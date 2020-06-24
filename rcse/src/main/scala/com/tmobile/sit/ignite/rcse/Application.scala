@@ -19,8 +19,8 @@ object Application extends App {
     encoderPath = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out")
 
   //new TerminalDProcessor(settings).processData()
-  //new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
-  new ActiveUsersToStage(Date.valueOf(LocalDate.now())).processData()
+  new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
+  //new ActiveUsersToStage(Date.valueOf(LocalDate.now())).processData()
 
 
 }

@@ -121,7 +121,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
     val withLookups = dmEventsOnly
       .withColumn("natco_code", lit("TMD"))
-      .withColumn("imsi", when($"imsi".isNotNull, encoder3des(lit(settings.encoderPath), $"imsi")).otherwise($"imsi"))
+      //.withColumn("imsi", when($"imsi".isNotNull, encoder3des(lit(settings.encoderPath), $"imsi")).otherwise($"imsi"))
       .withColumn("tac_code", when($"imei".isNotNull && length($"imei") > lit(8), trim($"imei").substr(0, 8)).otherwise($"imei"))
       .withColumn("client_vendor", upper($"client_vendor"))
       .withColumn("client_vendor", upper($"client_version"))
@@ -144,16 +144,16 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .agg(
         first("date_id"),
         (for (i <- EventsStage.withLookups if i != "msisdn" && i != "date_id") yield {
-          first(i)
+          first(i).alias(i)
         }): _*
       ).persist()
 
-    withLookups.show(false)
+    //withLookups.show(false)
 
     //println(s"${withLookups.count()}, ${withLookups.distinct().count()}")
 
 
-    val clientMax = client.select(max("rcse_client_id")).collect()(0).getLong(0)
+    val clientMax = client.select(max("rcse_client_id")).collect()(0).getInt(0)
 
     // Dimension Client
     val dimensionA =
@@ -203,6 +203,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         .withColumn("rcse_terminal_vendor_sdesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_model_sdesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
+        .withColumn("rcse_terminal_model_ldesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
         .select(
           lit(-1).as("rcse_terminal_id"),
           $"tac_code",
@@ -243,13 +244,13 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .agg(
         first("date_id"),
         (for (i <- EventsStage.input if i != "msisdn" && i != "rcse_event_type" && i != "date_id") yield {
-          first(i)
+          first(i).alias(i)
         }): _*
       )
       .withColumn("date_id", $"date_id".cast(DateType))
       .withColumn("natco_code", lit("TMD"))
-      .withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
-      .withColumn("imsi", when($"imsi".isNotNull, encoder3des($"imsi")))
+      //.withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
+     // .withColumn("imsi", when($"imsi".isNotNull, encoder3des($"imsi")))
       .withColumn("imei", when($"imei".isNotNull, $"imei".substr(0, 8)))
       .withColumn("client_vendor", upper($"client_vendor"))
       .withColumn("client_version", upper($"client_version"))
@@ -302,7 +303,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
     val output =
       dimensionD
         .withColumn("date_id", $"date_id".cast(DateType))
-        .withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
+        //.withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
         .clientLookup(newClient)
         .terminalLookup(newTerminal)
         .withColumn("rcse_terminal_id",
