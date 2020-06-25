@@ -4,7 +4,7 @@ import java.sql.{Date, Timestamp}
 import java.time.{LocalDate, LocalDateTime}
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.{EventsToStage, TerminalDProcessor, ActiveUsersToStage}
+import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, ConfToStage, EventsToStage, TerminalDProcessor}
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.DataFrame
 
@@ -19,8 +19,9 @@ object Application extends App {
     encoderPath = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out")
 
   //new TerminalDProcessor(settings).processData()
-  new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
+  //new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
   //new ActiveUsersToStage(Date.valueOf(LocalDate.now())).processData()
+  new ConfToStage(settings, max_Date = Date.valueOf(LocalDate.of(2072,12,31)), Date.valueOf(LocalDate.now())).processData()
 
 
 }

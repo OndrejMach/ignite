@@ -87,8 +87,14 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     val preprocessedTac = tacTerminal
       .filter($"valid_to" >= lit(max_Date) && $"id".isNotNull)
-      .terminalLookup(terminal)
-      .select($"tac_code", $"id".as("terminal_id"), $"rcse_terminal_id_tac", $"rcse_terminal_id_terminal".as("rcse_terminal_id_term"))
+      .join(terminal.select("tac_code","rcse_terminal_id"), Seq("tac_code"), "left_outer")
+      .withColumn("rcse_terminal_id_tac", $"rcse_terminal_id")
+      .drop("rcse_terminal_id")
+      .join(terminal.select($"rcse_terminal_id", $"terminal_id".as("terminal_id_terminal")),$"terminal_id_terminal" === $"id", "left_outer")
+      .withColumn("rcse_terminal_id_term", $"rcse_terminal_id")
+      .drop("rcse_terminal_id", "terminal_id_terminal")
+      .select($"tac_code", $"id".as("terminal_id"), $"rcse_terminal_id_tac", $"rcse_terminal_id_term".as("rcse_terminal_id_term"))
+
 
     val preprocessedEvents = events
       .filter($"rcse_subscribed_status_id" === lit(1) && $"rcse_active_status_id" === lit(1))
@@ -96,6 +102,10 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
       .withColumn("rcse_curr_terminal_id", when($"rcse_terminal_id_term".isNotNull, $"rcse_terminal_id_term").otherwise($"rcse_terminal_id"))
       .withColumn("rcse_curr_terminal_sw_id", $"rcse_terminal_sw_id")
       .withColumn("modification_date", $"date_id")
+      .withColumn("rcse_init_client_id", $"rcse_client_id")
+      .withColumn("rcse_init_terminal_id", $"rcse_terminal_id")
+      .withColumn("rcse_init_terminal_sw_id", $"rcse_terminal_sw_id")
+      .withColumn("rcse_curr_client_id", $"rcse_client_id")
       .select(
         "date_id", "natco_code",
         "msisdn", "rcse_tc_status_id",
@@ -115,6 +125,9 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
           $"rcse_curr_terminal_id".isNull))
       .withColumn("rcse_curr_terminal_id", $"term")
       .withColumn("modification_date", lit(processing_date))
+      .select(
+      outColumns.head, outColumns.tail :_*
+    )
 
 
     val confColumns = confData.columns.map(_+"_conf")
@@ -138,6 +151,9 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
       .select(
         outColumns.head, outColumns.tail :_*
       )
+
+    joined.printSchema()
+    conf2.printSchema()
 
     val tmpUpdate = joined
       .union(conf2)
@@ -164,6 +180,8 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
 
     val result = updJoin.union(umatched)
+
+    result.show(false)
 
   }
 
