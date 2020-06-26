@@ -6,7 +6,7 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.structures.Terminal
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{lit, when}
+import org.apache.spark.sql.functions.{lit, when, first, trim,length, col}
 import org.apache.spark.sql.types.{DateType, IntegerType, StringType, StructField, StructType, TimestampType}
 
 class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(implicit sparkSession: SparkSession) extends Processor {
@@ -20,26 +20,6 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
       "rcse_curr_client_id", "rcse_curr_terminal_id",
       "rcse_curr_terminal_sw_id", "modification_date")
 
-    val eventsSchema = StructType(
-      Seq(
-        StructField("date_id", DateType, true),
-        StructField("natco_code", StringType, true),
-        StructField("msisdn", StringType, true),
-        StructField("imsi", StringType, true),
-        StructField("rcse_event_type", StringType, true),
-        StructField("rcse_subscribed_status_id", IntegerType, true),
-        StructField("rcse_active_status_id", IntegerType, true),
-        StructField("rcse_tc_status_id", IntegerType, true),
-        StructField("tac_code", StringType, true),
-        StructField("rcse_version", StringType, true),
-        StructField("rcse_client_id", IntegerType, true),
-        StructField("rcse_terminal_id", IntegerType, true),
-        StructField("rcse_terminal_sw_id", IntegerType, true),
-        StructField("entry_id", IntegerType, true),
-        StructField("load_date", TimestampType, true)
-
-      )
-    )
     val confFileSchema = StructType(
       Seq(
         StructField("date_id", DateType, true),
@@ -64,7 +44,10 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
       header = false,
       schema = Some(Terminal.tac_struct),
       delimiter = "|"
-    ).read()
+    )
+      .read()
+      .filter($"valid_to" >= lit(MAX_DATE))
+      .withColumn("terminal_id", $"id")
 
     val terminal = CSVReader(path = settings.terminalPath,
       header = false,
@@ -74,7 +57,7 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     val events = CSVReader(path = settings.terminalPath,
       header = false,
-      schema = Some(eventsSchema),
+      schema = Some(Terminal.terminalSchema),
       delimiter = "|")
       .read()
 
@@ -125,6 +108,12 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
           $"rcse_curr_terminal_id".isNull))
       .withColumn("rcse_curr_terminal_id", $"term")
       .withColumn("modification_date", lit(processing_date))
+      .sort("msisdn")
+      .groupBy("msisdn")
+      .agg(
+        first(outColumns.head).alias(outColumns.head),
+        outColumns.tail.filter(_ != "msisdn").map(i => first(i).alias(i)) :_*
+      )
       .select(
       outColumns.head, outColumns.tail :_*
     )
@@ -132,13 +121,24 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     val confColumns = confData.columns.map(_+"_conf")
     val joinedEventsConfData = preprocessedEvents
-      .join(confData.toDF(confColumns :_*).withColumn("e", lit(1)), $"msisdn" === $"msisdn_conf", "left")
+      .join(
+        confData
+          .toDF(confColumns :_*)
+          .withColumn("e", lit(1)),
+        $"msisdn" === $"msisdn_conf",
+        "left"
+      )
 
     val umatched = joinedEventsConfData
       .filter($"e".isNull)
       .select(
-        outColumns.head, outColumns.tail :_*
+        outColumns.map(i => col(i+"_conf").as(i)) :_*
       )
+      .filter($"msisdn".isNotNull)
+      .persist()
+
+    logger.info(s"Unmatched count: ${umatched.count()}")
+
 
     val joined = joinedEventsConfData
       .filter($"e".isNotNull)
@@ -152,8 +152,6 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
         outColumns.head, outColumns.tail :_*
       )
 
-    joined.printSchema()
-    conf2.printSchema()
 
     val tmpUpdate = joined
       .union(conf2)
@@ -166,14 +164,30 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     .withColumn("date_id", when($"date_id_conf_update".isNotNull, $"date_id_conf_update").otherwise($"date_id"))
       .withColumn("msisdn", when($"msisdn_conf_update".isNotNull, $"msisdn_conf_update").otherwise($"msisdn"))
-      .withColumn("rcse_tc_status_id", when($"rcse_tc_status_id_conf_update".isNotNull, $"rcse_tc_status_id_conf_update").otherwise($"rcse_tc_status_id"))
-      .withColumn("rcse_init_client_id", when($"rcse_init_client_id_conf_update".isNotNull, $"rcse_init_client_id_conf_update").otherwise($"rcse_init_client_id"))
-      .withColumn("rcse_init_terminal_id", when($"rcse_init_terminal_id_conf_update".isNotNull, $"rcse_init_terminal_id_conf_update").otherwise($"rcse_init_terminal_id"))
-      .withColumn("rcse_init_terminal_sw_id", when($"rcse_init_terminal_sw_id_conf_update".isNotNull, $"rcse_init_terminal_sw_id_conf_update").otherwise($"rcse_init_terminal_sw_id"))
-      .withColumn("rcse_curr_client_id", when($"rcse_curr_client_id_conf_update".isNotNull, $"rcse_curr_client_id_conf_update").otherwise($"rcse_curr_client_id"))
-      .withColumn("rcse_curr_terminal_id", when($"rcse_curr_terminal_id_conf_update".isNotNull, $"rcse_curr_terminal_id_conf_update").otherwise($"rcse_curr_terminal_id"))
-      .withColumn("rcse_curr_terminal_sw_id", when($"rcse_curr_terminal_sw_id_conf_update".isNotNull, $"rcse_curr_terminal_sw_id_conf_update").otherwise($"rcse_curr_terminal_sw_id"))
-      .withColumn("modification_date", when($"modification_date_conf_update".isNotNull, $"modification_date_conf_update").otherwise($"modification_date"))
+      .withColumn("rcse_tc_status_id",
+        when($"rcse_tc_status_id_conf_update".isNotNull, $"rcse_tc_status_id_conf_update")
+          .otherwise($"rcse_tc_status_id"))
+      .withColumn("rcse_init_client_id",
+        when($"rcse_init_client_id_conf_update".isNotNull, $"rcse_init_client_id_conf_update")
+          .otherwise($"rcse_init_client_id"))
+      .withColumn("rcse_init_terminal_id",
+        when($"rcse_init_terminal_id_conf_update".isNotNull, $"rcse_init_terminal_id_conf_update")
+          .otherwise($"rcse_init_terminal_id"))
+      .withColumn("rcse_init_terminal_sw_id",
+        when($"rcse_init_terminal_sw_id_conf_update".isNotNull, $"rcse_init_terminal_sw_id_conf_update")
+          .otherwise($"rcse_init_terminal_sw_id"))
+      .withColumn("rcse_curr_client_id",
+        when($"rcse_curr_client_id_conf_update".isNotNull, $"rcse_curr_client_id_conf_update")
+          .otherwise($"rcse_curr_client_id"))
+      .withColumn("rcse_curr_terminal_id",
+        when($"rcse_curr_terminal_id_conf_update".isNotNull, $"rcse_curr_terminal_id_conf_update")
+          .otherwise($"rcse_curr_terminal_id"))
+      .withColumn("rcse_curr_terminal_sw_id",
+        when($"rcse_curr_terminal_sw_id_conf_update".isNotNull, $"rcse_curr_terminal_sw_id_conf_update")
+          .otherwise($"rcse_curr_terminal_sw_id"))
+      .withColumn("modification_date",
+        when($"modification_date_conf_update".isNotNull, $"modification_date_conf_update")
+          .otherwise($"modification_date"))
       .select(
         outColumns.head, outColumns.tail :_*
       )
@@ -181,8 +195,7 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     val result = updJoin.union(umatched)
 
-    result.show(false)
-
+    logger.info(s"Conf file row count: ${result.count()}")
   }
 
 

@@ -5,8 +5,9 @@ import java.sql.Timestamp
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
+import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
-import com.tmobile.sit.ignite.rcse.structures.Terminal
+import com.tmobile.sit.ignite.rcse.structures.{CommonStructures, Events, Terminal}
 import org.apache.spark.sql.types.{DateType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
@@ -27,112 +28,14 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
     // input file reading
     import sparkSession.implicits._
 
-    val inputSchema = StructType(
-      Seq(
-        StructField("date_id", TimestampType, true),
-        StructField("msisdn", LongType, true),
-        StructField("imsi", StringType, true),
-        StructField("rcse_event_type", StringType, true),
-        StructField("rcse_subscribed_status_id", IntegerType, true),
-        StructField("rcse_active_status_id", IntegerType, true),
-        StructField("rcse_tc_status_id", IntegerType, true),
-        StructField("imei", StringType, true),
-        StructField("rcse_version", StringType, true),
-        StructField("client_vendor", StringType, true),
-        StructField("client_version", StringType, true),
-        StructField("terminal_vendor", StringType, true),
-        StructField("terminal_model", StringType, true),
-        StructField("terminal_sw_version", StringType, true)
-      )
-    )
+    val inputData = new EventsInputData(settings)
 
-    val clientSchema = StructType(
-      Seq(
-        StructField("rcse_client_id", IntegerType, true),
-        StructField("rcse_client_vendor_sdesc", StringType, true),
-        StructField("rcse_client_vendor_ldesc", StringType, true),
-        StructField("rcse_client_version_sdesc", StringType, true),
-        StructField("rcse_client_version_ldesc", StringType, true),
-        StructField("modification_date", TimestampType, true),
-        StructField("entry_id", IntegerType, true),
-        StructField("load_date", TimestampType, true)
-      )
-    )
+    val onlyMSISDNS = inputData.dataInput.select("msisdn")
 
-    val terminalSWSchema = StructType(
-      Seq(
-        StructField("rcse_terminal_sw_id", IntegerType, true),
-        StructField("rcse_terminal_sw_desc", StringType, true),
-        StructField("modification_date", TimestampType, true),
-        StructField("entry_id", IntegerType, true),
-        StructField("load_date", TimestampType, true)
+    val dmEventsOnly = inputData.dataInput.filter($"rcse_event_type" === lit("DM"))
+    val regDER = inputData.dataInput.filter($"rcse_event_type" =!= lit("DM"))
 
-      )
-    )
-
-    val des3Schema = StructType(
-      Seq(
-        StructField("des", StringType, false),
-        StructField("number", StringType, false)
-      )
-    )
-
-
-    val data = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/input/TMD_*",
-      header = false,
-      schema = Some(inputSchema),
-      timestampFormat = "yyyyMMddHHmmss",
-      delimiter = "|"
-    ) read()
-
-
-    val client = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_d_rcse_client.csv",
-      header = false,
-      schema = Some(clientSchema),
-      timestampFormat = "yyyy-MM-DD HH:mm:ss",
-      delimiter = "|"
-    ).read()
-
-    val tacTerminal = CSVReader(
-      path = settings.tacPath,
-      header = false,
-      schema = Some(Terminal.tac_struct),
-      delimiter = "|"
-    ).read()
-
-    val terminal = CSVReader(path = settings.terminalPath,
-      header = false,
-      schema = Some(Terminal.terminal_d_struct),
-      delimiter = "|")
-      .read()
-
-
-    val terminalSW = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_d_rcse_terminal_sw.csv",
-      header = false,
-      schema = Some(terminalSWSchema),
-      delimiter = "|",
-      timestampFormat = "yyyy-MM-DD HH:mm:ss")
-      .read()
-
-    val imsi3DesLookup = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/input/imsis_encoded.csv",
-      header = false,
-      schema = Some(des3Schema),
-      delimiter = ",")
-      .read()
-
-    val msisdn3DesLookup = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/input/msisdns_encoded.csv",
-      header = false,
-      schema = Some(des3Schema),
-      delimiter = ",")
-      .read()
-
-    val onlyMSISDNS = data.select("msisdn")
-
-    val dmEventsOnly = data.filter($"rcse_event_type" === lit("DM"))
-    val regDER = data.filter($"rcse_event_type" =!= lit("DM"))
-
-    println(s"DM: ${dmEventsOnly.count()} REGDER: ${regDER.count()}")
+    //println(s"DM: ${dmEventsOnly.count()} REGDER: ${regDER.count()}")
 
     val encoder3des = udf(UDFs.encode)
 
@@ -140,18 +43,19 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
     val withLookups = dmEventsOnly
       .withColumn("natco_code", lit("TMD"))
       //.withColumn("imsi", when($"imsi".isNotNull, encoder3des(lit(settings.encoderPath), $"imsi")).otherwise($"imsi"))
-      .join(imsi3DesLookup, $"imsi" === $"number", "left_outer")
+      .join(inputData.imsi3DesLookup, $"imsi" === $"number", "left_outer")
       .withColumn("imsi", $"des")
+      .na.fill("#", Seq("msisdn"))
       .drop("des", "number")
       .withColumn("tac_code", when($"imei".isNotNull && length($"imei") > lit(8), trim($"imei").substr(0, 8)).otherwise($"imei"))
       .withColumn("client_vendor", upper($"client_vendor"))
-      .withColumn("client_vendor", upper($"client_version"))
-      .withColumn("client_vendor", upper($"terminal_vendor"))
-      .withColumn("client_vendor", upper($"terminal_model"))
-      .withColumn("client_vendor", upper($"terminal_sw_version"))
-      .clientLookup(client)
-      .tacLookup(tacTerminal)
-      .terminalLookup(terminal)
+      .withColumn("client_version", upper($"client_version"))
+      .withColumn("terminal_vendor", upper($"terminal_vendor"))
+      .withColumn("terminal_model", upper($"terminal_model"))
+      .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
+      .tacLookup(inputData.tacTerminal)
+      .clientLookup(inputData.client)
+      .terminalLookup(inputData.terminal)
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
           .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
@@ -159,7 +63,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
-      .terminalSWLookup(terminalSW)
+      .terminalSWLookup(inputData.terminalSW)
       .sort("msisdn", "date_id")
       .groupBy("msisdn")
       .agg(
@@ -169,17 +73,19 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         }): _*
       ).persist()
 
-    //withLookups.show(false)
+    logger.info(s"Input files enriched, row count is: ${withLookups.count()}")
+
+    //withLookups.filter("rcse_terminal_id is null").show(false)
 
     //println(s"${withLookups.count()}, ${withLookups.distinct().count()}")
 
 
-    val clientMax = client.select(max("rcse_client_id")).collect()(0).getInt(0)
+    val clientMax = inputData.client.select(max("rcse_client_id")).collect()(0).getInt(0)
 
     // Dimension Client
     val dimensionA =
       withLookups
-        .filter($"rcse_client_id".isNotNull)
+        .filter($"rcse_client_id".isNull)
         .select(
           lit(-1).as("rcse_client_id"),
           $"client_vendor".as("rcse_client_vendor_sdesc"),
@@ -197,12 +103,14 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         )
         .withColumn("rcse_client_id", monotonically_increasing_id() + lit(clientMax))
 
+    logger.info(s"Updating client dimension, count: ${dimensionA.count()}")
+
     //Dimension terminal
 
     val dimensionBOld =
       withLookups
         .filter($"rcse_terminal_id".isNotNull)
-        .join(terminal.select($"tac_code".as("tac_code_lkp"), $"terminal_id".as("terminal_id_lkp"), $"rcse_terminal_id"), Seq("rcse_terminal_id"), "left_outer").cache()
+        .join(inputData.terminal.select($"tac_code".as("tac_code_lkp"), $"terminal_id".as("terminal_id_lkp"), $"rcse_terminal_id"), Seq("rcse_terminal_id"), "left_outer").cache()
         .filter($"tac_code_lkp".isNull && $"terminal_id_lkp".isNull && $"tac_code".isNotNull)
         .select(
           $"rcse_terminal_id",
@@ -219,7 +127,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       withLookups
         .filter($"rcse_terminal_id".isNull)
         .withColumn("rcse_terminal_id", lit(-1))
-        .join(tacTerminal.select("manufacturer", "model", "terminal_id"), Seq("terminal_id"), "left_outer")
+        .join(inputData.tacTerminal.select("manufacturer", "model", "terminal_id"), Seq("terminal_id"), "left_outer")
         .withColumn("tac_code", when($"terminal_id".isNull, $"tac_code"))
         .withColumn("rcse_terminal_vendor_sdesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
@@ -236,8 +144,10 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
           lit(load_date).as("modification_date")
         )
 
+    logger.info(s"Updating terminal dimension, new rows: ${dimensionBNew.count()}")
+
     //DIMENSION C
-    val maxTerminalSWId = terminalSW.select(max("rcse_terminal_sw_id")).collect()(0).getInt(0)
+    val maxTerminalSWId = inputData.terminalSW.select(max("rcse_terminal_sw_id")).collect()(0).getInt(0)
     val dimensionC = withLookups
       .filter($"rcse_terminal_sw_id".isNull)
       .select(
@@ -252,6 +162,8 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         first("modification_date").alias("modification_date")
       )
       .withColumn("rcse_terminal_sw_id", monotonically_increasing_id() + lit(maxTerminalSWId))
+
+    logger.info(s"Updating dimension Terminal SW version, new rows count: ${dimensionC.count()}")
 
     //DIMENSION D
     val dimensionD = withLookups
@@ -272,11 +184,11 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .withColumn("date_id", $"date_id".cast(DateType))
       .withColumn("natco_code", lit("TMD"))
       .withColumn("msisdn", when($"msisdn".isNotNull, $"msisdn").otherwise(lit("#")))
-      .join(msisdn3DesLookup, $"msisdn" === $"number", "left_outer")
+      .join(inputData.msisdn3DesLookup, $"msisdn" === $"number", "left_outer")
       .withColumn("msisdn", $"des")
       .drop("des", "number")
       // .withColumn("imsi", when($"imsi".isNotNull, encoder3des($"imsi")))
-      .join(imsi3DesLookup, $"imsi" === $"number", "left_outer")
+      .join(inputData.imsi3DesLookup, $"imsi" === $"number", "left_outer")
       .withColumn("imsi", $"des")
       .drop("des", "number")
       .withColumn("imei", when($"imei".isNotNull, $"imei".substr(0, 8)))
@@ -285,9 +197,9 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .withColumn("terminal_vendor", upper($"terminal_vendor"))
       .withColumn("terminal_model", upper($"terminal_model"))
       .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
-      .clientLookup(client)
-      .tacLookup(tacTerminal)
-      .terminalLookup(terminal)
+      .clientLookup(inputData.client)
+      .tacLookup(inputData.tacTerminal)
+      .terminalLookup(inputData.terminal)
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
           .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
@@ -295,15 +207,17 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
-      .terminalSWLookup(terminalSW)
+      .terminalSWLookup(inputData.terminalSW)
       .select(
         EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
       )
 
+    logger.info(s"Getting REG,DER-events file, row count: ${nonDM.count()}")
+
     //Update terminal dimension
     val cols = dimensionBOld.columns.map(i => i + "_old")
 
-    val newTerminal = terminal
+    val newTerminal = inputData.terminal
       .drop("entry_id", "load_date")
       .union(dimensionBNew)
       .join(dimensionBOld.toDF(cols: _*), $"rcse_terminal_id" === $"rcse_terminal_id_old", "left_outer")
@@ -326,23 +240,24 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       )
 
 
-    client.printSchema()
-    dimensionA.printSchema()
+    logger.info(s"Writing new terminal file, row count: ${newTerminal.count()}")
 
-    val newClient = client
+    val newClient = inputData.client
       .drop("entry_id", "load_date")
       .union(dimensionA)
 
+
+
     //dimension output
 
-    val output =
+    val outputPrep =
       dimensionD
         .withColumn("date_id", $"date_id".cast(DateType))
         //.withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
-        .join(msisdn3DesLookup, $"msisdn" === $"number", "left_outer")
+        .join(inputData.msisdn3DesLookup, $"msisdn" === $"number", "left_outer")
         .withColumn("msisdn", $"des")
         .drop("des", "number")
-      .withColumnRenamed("rcse_client_id", "rcse_client_id_old")
+        .withColumnRenamed("rcse_client_id", "rcse_client_id_old")
         .clientLookup(newClient)
         .withColumn("rcse_client_id", when($"rcse_client_id_old".isNull, $"rcse_client_id").otherwise($"rcse_client_id_old"))
         .terminalLookup(newTerminal)
@@ -355,14 +270,22 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
                 )
             )
         )
-        .withColumnRenamed("rcse_terminal_sw_id", "rcse_terminal_sw_id_old")
-        .terminalSWLookup(terminalSW)
-        .withColumn("rcse_terminal_sw_id", when($"rcse_terminal_sw_id_old".isNull, $"rcse_terminal_sw_id").otherwise($"rcse_terminal_sw_id_old"))
-        .select(
-          EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
-        )
 
-    output.show(false)
+
+    val outputDone = outputPrep.filter($"rcse_terminal_sw_id".isNotNull)
+    val output = outputPrep
+      .filter($"rcse_terminal_sw_id".isNull)
+      .drop("rcse_terminal_sw_id")
+      .terminalSWLookup(inputData.terminalSW.drop("entry_id", "load_date").union(dimensionC))
+      .union(outputDone)
+      .select(
+        EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
+      )
+
+
+    logger.info(s"Getting new DM file, row count ${output.count()}")
+    output.select("date_id").distinct().show(false)
+
   }
 
 }
