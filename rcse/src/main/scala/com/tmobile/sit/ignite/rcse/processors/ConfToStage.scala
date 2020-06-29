@@ -4,10 +4,9 @@ import java.sql.Date
 
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.structures.Terminal
+import com.tmobile.sit.ignite.rcse.structures.{Conf, Terminal}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{lit, when, first, trim,length, col}
-import org.apache.spark.sql.types.{DateType, IntegerType, StringType, StructField, StructType, TimestampType}
+import org.apache.spark.sql.functions.{col, first, length, lit, trim, when}
 
 class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(implicit sparkSession: SparkSession) extends Processor {
 
@@ -19,24 +18,6 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
       "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id",
       "rcse_curr_client_id", "rcse_curr_terminal_id",
       "rcse_curr_terminal_sw_id", "modification_date")
-
-    val confFileSchema = StructType(
-      Seq(
-        StructField("date_id", DateType, true),
-        StructField("natco_code", StringType, true),
-        StructField("msisdn", StringType, true),
-        StructField("rcse_tc_status_id", IntegerType, true),
-        StructField("rcse_init_client_id", IntegerType, true),
-        StructField("rcse_init_terminal_id", IntegerType, true),
-        StructField("rcse_init_terminal_sw_id", IntegerType, true),
-        StructField("rcse_curr_client_id", IntegerType, true),
-        StructField("rcse_curr_terminal_id", IntegerType, true),
-        StructField("rcse_curr_terminal_sw_id", IntegerType, true),
-        StructField("modification_date", DateType, true),
-        StructField("entry_id", IntegerType, true),
-        StructField("load_date", TimestampType, true)
-      )
-    )
 
 
     val tacTerminal = CSVReader(
@@ -63,7 +44,7 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     val confData = CSVReader(path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_conf.TMD.csv",
       header = false,
-      schema = Some(confFileSchema),
+      schema = Some(Conf.confFileSchema),
       delimiter = "|"
     ).read()
 

@@ -14,10 +14,16 @@ package object processors {
 
     import sparkSession.implicits._
 
-    def terminalLookup(terminal: DataFrame): DataFrame = {
+    def terminalSimpleLookup(terminal: DataFrame) : DataFrame= {
       df
         .join(broadcast(terminal.select($"rcse_terminal_id".as("rcse_terminal_id_terminal"), $"terminal_id").distinct()), Seq("terminal_id"), "left_outer")
         .join(broadcast(terminal.select($"tac_code", $"rcse_terminal_id".as("rcse_terminal_id_tac")).sort().distinct()), Seq("tac_code"), "left_outer")
+
+    }
+
+    def terminalLookup(terminal: DataFrame): DataFrame = {
+      df
+        .terminalSimpleLookup(terminal)
         .join(broadcast(terminal.select($"rcse_terminal_vendor_sdesc", $"rcse_terminal_model_sdesc", $"rcse_terminal_id".as("rcse_terminal_id_desc")).distinct()),
           $"terminal_vendor" === $"rcse_terminal_vendor_sdesc" && $"rcse_terminal_model_sdesc" === $"terminal_model", "left_outer")
         .drop("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc")

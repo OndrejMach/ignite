@@ -25,7 +25,7 @@ class EventsInputData(settings: Settings)(implicit sparkSession: SparkSession) {
     delimiter = "|"
   ).read()
 
-  val tacTerminal = CSVReader(
+  val tac = CSVReader(
     path = settings.tacPath,
     header = false,
     schema = Some(Terminal.tac_struct),

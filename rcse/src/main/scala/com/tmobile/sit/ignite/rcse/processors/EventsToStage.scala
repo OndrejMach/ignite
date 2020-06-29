@@ -53,7 +53,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .withColumn("terminal_vendor", upper($"terminal_vendor"))
       .withColumn("terminal_model", upper($"terminal_model"))
       .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
-      .tacLookup(inputData.tacTerminal)
+      .tacLookup(inputData.tac)
       .clientLookup(inputData.client)
       .terminalLookup(inputData.terminal)
       .withColumn("rcse_terminal_id",
@@ -127,7 +127,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       withLookups
         .filter($"rcse_terminal_id".isNull)
         .withColumn("rcse_terminal_id", lit(-1))
-        .join(inputData.tacTerminal.select("manufacturer", "model", "terminal_id"), Seq("terminal_id"), "left_outer")
+        .join(inputData.tac.select("manufacturer", "model", "terminal_id"), Seq("terminal_id"), "left_outer")
         .withColumn("tac_code", when($"terminal_id".isNull, $"tac_code"))
         .withColumn("rcse_terminal_vendor_sdesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
@@ -198,7 +198,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .withColumn("terminal_model", upper($"terminal_model"))
       .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
       .clientLookup(inputData.client)
-      .tacLookup(inputData.tacTerminal)
+      .tacLookup(inputData.tac)
       .terminalLookup(inputData.terminal)
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")

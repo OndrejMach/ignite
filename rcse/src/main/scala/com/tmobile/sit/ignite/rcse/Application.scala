@@ -4,12 +4,14 @@ import java.sql.{Date, Timestamp}
 import java.time.{LocalDate, LocalDateTime}
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, ConfToStage, EventsToStage, TerminalDProcessor}
+import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, ConfToStage, EventsToStage, InitConfAggregatesProcessor, TerminalDProcessor}
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.DataFrame
 
 object Application extends App {
   implicit val sparkSession = getSparkSession()
+
+sparkSession.sparkContext.getConf.setAppName("test")
 
 
   val settings = Settings(
@@ -27,7 +29,8 @@ object Application extends App {
   //new TerminalDProcessor(settings).processData()
   //new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
   //new ActiveUsersToStage(Date.valueOf(LocalDate.now())).processData()
-  new ConfToStage(settings, max_Date = Date.valueOf(LocalDate.of(4712,12,31)), Date.valueOf(LocalDate.now())).processData()
+  //new ConfToStage(settings, max_Date = Date.valueOf(LocalDate.of(4712,12,31)), Date.valueOf(LocalDate.now())).processData()
+  new InitConfAggregatesProcessor(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
 
 
 }
