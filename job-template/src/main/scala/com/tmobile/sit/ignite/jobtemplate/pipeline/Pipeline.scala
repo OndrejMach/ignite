@@ -7,7 +7,13 @@ import org.apache.spark.sql.SparkSession
 class Pipeline(inputData: InputData, stage: TemplateStageProcessing, core: ProcessingCore, settings: Settings)(implicit sparkSession: SparkSession) {
   def run(): Unit = {
 
-    val preprocessedData = PreprocessedData(stage.preprocessPeople(inputData.people.read()),stage.preprocessSalaryInfo(inputData.salaryInfo.read()) )
+    val inputPeople = inputData.people.read()
+    val inputSalary = inputData.salaryInfo.read()
+
+    val preprocessedPeople = stage.preprocessPeople(inputPeople)
+    val preprocessedSalary = stage.preprocessSalaryInfo(inputSalary)
+
+    val preprocessedData = PreprocessedData(preprocessedPeople, preprocessedSalary)
 
     val result = core.process(preprocessedData)
 
