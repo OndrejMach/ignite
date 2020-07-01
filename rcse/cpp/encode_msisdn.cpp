@@ -1,6 +1,7 @@
 //#include "encode_msisdn.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 //------------------------------------------------------------------------------
 
 	// file: des_static_first.h
@@ -3318,6 +3319,18 @@
 	//{
 //		return std::string(DWH_ENCODE_Encode_Char_Static(msisdn.data(), msisdn.size()));
 	//}
+
+char *trim(char *s) {
+    char *ptr;
+    if (!s)
+        return NULL;   // handle NULL string
+    if (!*s)
+        return s;      // handle empty string
+    for (ptr = s + strlen(s) - 1; (ptr >= s) && isspace(*ptr); --ptr);
+    ptr[1] = '\0';
+    return s;
+}
+
 int main(int argc, char *argv[])
 { 
     FILE * fp;
@@ -3331,8 +3344,8 @@ int main(int argc, char *argv[])
 
     while ((read = getline(&line, &len, fp)) != -1) {
 
-        char *converted = DWH_ENCODE_Encode_Char_Static(line, strlen(line));
-        printf("%s,%s",converted,line);
+        char *converted = DWH_ENCODE_Encode_Char_Static(trim(line), strlen(trim(line)));
+        printf("%s,%s\n",converted,line);
 
         //printf("Retrieved line of length %zu:\n", read);
         //printf("%s", line);

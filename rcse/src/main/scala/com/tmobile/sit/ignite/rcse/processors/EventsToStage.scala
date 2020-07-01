@@ -3,6 +3,7 @@ package com.tmobile.sit.ignite.rcse.processors
 import java.sql.Timestamp
 
 import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
@@ -102,6 +103,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
           first("modification_date").alias("modification_date")
         )
         .withColumn("rcse_client_id", monotonically_increasing_id() + lit(clientMax))
+
 
     logger.info(s"Updating client dimension, count: ${dimensionA.count()}")
 
@@ -214,6 +216,7 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
     logger.info(s"Getting REG,DER-events file, row count: ${nonDM.count()}")
 
+
     //Update terminal dimension
     val cols = dimensionBOld.columns.map(i => i + "_old")
 
@@ -247,6 +250,22 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .union(dimensionA)
 
 
+    newClient.printSchema()
+
+    CSVWriter(data = newClient,
+      path = "/Users/ondrejmachacek/tmp/rcse/stage/clientSpark.csv",
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-DD HH:mm:ss",
+      writeHeader = false)
+      .writeData()
+
+    newTerminal.printSchema()
+    CSVWriter(data = newTerminal,
+      path = "/Users/ondrejmachacek/tmp/rcse/stage/terminalSpark.csv",
+      delimiter = "|",
+      timestampFormat = "yyyy-MM-DD HH:mm:ss",
+      writeHeader = false)
+      .writeData()
 
     //dimension output
 

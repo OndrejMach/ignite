@@ -48,7 +48,7 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
         first("date_id").alias("date_id"),
         first("natco_code").alias("natco_code"),
         sum("accepted").alias("rcse_num_tc_acc"),
-        first("denied").alias("rcse_num_tc_den")
+        sum("denied").alias("rcse_num_tc_den")
       )
       .select(InitConf.stageColumns.head, InitConf.stageColumns.tail: _*)
 
