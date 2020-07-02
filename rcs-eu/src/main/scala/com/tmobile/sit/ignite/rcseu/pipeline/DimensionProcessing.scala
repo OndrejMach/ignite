@@ -10,6 +10,7 @@ trait DimensionProcessing extends Logger{
 class Dimension extends DimensionProcessing {
 
   override def getUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {
+    //TODO: add logic here to split user_agents into parts
     activity
       .select("user_agent")
       .union(

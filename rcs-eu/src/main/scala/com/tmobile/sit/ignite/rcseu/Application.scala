@@ -17,7 +17,6 @@ object Application extends App with Logger {
 
   conf.settings.printAllFields()
 
-
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
   val inputReaders = InputData(
