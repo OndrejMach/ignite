@@ -25,11 +25,29 @@ class TerminalDProcessor(settings: Settings)(implicit sparkSession: SparkSession
     val terminalDResultData = new UpdateDTerminal(terminalDData, tac, settings.maxDate).getData()
 
     //TODO quotation
+    terminalDResultData
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "true")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .csv(settings.outputPath);
+/*
     CSVWriter(
-      data = terminalDResultData,
+      data = terminalDResultData
+        .na
+        .fill("", Seq("rcse_terminal_id", "tac_code",
+          "terminal_id", "rcse_terminal_vendor_sdesc",
+          "rcse_terminal_vendor_ldesc", "rcse_terminal_model_sdesc",
+        "rcse_terminal_model_ldesc", "modification_date")),
       path = settings.outputPath,
-      delimiter = "|"
+      delimiter = "|",
+      quoteMode = "NONE"
     ).writeData()
+
+ */
   }
 
 }

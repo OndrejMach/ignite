@@ -164,5 +164,16 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .select(InitConf.workColumns.head, InitConf.workColumns.tail: _*)
 
     logger.info(s"result count ${result.count()}")
+
+    result
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_x_rcse_init_conf.TMD.csv");
   }
 }

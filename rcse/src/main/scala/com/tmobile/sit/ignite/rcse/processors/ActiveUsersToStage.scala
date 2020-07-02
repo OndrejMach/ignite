@@ -135,6 +135,17 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
     result.show(false)
     println(result.count())
 
+    result
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_f_rcse_active_user.TMD.20200607.csv");
+
 
   }
 }

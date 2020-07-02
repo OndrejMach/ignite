@@ -216,7 +216,20 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
     logger.info(s"Getting REG,DER-events file, row count: ${nonDM.count()}")
 
+/*
+    nonDM
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/regDerSpark.csv");
 
+
+*/
     //Update terminal dimension
     val cols = dimensionBOld.columns.map(i => i + "_old")
 
@@ -224,13 +237,13 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       .drop("entry_id", "load_date")
       .union(dimensionBNew)
       .join(dimensionBOld.toDF(cols: _*), $"rcse_terminal_id" === $"rcse_terminal_id_old", "left_outer")
-      .withColumn("tac_code", when($"tac_code".isNull, $"tac_code_old"))
-      .withColumn("terminal_id", when($"terminal_id".isNull, $"terminal_id"))
-      .withColumn("rcse_terminal_vendor_sdesc", when($"rcse_terminal_vendor_sdesc".isNull, $"rcse_terminal_vendor_sdesc_old"))
-      .withColumn("rcse_terminal_vendor_ldesc", when($"rcse_terminal_vendor_ldesc".isNull, $"rcse_terminal_vendor_ldesc_old"))
-      .withColumn("rcse_terminal_model_sdesc", when($"rcse_terminal_model_sdesc".isNull, $"rcse_terminal_model_sdesc_old"))
-      .withColumn("rcse_terminal_model_ldesc", when($"rcse_terminal_model_ldesc".isNull, $"rcse_terminal_model_ldesc_old"))
-      .withColumn("modification_date", when($"modification_date".isNull, $"modification_date_old"))
+      .withColumn("tac_code", when($"tac_code".isNull, $"tac_code_old").otherwise($"tac_code"))
+      .withColumn("terminal_id", when($"terminal_id".isNull, $"terminal_id_old").otherwise($"terminal_id"))
+      .withColumn("rcse_terminal_vendor_sdesc", when($"rcse_terminal_vendor_sdesc".isNull, $"rcse_terminal_vendor_sdesc_old").otherwise($"rcse_terminal_vendor_sdesc"))
+      .withColumn("rcse_terminal_vendor_ldesc", when($"rcse_terminal_vendor_ldesc".isNull, $"rcse_terminal_vendor_ldesc_old").otherwise($"rcse_terminal_vendor_ldesc"))
+      .withColumn("rcse_terminal_model_sdesc", when($"rcse_terminal_model_sdesc".isNull, $"rcse_terminal_model_sdesc_old").otherwise($"rcse_terminal_model_sdesc"))
+      .withColumn("rcse_terminal_model_ldesc", when($"rcse_terminal_model_ldesc".isNull, $"rcse_terminal_model_ldesc_old").otherwise($"rcse_terminal_model_ldesc"))
+      .withColumn("modification_date", when($"modification_date".isNull, $"modification_date_old").otherwise($"modification_date"))
       .select(
         "rcse_terminal_id",
         "tac_code",
@@ -251,22 +264,30 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
 
     newClient.printSchema()
+/*
+    newClient
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/clientSpark.csv");
 
-    CSVWriter(data = newClient,
-      path = "/Users/ondrejmachacek/tmp/rcse/stage/clientSpark.csv",
-      delimiter = "|",
-      timestampFormat = "yyyy-MM-DD HH:mm:ss",
-      writeHeader = false)
-      .writeData()
 
-    newTerminal.printSchema()
-    CSVWriter(data = newTerminal,
-      path = "/Users/ondrejmachacek/tmp/rcse/stage/terminalSpark.csv",
-      delimiter = "|",
-      timestampFormat = "yyyy-MM-DD HH:mm:ss",
-      writeHeader = false)
-      .writeData()
-
+    newTerminal
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/terminalSpark.csv");
+*/
     //dimension output
 
     val outputPrep =
@@ -304,7 +325,16 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
     logger.info(s"Getting new DM file, row count ${output.count()}")
     output.select("date_id").distinct().show(false)
-
+    output
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_f_rcse_events.TMD.20200607.dm.csv");
   }
 
 }

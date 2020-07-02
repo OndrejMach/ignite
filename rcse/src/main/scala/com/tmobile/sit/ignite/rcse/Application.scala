@@ -4,7 +4,7 @@ import java.sql.{Date, Timestamp}
 import java.time.{LocalDate, LocalDateTime}
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, ConfToStage, EventsToStage, InitConfAggregatesProcessor, InitUserAggregatesProcessor, TerminalDProcessor}
+import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, AggregateUAU, ConfToStage, EventsToStage, InitConfAggregatesProcessor, InitUserAggregatesProcessor, TerminalDProcessor}
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.DataFrame
 
@@ -28,10 +28,11 @@ sparkSession.sparkContext.getConf.setAppName("test")
 
   //new TerminalDProcessor(settings).processData()
   //new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
-  //new ActiveUsersToStage(Date.valueOf(LocalDate.now())).processData()
-  //new ConfToStage(settings, max_Date = Date.valueOf(LocalDate.of(4712,12,31)), Date.valueOf(LocalDate.now())).processData()
+  //new ActiveUsersToStage(Date.valueOf(LocalDate.of(2020,6,8))).processData()
+  //new ConfToStage(settings, max_Date = Date.valueOf(LocalDate.of(4712,12,31)), Date.valueOf(LocalDate.of(2020,6,8))).processData()
   //new InitConfAggregatesProcessor(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
   new InitUserAggregatesProcessor(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
+  //new AggregateUAU(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
 
 
 }

@@ -21,7 +21,7 @@ class EventsInputData(settings: Settings)(implicit sparkSession: SparkSession) {
     path = settings.clientPath,
     header = false,
     schema = Some(CommonStructures.clientSchema),
-    timestampFormat = "yyyy-MM-DD HH:mm:ss",
+    timestampFormat = "yyyy-MM-dd HH:mm:ss",
     delimiter = "|"
   ).read()
 
@@ -46,7 +46,7 @@ class EventsInputData(settings: Settings)(implicit sparkSession: SparkSession) {
     header = false,
     schema = Some(CommonStructures.terminalSWSchema),
     delimiter = "|",
-    timestampFormat = "yyyy-MM-DD HH:mm:ss")
+    timestampFormat = "yyyy-MM-dd HH:mm:ss")
     .read()
     .withColumn("rcse_terminal_sw_desc", upper($"rcse_terminal_sw_desc"))
 

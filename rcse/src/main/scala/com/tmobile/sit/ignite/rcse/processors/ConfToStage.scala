@@ -176,6 +176,17 @@ class ConfToStage(settings: Settings, max_Date: Date, processing_date: Date)(imp
 
     val result = updJoin.union(umatched)
 
+    result
+      .coalesce(1)
+      .write
+      .option("delimiter", "|")
+      .option("header", "false")
+      .option("nullValue", "")
+      .option("emptyValue", "")
+      .option("quoteAll", "false")
+      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+      .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_f_rcse_conf.TMD.csv");
+
     logger.info(s"Conf file row count: ${result.count()}")
   }
 
