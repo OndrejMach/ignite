@@ -4,29 +4,30 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.count
 
 trait ProcessingCore {
-  def process(preprocessedData: PreprocessedData) : DataFrame
+  def process(preprocessedData: PreprocessedData) : OutputData
 }
 
 class CoreLogicWithTransform extends ProcessingCore {
-  /*
-  private def joinPeopleAndSalaryInfo(salaryInfo: DataFrame)(people: DataFrame) = {
-    people.join(salaryInfo,Seq("id"), "inner")
-  }
-  private def aggregateOnSalary(peopleWithSalary: DataFrame) : DataFrame = {
-    peopleWithSalary
-      .groupBy("salary", "address")
-      .agg(count("salary")
-        .alias("count"))
-  }
- */
 
+  def getUserAgents(activityData: DataFrame, registerRequestsData: DataFrame): DataFrame = {
+    activityData
+      .select("user_agent")
+      .union(
+        registerRequestsData
+          .select("user_agent")
+      )
+      .distinct()
+      .sort("user_agent")
+  }
 
-  override def process(preprocessedData: PreprocessedData): DataFrame = {
+  override def process(preprocessedData: PreprocessedData): OutputData = {
 
     preprocessedData.activityData.show()
     preprocessedData.provisionData.show()
     preprocessedData.registerRequestsData.show()
 
-    preprocessedData.activityData
+    val UserAgents = getUserAgents(preprocessedData.activityData, preprocessedData.registerRequestsData)
+
+    OutputData(UserAgents)
   }
 }
