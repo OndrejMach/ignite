@@ -1,9 +1,10 @@
 package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.{CSVReader}
+import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.config.Setup
-import com.tmobile.sit.ignite.rcseu.pipeline.{CoreLogicWithTransform, InputData, Pipeline, ResultPaths, ResultWriter, Stage}
+import com.tmobile.sit.ignite.rcseu.data.{InputData, ResultPaths}
+import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter, Stage}
 
 object Application extends App with Logger {
   val conf = new Setup()
@@ -25,14 +26,14 @@ object Application extends App with Logger {
     register_requests = new CSVReader(conf.settings.inputPath.get + "register_request*.gz", header = true, delimiter = "\t")
   )
 
-  val stage = new Stage()
+  val stageProcessing = new Stage()
 
-  val processingCore = new CoreLogicWithTransform()
+  val coreProcessing = new Core()
 
   val resultPaths = ResultPaths(conf.settings.lookupPath.get, conf.settings.outputPath.get)
   val resultWriter = new ResultWriter(resultPaths)
 
-  val pipeline = new Pipeline(inputReaders,stage,processingCore,resultWriter)
+  val pipeline = new Pipeline(inputReaders,stageProcessing,coreProcessing,resultWriter)
 
   pipeline.run()
 

@@ -1,5 +1,8 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
+import java.awt.Dimension
+
+import com.tmobile.sit.ignite.rcseu.data.{OutputData, PreprocessedData}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.count
 
@@ -7,26 +10,17 @@ trait ProcessingCore {
   def process(preprocessedData: PreprocessedData) : OutputData
 }
 
-class CoreLogicWithTransform extends ProcessingCore {
+class Core extends ProcessingCore {
 
-  def getUserAgents(activityData: DataFrame, registerRequestsData: DataFrame): DataFrame = {
-    activityData
-      .select("user_agent")
-      .union(
-        registerRequestsData
-          .select("user_agent")
-      )
-      .distinct()
-      .sort("user_agent")
-  }
+  override def process(stageData: PreprocessedData): OutputData = {
 
-  override def process(preprocessedData: PreprocessedData): OutputData = {
+    stageData.activity.show()
+    stageData.provision.show()
+    stageData.registerRequests.show()
 
-    preprocessedData.activityData.show()
-    preprocessedData.provisionData.show()
-    preprocessedData.registerRequestsData.show()
+    val dim = new Dimension()
 
-    val UserAgents = getUserAgents(preprocessedData.activityData, preprocessedData.registerRequestsData)
+    val UserAgents = dim.getUserAgents(stageData.activity, stageData.registerRequests)
 
     OutputData(UserAgents)
   }

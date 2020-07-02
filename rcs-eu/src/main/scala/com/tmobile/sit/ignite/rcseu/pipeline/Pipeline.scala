@@ -1,11 +1,9 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.rcseu.config.Settings
+import com.tmobile.sit.ignite.rcseu.data.{InputData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.scheduler.rate.RateEstimator
 
-class Pipeline(inputData: InputData, stage: StageProcessing, core: ProcessingCore, writer: ResultWriter)(implicit sparkSession: SparkSession) {
+class Pipeline(inputData: InputData, stageData: StageProcessing, core: ProcessingCore, writer: ResultWriter)(implicit sparkSession: SparkSession) {
   def run(): Unit = {
 
     // Read input files
@@ -14,13 +12,13 @@ class Pipeline(inputData: InputData, stage: StageProcessing, core: ProcessingCor
     val inputRegisterRequests = inputData.register_requests.read()
 
     // Preprocess input files
-    val preprocessedActivity = stage.preprocessActivity(inputActivity)
-    val preprocessedProvision = stage.preprocessProvision(inputProvision)
-    val preprocessedRegisterRequest =  stage.preprocessRegisterRequests(inputRegisterRequests)
+    val stageActivity = stageData.preprocessActivity(inputActivity)
+    val stageProvision = stageData.preprocessProvision(inputProvision)
+    val stageRegisterRequests =  stageData.preprocessRegisterRequests(inputRegisterRequests)
 
     // Create preprocessedData object
-    val preprocessedData = PreprocessedData(preprocessedActivity,
-      preprocessedProvision,preprocessedRegisterRequest)
+    val preprocessedData = PreprocessedData(stageActivity,
+      stageProvision,stageRegisterRequests)
 
     // Calculate output data from core processing
     val result = core.process(preprocessedData)
