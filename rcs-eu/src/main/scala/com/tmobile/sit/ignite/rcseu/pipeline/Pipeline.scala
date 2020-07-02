@@ -3,8 +3,9 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcseu.config.Settings
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.streaming.scheduler.rate.RateEstimator
 
-class Pipeline(inputData: InputData, stage: StageProcessing, core: ProcessingCore, settings: Settings)(implicit sparkSession: SparkSession) {
+class Pipeline(inputData: InputData, stage: StageProcessing, core: ProcessingCore, writer: ResultWriter)(implicit sparkSession: SparkSession) {
   def run(): Unit = {
 
     // Read input files
@@ -24,8 +25,8 @@ class Pipeline(inputData: InputData, stage: StageProcessing, core: ProcessingCor
     // Calculate output data from core processing
     val result = core.process(preprocessedData)
 
-    // Write output
-    CSVWriter(data = result,settings.outputPath.get, writeHeader = true)
+    // Write result data set
+    writer.write(result)
   }
 
 }
