@@ -10,7 +10,7 @@ import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
 import com.tmobile.sit.ignite.rcse.structures.{CommonStructures, Events, Terminal}
 import org.apache.spark.sql.types.{DateType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 
 /*
@@ -112,7 +112,8 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
     val dimensionBOld =
       withLookups
         .filter($"rcse_terminal_id".isNotNull)
-        .join(inputData.terminal.select($"tac_code".as("tac_code_lkp"), $"terminal_id".as("terminal_id_lkp"), $"rcse_terminal_id"), Seq("rcse_terminal_id"), "left_outer").cache()
+        .join(
+          inputData.terminal.select($"tac_code".as("tac_code_lkp"), $"terminal_id".as("terminal_id_lkp"), $"rcse_terminal_id"), Seq("rcse_terminal_id"), "left_outer").cache()
         .filter($"tac_code_lkp".isNull && $"terminal_id_lkp".isNull && $"tac_code".isNotNull)
         .select(
           $"rcse_terminal_id",
@@ -216,20 +217,20 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
     logger.info(s"Getting REG,DER-events file, row count: ${nonDM.count()}")
 
-/*
-    nonDM
-      .coalesce(1)
-      .write
-      .option("delimiter", "|")
-      .option("header", "false")
-      .option("nullValue", "")
-      .option("emptyValue", "")
-      .option("quoteAll", "false")
-      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
-      .csv("/Users/ondrejmachacek/tmp/rcse/stage/regDerSpark.csv");
+    /*
+        nonDM
+          .coalesce(1)
+          .write
+          .option("delimiter", "|")
+          .option("header", "false")
+          .option("nullValue", "")
+          .option("emptyValue", "")
+          .option("quoteAll", "false")
+          .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+          .csv("/Users/ondrejmachacek/tmp/rcse/stage/regDerSpark.csv");
 
 
-*/
+    */
     //Update terminal dimension
     val cols = dimensionBOld.columns.map(i => i + "_old")
 
@@ -264,30 +265,30 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
 
 
     newClient.printSchema()
-/*
-    newClient
-      .coalesce(1)
-      .write
-      .option("delimiter", "|")
-      .option("header", "false")
-      .option("nullValue", "")
-      .option("emptyValue", "")
-      .option("quoteAll", "false")
-      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
-      .csv("/Users/ondrejmachacek/tmp/rcse/stage/clientSpark.csv");
+    /*
+        newClient
+          .coalesce(1)
+          .write
+          .option("delimiter", "|")
+          .option("header", "false")
+          .option("nullValue", "")
+          .option("emptyValue", "")
+          .option("quoteAll", "false")
+          .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+          .csv("/Users/ondrejmachacek/tmp/rcse/stage/clientSpark.csv");
 
 
-    newTerminal
-      .coalesce(1)
-      .write
-      .option("delimiter", "|")
-      .option("header", "false")
-      .option("nullValue", "")
-      .option("emptyValue", "")
-      .option("quoteAll", "false")
-      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
-      .csv("/Users/ondrejmachacek/tmp/rcse/stage/terminalSpark.csv");
-*/
+        newTerminal
+          .coalesce(1)
+          .write
+          .option("delimiter", "|")
+          .option("header", "false")
+          .option("nullValue", "")
+          .option("emptyValue", "")
+          .option("quoteAll", "false")
+          .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
+          .csv("/Users/ondrejmachacek/tmp/rcse/stage/terminalSpark.csv");
+    */
     //dimension output
 
     val outputPrep =
@@ -300,7 +301,8 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
         .withColumnRenamed("rcse_client_id", "rcse_client_id_old")
         .clientLookup(newClient)
         .withColumn("rcse_client_id", when($"rcse_client_id_old".isNull, $"rcse_client_id").otherwise($"rcse_client_id_old"))
-        .terminalLookup(newTerminal)
+        .terminalSimpleLookup(newTerminal)
+        .terminalDescLookup(newTerminal)
         .withColumn("rcse_terminal_id",
           when($"rcse_terminal_id".isNotNull, $"rcse_terminal_id")
             .otherwise(
@@ -311,25 +313,29 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
             )
         )
 
-
-    val outputDone = outputPrep.filter($"rcse_terminal_sw_id".isNotNull)
-    val output = outputPrep
-      .filter($"rcse_terminal_sw_id".isNull)
-      .drop("rcse_terminal_sw_id")
-      .terminalSWLookup(inputData.terminalSW.drop("entry_id", "load_date").union(dimensionC))
-      .union(outputDone)
+    val outputDone = outputPrep
+      .filter($"rcse_terminal_sw_id".isNotNull)
       .select(
         EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
       )
 
+    val output = outputPrep
+      .filter($"rcse_terminal_sw_id".isNull)
+      .drop("rcse_terminal_sw_id")
+      .terminalSWLookup(inputData.terminalSW.drop("entry_id", "load_date").union(dimensionC))
+      .select(
+        EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
+      )
+      .union(outputDone)
+
 
     logger.info(s"Getting new DM file, row count ${output.count()}")
-    output.select("date_id").distinct().show(false)
     output
       .coalesce(1)
       .write
+      .mode(SaveMode.Overwrite)
       .option("delimiter", "|")
-      .option("header", "false")
+      .option("header", "true")
       .option("nullValue", "")
       .option("emptyValue", "")
       .option("quoteAll", "false")
