@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcse.processors
 import java.sql.Date
 
 import com.tmobile.sit.common.readers.CSVReader
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.sql.types.{DateType, IntegerType, StringType, StructField, StructType, TimestampType}
 import org.apache.spark.sql.functions._
 
@@ -64,7 +64,7 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
     )
 
     val inputEvents = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_events.TMD.20200608.reg_der.csv",
+      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_events.TMD.20200607.reg_der.csv",
       delimiter = "|",
       header = false,
       schema = Some(regDerSchema)
@@ -75,17 +75,19 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
       delimiter = "|",
       header = false,
       schema = Some(confSchema)
-    ).read()
+    )
+      .read()
+      .select("msisdn", "rcse_tc_status_id", "rcse_curr_client_id", "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id")
 
     val activeUsersYesterday = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_active_user.TMD.20200607.csv.gz",
+      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_active_user.TMD.20200606.csv",
       delimiter = "|",
       header = false,
       schema = Some(activeUsersSchema)
     ).read()
 
     val eventsYesterday = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_events.TMD.20200607.reg_der.csv",
+      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_events.TMD.20200606.reg_der.csv",
       delimiter = "|",
       header = false,
       schema = Some(regDerSchema)
@@ -96,12 +98,13 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
       .select("date_id", "natco_code", "msisdn")
       .sort("msisdn")
       .groupBy("msisdn")
-      .agg(first("date_id").as("date_id_events"), first("natco_code").as("natco_code_events"))
+      .agg(first("date_id").as("date_id"), first("natco_code").as("natco_code"))
 
 
     val join1 = prepEvents
       .join(inputConf, Seq("msisdn"), "left")
-      .na.fill(-999, Seq("rcse_tc_status_id", "rcse_curr_client_id", "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id"))
+      .na
+      .fill(-999, Seq("rcse_tc_status_id", "rcse_curr_client_id", "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id"))
       .select(
         "date_id", "natco_code",
         "msisdn", "rcse_tc_status_id",
@@ -123,7 +126,7 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
     val join2Cols = join2.columns.map(_+"_yesterday")
     val result = join1
       .join(join2.toDF(join2Cols :_*), $"msisdn" === $"msisdn_yesterday", "outer")
-      .withColumn("date_id", when($"date_id".isNull, lit(processingDate)))
+      .withColumn("date_id", when($"date_id".isNull, lit(processingDate)).otherwise($"date_id"))
       .withColumn("natco_code", lit("TMD"))
       .withColumn("msisdn", when($"msisdn".isNull, $"msisdn_yesterday").otherwise($"msisdn"))
       .withColumn("rcse_tc_status_id", when($"rcse_tc_status_id".isNull, $"rcse_tc_status_id_yesterday").otherwise($"rcse_tc_status_id"))
@@ -138,6 +141,7 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
     result
       .coalesce(1)
       .write
+      .mode(SaveMode.Overwrite)
       .option("delimiter", "|")
       .option("header", "false")
       .option("nullValue", "")

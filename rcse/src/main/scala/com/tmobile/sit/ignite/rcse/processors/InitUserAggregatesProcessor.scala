@@ -7,7 +7,7 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
 import com.tmobile.sit.ignite.rcse.structures.{Conf, InitConf, InitUsers}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.udf
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
@@ -59,66 +59,6 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .withColumn("rcse_reg_users_all", lit(0))
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
-    /*static const date ref_date = date(1900,1,1);
-static const date max_date_id = date(std::getenv("MAX_DATE_ID"),"%Y-%m-%d");
-static const date odate = date(std::getenv("ODATE"),"%Y%m%d");
-static const date odate_minus1 = date(std::getenv("ODATE_MINUS1"),"%Y%m%d");
-static date date_id;
-static date date_id_upper_bound;
-static int cnt_users_all;
-static std::deque<int> date_queue;
-static std::deque<int> user_queue;
-
-INITIALIZE:
-cnt_users_all = 0;
-date_queue.clear();
-user_queue.clear();
-date_id = odate;
-if (odate <= max_date_id)
-  date_id_upper_bound = max_date_id;
-else
-  date_id_upper_bound = odate;
-
-COMPUTE:
-if (*in->date_id == odate_minus1)
-  cnt_users_all = *in->rcse_reg_users_all;
-else
-{
-  date_queue.push_back(*in->date_id - ref_date); // days since 1900-01-01
-  user_queue.push_back(*in->rcse_reg_users_new);
-}
-
-FINALIZE:
-$SET_RUN_ID
-$SET_LOAD_DATE
-
-out->natco_code 		= in->natco_code;
-out->rcse_init_client_id 	= in->rcse_init_client_id;
-out->rcse_init_terminal_id 	= in->rcse_init_terminal_id;
-out->rcse_init_terminal_sw_id 	= in->rcse_init_terminal_sw_id;
-*out->entry_id 			= run_id;
-*out->load_date 		= load_date;
-
-while (date_id <= date_id_upper_bound)
-{
-  *out->date_id 		= date_id;
-  if (!date_queue.empty() && date_queue.front() == date_id - ref_date)
-  {
-    *out->rcse_reg_users_new	= user_queue.front();
-    cnt_users_all 	       += user_queue.front();
-    date_queue.pop_front();
-    user_queue.pop_front();
-  }
-  else
-    *out->rcse_reg_users_new	= 0;
-
-  *out->rcse_reg_users_all 	= cnt_users_all;
-  add_record();
-
-  date_id++;
-}*/
-
-
     val getDates = udf(UDFs.dateUDF)
 
 
@@ -136,7 +76,7 @@ while (date_id <= date_id_upper_bound)
       .groupBy("rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
         collect_list(when($"date_id" =!= lit(processingDateMinus1), datediff($"date_id", lit(refDate)).cast(IntegerType))).alias("date_queue"),
-        collect_list(when($"date_id" =!= lit(processingDateMinus1), $"rcse_reg_users_new".cast(IntegerType))).alias("user_queue"),
+        collect_list(when($"date_id" =!= lit(processingDateMinus1), $"rcse_reg_users_new".cast(IntegerType)).otherwise(lit(0))).alias("user_queue"),
         max($"cnt_users_all").alias("cnt_users_all"),
         max("date_id_upper_bound").alias("date_id_upper_bound"),
         first("natco_code").alias("natco_code")
@@ -224,7 +164,7 @@ while (date_id <= date_id_upper_bound)
       )
       .withColumn("rcse_init_terminal_id", when($"r".isNotNull, $"rcse_init_terminal_id_right").otherwise($"rcse_init_terminal_id"))
       .withColumnRenamed("rcse_old_terminal_id_right", "rcse_old_terminal_id")
-      .select(InitUsers.workColumns.head, InitUsers.workColumns.tail: _*)
+      .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
     val join3 = join2
       .withColumn("l", lit(1))
@@ -238,9 +178,9 @@ while (date_id <= date_id_upper_bound)
           $"rcse_init_terminal_sw_id" === $"rcse_init_terminal_sw_id_right",
         "left"
       )
-      .withColumn("rcse_reg_users_new", when($"r".isNotNull, $"rcse_reg_users_new" + $"rcse_reg_users_new_right"))
-      .withColumn("rcse_reg_users_all", when($"r".isNotNull, $"rcse_reg_users_all" + $"rcse_reg_users_all_right"))
-      .select(InitUsers.workColumns.head, InitUsers.workColumns.tail: _*)
+      .withColumn("rcse_reg_users_new", when($"r".isNotNull, $"rcse_reg_users_new" + $"rcse_reg_users_new_right").otherwise($"rcse_reg_users_new"))
+      .withColumn("rcse_reg_users_all", when($"r".isNotNull, $"rcse_reg_users_all" + $"rcse_reg_users_all_right").otherwise($"rcse_reg_users_new"))
+      .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
     val result = join3
       .withColumn("l", lit(1))
@@ -255,11 +195,12 @@ while (date_id <= date_id_upper_bound)
         "left"
       )
       .filter($"r".isNull)
-      .select(InitUsers.workColumns.head, InitUsers.workColumns.tail: _*)
+      .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
     result
       .coalesce(1)
       .write
+      .mode(SaveMode.Overwrite)
       .option("delimiter", "|")
       .option("header", "false")
       .option("nullValue", "")

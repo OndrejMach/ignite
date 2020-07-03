@@ -6,7 +6,7 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
 import com.tmobile.sit.ignite.rcse.structures.{Conf, InitConf}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 
 class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(implicit sparkSession: SparkSession) extends Processor {
@@ -41,7 +41,7 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
 
     val confPreprocessed = confData
       .filter($"date_id" === lit(processingDate))
-      .withColumn("accepted", when($"rcse_tc_status_id" === lit(1) || $"rcse_tc_status_id" === lit(1), lit(1)).otherwise(lit(0)))
+      .withColumn("accepted", when($"rcse_tc_status_id" === lit(0) || $"rcse_tc_status_id" === lit(1), lit(1)).otherwise(lit(0)))
       .withColumn("denied", when($"rcse_tc_status_id" === lit(2), lit(1)).otherwise(lit(0)))
       .groupBy("rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
@@ -93,7 +93,10 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .join(
         changed
           .drop("id")
-          .toDF(changed.columns.filter(_ != "id").map(_ + "_right"): _*)
+          .toDF(changed
+            .columns
+            .filter(_ != "id")
+            .map(_ + "_right"): _*)
           .withColumn("r", lit(1)),
         $"date_id" === $"date_id_right" &&
           $"rcse_init_client_id" === $"rcse_init_client_id_right" &&
@@ -128,7 +131,7 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       )
       .withColumn("rcse_init_terminal_id", when($"r".isNotNull, $"rcse_init_terminal_id_right").otherwise($"rcse_init_terminal_id"))
       .withColumnRenamed("rcse_old_terminal_id_right", "rcse_old_terminal_id")
-      .select(InitConf.workColumns.head, InitConf.workColumns.tail: _*)
+      .select(InitConf.stageColumns.head, InitConf.stageColumns.tail: _*)
 
 
     //here it differs
@@ -136,7 +139,9 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .withColumn("l", lit(1))
       .join(
         teeABSort
-        .toDF(teeABSort.columns.map(_+"_right") :_*)
+        .toDF(teeABSort
+          .columns
+          .map(_+"_right") :_*)
           .withColumn("r", lit(1)),
         $"date_id" === $"date_id_right" &&
           $"rcse_init_client_id" === $"rcse_init_client_id_right" &&
@@ -144,9 +149,9 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
           $"rcse_init_terminal_sw_id" === $"rcse_init_terminal_sw_id_right",
         "left"
       )
-      .withColumn("rcse_num_tc_acc", when($"r".isNotNull, $"rcse_num_tc_acc" + $"rcse_num_tc_acc_right"))
-      .withColumn("rcse_num_tc_den", when($"r".isNotNull, $"rcse_num_tc_den" + $"rcse_num_tc_den_right"))
-      .select(InitConf.workColumns.head, InitConf.workColumns.tail: _*)
+      .withColumn("rcse_num_tc_acc", when($"r".isNotNull, $"rcse_num_tc_acc" + $"rcse_num_tc_acc_right").otherwise($"rcse_num_tc_acc"))
+      .withColumn("rcse_num_tc_den", when($"r".isNotNull, $"rcse_num_tc_den" + $"rcse_num_tc_den_right").otherwise($"rcse_num_tc_den"))
+      .select(InitConf.stageColumns.head, InitConf.stageColumns.tail: _*)
 
     val result = join3
       .withColumn("l", lit(1))
@@ -161,13 +166,14 @@ class InitConfAggregatesProcessor(processingDate: Date, settings: Settings)(impl
         "left"
       )
       .filter($"r".isNull)
-      .select(InitConf.workColumns.head, InitConf.workColumns.tail: _*)
+      .select(InitConf.stageColumns.head, InitConf.stageColumns.tail: _*)
 
     logger.info(s"result count ${result.count()}")
 
     result
       .coalesce(1)
       .write
+      .mode(SaveMode.Overwrite)
       .option("delimiter", "|")
       .option("header", "false")
       .option("nullValue", "")

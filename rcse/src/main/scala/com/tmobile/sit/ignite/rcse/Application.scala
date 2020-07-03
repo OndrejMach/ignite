@@ -27,11 +27,11 @@ sparkSession.sparkContext.getConf.setAppName("test")
     encoderPath = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/shared/lib/a.out")
 
   //new TerminalDProcessor(settings).processData()
-  new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
-  //new ActiveUsersToStage(Date.valueOf(LocalDate.of(2020,6,8))).processData()
+  //new EventsToStage(settings, Timestamp.valueOf(LocalDateTime.now())).processData()
+  //new ActiveUsersToStage(Date.valueOf(LocalDate.of(2020,6,7))).processData()
   //new ConfToStage(settings, max_Date = Date.valueOf(LocalDate.of(4712,12,31)), Date.valueOf(LocalDate.of(2020,6,8))).processData()
   //new InitConfAggregatesProcessor(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
-  //new InitUserAggregatesProcessor(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
+  new InitUserAggregatesProcessor(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
   //new AggregateUAU(Date.valueOf(LocalDate.of(2020,6,7)), settings).processData()
 
 

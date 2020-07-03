@@ -109,25 +109,25 @@ class AggregateUAU(time_key: Date, settings: Settings)(implicit sparkSession: Sp
       aggregKeys("key0")
         .foldLeft(aggreg)((df, name) => if (aggregKeys(i).filter(_ == name).isEmpty) df.withColumn(name, lit("##")) else df)
         .withColumn("date_id", lit(time_key))
+        .withColumn("rcse_client_key_code", concat_ws("_", $"rcse_client_vendor_ldesc", $"rcse_client_id"))
+        .withColumn("rcse_terminal_key_code", concat_ws("_", $"rcse_client_vendor_ldesc", $"rcse_terminal_id"))
+        .withColumnRenamed("rcse_terminal_sw_id", "rcse_terminal_sw_key_code")
+        .select(
+          $"date_id".as("time_key_code"),
+          $"natco_code".as("natco_key_code"),
+          $"rcse_client_key_code",
+          $"rcse_terminal_key_code",
+          $"rcse_terminal_sw_key_code",
+          $"unique_users"
+        )
     })
       .reduce(_.union(_))
-      .withColumn("rcse_client_key_code", concat_ws("_", $"rcse_client_vendor_ldesc", $"rcse_client_id"))
-      .withColumn("rcse_terminal_key_code", concat_ws("_", $"rcse_client_vendor_ldesc", $"rcse_terminal_id"))
-      .withColumnRenamed("rcse_terminal_sw_id", "rcse_terminal_sw_key_code")
-      .select(
-        $"date_id".as("time_key_code"),
-        $"natco_code".as("natco_key_code"),
-        $"rcse_client_key_code",
-        $"rcse_terminal_key_code",
-        $"rcse_terminal_sw_key_code",
-        $"unique_users"
-      )
 
     result
       .coalesce(1)
       .write
       .option("delimiter", "|")
-      .option("header", "false")
+      .option("header", "true")
       .option("nullValue", "")
       .option("emptyValue", "")
       .option("quoteAll", "false")
