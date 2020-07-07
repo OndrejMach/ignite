@@ -1,5 +1,6 @@
 rootProject.name = 'ignite'
 include 'ignite-common'
+include 'device-atlas'
 include 'hotspot'
 include 'inflight'
 include 'rcse'
