@@ -21,7 +21,8 @@ class InputData (inputPath : String, fileName: String)(implicit sparkSession : S
     CSVReader(file,
       header = false,
       schema = Some(FileStructures.cptm_term_spec),
-      delimiter = "|")
+      delimiter = "|",
+      encoding = "CP1250")
       .read()
   }
 
@@ -31,7 +32,8 @@ class InputData (inputPath : String, fileName: String)(implicit sparkSession : S
     CSVReader(file,
       header = false,
       schema = Some(FileStructures.cptm_ta_d_tac),
-      delimiter = "|")
+      delimiter = "|",
+      encoding = "CP1250")
       .read()
   }
 
