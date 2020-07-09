@@ -80,14 +80,14 @@ class ActiveUsersToStage(processingDate: Date)(implicit sparkSession: SparkSessi
       .select("msisdn", "rcse_tc_status_id", "rcse_curr_client_id", "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id")
 
     val activeUsersYesterday = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_active_user.TMD.20200606.csv",
+      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_active_user.TMD.20200606.csv.gz",
       delimiter = "|",
       header = false,
       schema = Some(activeUsersSchema)
     ).read()
 
     val eventsYesterday = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_events.TMD.20200606.reg_der.csv",
+      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_events.TMD.20200606.reg_der.csv.gz",
       delimiter = "|",
       header = false,
       schema = Some(regDerSchema)
