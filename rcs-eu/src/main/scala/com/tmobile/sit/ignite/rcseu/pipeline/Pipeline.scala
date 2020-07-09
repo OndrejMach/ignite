@@ -17,8 +17,7 @@ class Pipeline(inputData: InputData, stageData: StageProcessing, core: Processin
     val stageRegisterRequests =  stageData.preprocessRegisterRequests(inputRegisterRequests)
 
     // Create preprocessedData object
-    val preprocessedData = PreprocessedData(stageActivity,
-      stageProvision,stageRegisterRequests)
+    val preprocessedData = PreprocessedData(stageActivity,stageProvision,stageRegisterRequests)
 
     // Calculate output data from core processing
     val result = core.process(preprocessedData)
