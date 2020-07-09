@@ -65,6 +65,7 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
     //potentially common
     val maxDateId = initData.select(max("date_id")).collect()(0).getDate(0)
 
+    logger.info(s"maxDateId: ${maxDateId}")
 
     val initDate1 = initData
       .drop("load_date", "entry_id")
@@ -76,7 +77,7 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .groupBy("rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
         collect_list(when($"date_id" =!= lit(processingDateMinus1), datediff($"date_id", lit(refDate)).cast(IntegerType))).alias("date_queue"),
-        collect_list(when($"date_id" =!= lit(processingDateMinus1), $"rcse_reg_users_new".cast(IntegerType)).otherwise(lit(0))).alias("user_queue"),
+        collect_list(when($"date_id" =!= lit(processingDateMinus1), $"rcse_reg_users_new".cast(IntegerType))).alias("user_queue"),
         max($"cnt_users_all").alias("cnt_users_all"),
         max("date_id_upper_bound").alias("date_id_upper_bound"),
         first("natco_code").alias("natco_code")
@@ -111,8 +112,8 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .agg(
         first("natco_code").alias("natco_code"),
         first("rcse_old_terminal_id").alias("rcse_old_terminal_id"),
-        first("rcse_reg_users_new").alias("rcse_reg_users_new"),
-        first("rcse_reg_users_all").alias("rcse_reg_users_all"),
+        max("rcse_reg_users_new").alias("rcse_reg_users_new"),
+        max("rcse_reg_users_all").alias("rcse_reg_users_all"),
         first("id").alias("id")
       )
 
@@ -179,7 +180,7 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
         "left"
       )
       .withColumn("rcse_reg_users_new", when($"r".isNotNull, $"rcse_reg_users_new" + $"rcse_reg_users_new_right").otherwise($"rcse_reg_users_new"))
-      .withColumn("rcse_reg_users_all", when($"r".isNotNull, $"rcse_reg_users_all" + $"rcse_reg_users_all_right").otherwise($"rcse_reg_users_new"))
+      .withColumn("rcse_reg_users_all", when($"r".isNotNull, $"rcse_reg_users_all" + $"rcse_reg_users_all_right").otherwise($"rcse_reg_users_all"))
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
     val result = join3

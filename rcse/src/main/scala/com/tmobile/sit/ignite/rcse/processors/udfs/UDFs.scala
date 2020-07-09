@@ -22,7 +22,7 @@ object UDFs {
     val refDateLocalTime = LocalDate.of(1900,1,1)
     while (dateId.isBefore(dateUpperBound.toLocalDate) || (dateId.isEqual(dateUpperBound.toLocalDate))) {
       var rcse_reg_users_new = 0
-      if (!dQueue.isEmpty && dQueue.head == DAYS.between(dateId, refDateLocalTime)) {
+      if (!dQueue.isEmpty && dQueue.head == DAYS.between( refDateLocalTime,dateId)) {
         rcse_reg_users_new = uQueue.head
         cntUsersAll += uQueue.head
         dQueue = dQueue.tail; uQueue = uQueue.tail
