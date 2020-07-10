@@ -48,6 +48,7 @@ class EventsInputData(settings: Settings)(implicit sparkSession: SparkSession) {
     delimiter = "|",
     timestampFormat = "yyyy-MM-dd HH:mm:ss")
     .read()
+    .filter($"modification_date".isNotNull)
     .withColumn("rcse_terminal_sw_desc", upper($"rcse_terminal_sw_desc"))
 
   val imsi3DesLookup = CSVReader(path = settings.imsisEncodedPath,

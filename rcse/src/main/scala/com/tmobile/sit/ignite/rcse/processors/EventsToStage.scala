@@ -2,16 +2,13 @@ package com.tmobile.sit.ignite.rcse.processors
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
-import com.tmobile.sit.ignite.rcse.structures.{CommonStructures, Events, Terminal}
-import org.apache.spark.sql.types.{DateType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
-import org.apache.spark.sql.{Column, DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.{SaveMode, SparkSession}
 
 /*
 lookups:
@@ -65,12 +62,12 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
       .terminalSWLookup(inputData.terminalSW)
-      .sort("msisdn", "date_id")
+      .sort(asc("msisdn"), asc("date_id"))
       .groupBy("msisdn")
       .agg(
-        first("date_id").alias("date_id"),
-        (for (i <- EventsStage.withLookups if i != "msisdn" && i != "date_id") yield {
-          first(i).alias(i)
+        last("date_id").alias("date_id"),
+        (for (i <- EventsStage.withLookups if i != "msisdn" && i != "date_id" ) yield {
+          last(i).alias(i)
         }): _*
       ).persist()
 
@@ -175,12 +172,12 @@ class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSess
       )
 
     val nonDM = regDER
-      .sort("msisdn", "rcse_event_type", "date_id")
-      .groupBy("msisdn", "rcse_event_type")
+      .sort(asc("msisdn"), asc("rcse_event_type"), asc("date_id"))
+      .groupBy(asc("msisdn"), asc("rcse_event_type"))
       .agg(
-        first("date_id").alias("date_id"),
+        last("date_id").alias("date_id"),
         (for (i <- EventsStage.input if i != "msisdn" && i != "rcse_event_type" && i != "date_id") yield {
-          first(i).alias(i)
+          last(i).alias(i)
         }): _*
       )
       .withColumn("tac_code", when($"imei".isNotNull && length($"imei") > lit(8), trim($"imei").substr(0, 8)).otherwise($"imei"))
