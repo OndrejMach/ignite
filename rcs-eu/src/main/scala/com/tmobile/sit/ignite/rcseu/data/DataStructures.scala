@@ -9,4 +9,6 @@ case class PreprocessedData(activity: DataFrame, provision: DataFrame, registerR
 
 case class OutputData(UserAgents: DataFrame)
 
+case class PersistentData(oldUserAgents: DataFrame)
+
 case class ResultPaths(lookupPath: String, outputPath: String)

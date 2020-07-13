@@ -1,9 +1,10 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import com.tmobile.sit.ignite.rcseu.data.{InputData, PreprocessedData}
+import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
 
-class Pipeline(inputData: InputData, stageData: StageProcessing, core: ProcessingCore, writer: ResultWriter)(implicit sparkSession: SparkSession) {
+class Pipeline(inputData: InputData, persistentData: PersistentData, stageData: StageProcessing,
+               core: ProcessingCore, writer: ResultWriter)(implicit sparkSession: SparkSession) {
   def run(): Unit = {
 
     // Read input files
@@ -21,7 +22,7 @@ class Pipeline(inputData: InputData, stageData: StageProcessing, core: Processin
       stageProvision,stageRegisterRequests)
 
     // Calculate output data from core processing
-    val result = core.process(preprocessedData)
+    val result = core.process(preprocessedData, persistentData)
 
     // Write result data set
     writer.write(result)

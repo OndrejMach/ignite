@@ -1,18 +1,16 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import java.awt.Dimension
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.rcseu.data.{OutputData, PersistentData, PreprocessedData}
 
-import com.tmobile.sit.ignite.rcseu.data.{OutputData, PreprocessedData}
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.count
 
-trait ProcessingCore {
-  def process(preprocessedData: PreprocessedData) : OutputData
+trait ProcessingCore extends Logger{
+  def process(preprocessedData: PreprocessedData, persistentData: PersistentData) : OutputData
 }
 
 class Core extends ProcessingCore {
 
-  override def process(stageData: PreprocessedData): OutputData = {
+  override def process(stageData: PreprocessedData, persistentData: PersistentData): OutputData = {
 
     stageData.activity.show()
     stageData.provision.show()
@@ -20,8 +18,13 @@ class Core extends ProcessingCore {
 
     val dim = new Dimension()
 
-    val UserAgents = dim.getUserAgents(stageData.activity, stageData.registerRequests)
+    val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
 
-    OutputData(UserAgents)
+    val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
+
+    fullUserAgents.cache()
+    logger.info("Full user agents count: " + fullUserAgents.count())
+
+    OutputData(fullUserAgents)
   }
 }
