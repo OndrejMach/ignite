@@ -7,6 +7,17 @@ import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, ResultPaths
 import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter, Stage}
 
 object Application extends App with Logger {
+
+  if(args.length != 2) {
+    logger.error("No arguments specified. Usage: ... <date> <natco>")
+    System.exit(0)
+  }
+
+  val date = args(0)
+  val natco = args(1)
+
+  logger.info(s"Date: $date, natco: $natco")
+
   val conf = new Setup()
 
   if (!conf.settings.isAllDefined) {
@@ -20,9 +31,9 @@ object Application extends App with Logger {
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
   val inputReaders = InputData(
-    activity = new CSVReader(conf.settings.inputPath.get + "activity_*.csv", header = true, delimiter = "\t"),
-    provision = new CSVReader(conf.settings.inputPath.get + "provision_*.gz", header = true, delimiter = "\t"),
-    register_requests = new CSVReader(conf.settings.inputPath.get + "register_request*.gz", header = true, delimiter = "\t")
+    activity = new CSVReader(conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz", header = true, delimiter = "\t"),
+    provision = new CSVReader(conf.settings.inputPath.get + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t"),
+    register_requests = new CSVReader(conf.settings.inputPath.get + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t")
   )
 
   val persistentData = PersistentData(
