@@ -1,55 +1,36 @@
-package com.tmobile.sit.ignite.rcse.processors
+package com.tmobile.sit.ignite.rcse.processors.inituseragregates
 
 import java.sql.Date
 import java.time.LocalDate
 
-import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.events.EventsInputData
-import com.tmobile.sit.ignite.rcse.structures.{Conf, InitConf, InitUsers}
-import org.apache.spark.sql.{SaveMode, SparkSession}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.udf
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.rcse.processors.inputs.{InitUserInputs, LookupsData}
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
+import com.tmobile.sit.ignite.rcse.structures.InitUsers
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, collect_list, count, datediff, explode, first, lit, max, monotonically_increasing_id, udf, when}
 import org.apache.spark.sql.types.{DateType, IntegerType}
+import com.tmobile.sit.ignite.rcse.processors.Lookups
 
-case class DatesCount(date_id: Date, rcse_reg_users_new: Int, rcse_reg_users_all: Int)
 
-
-class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(implicit sparkSession: SparkSession) extends Processor {
+class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsData, maxData: Date, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._
 
-  val processingDateMinus1 = Date.valueOf(processingDate.toLocalDate.minusDays(1))
-  val refDate = Date.valueOf(LocalDate.of(1900, 1, 1))
 
-  override def processData(): Unit = {
-    val inputData: EventsInputData = new EventsInputData(settings = settings)
-
-    val confData = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_f_rcse_conf.TMD.csv",
-      schema = Some(Conf.confFileSchema),
-      header = false,
-      delimiter = "|"
-    ).read()
-
-    val initData = CSVReader(
-      path = "/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_x_rcse_init_user.TMD.csv",
-      header = false,
-      delimiter = "|",
-      schema = Some(InitUsers.initUsersSchema)
-    )
-      .read()
-
-
-    val tacPreprocessed = inputData.tac
-      .filter($"valid_to" >= MAX_DATE && $"id".isNotNull)
-      .terminalSimpleLookup(inputData.terminal)
+  private val tacPreprocessed = {
+    logger.info("Preparing TAC")
+    lookups.tac
+      .filter($"valid_to" >= maxData && $"id".isNotNull)
+      .terminalSimpleLookup(lookups.terminal)
       .withColumn("rcse_terminal_id_tac", $"rcse_terminal_id_tac")
       .withColumnRenamed("rcse_terminal_id_terminal", "rcse_terminal_id_term")
       .drop("rcse_terminal_id_desc")
+  }
 
-    val userPreprocessed = confData
+  private val userPreprocessed = {
+    logger.info("Preparing init user data")
+    inputData.confData
       .filter($"date_id" === lit(processingDate) && ($"rcse_tc_status_id" === lit(0) || $"rcse_tc_status_id" === lit(1)))
       .groupBy("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
@@ -58,16 +39,23 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       )
       .withColumn("rcse_reg_users_all", lit(0))
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
+  }
 
-    val getDates = udf(UDFs.dateUDF)
 
+  //potentially common
 
-    //potentially common
-    val maxDateId = initData.select(max("date_id")).collect()(0).getDate(0)
+  private val initDate1 = {
+    logger.info("Calculating initDate1")
+    val maxDateId = inputData.initData.select(max("date_id")).collect()(0).getDate(0)
 
     logger.info(s"maxDateId: ${maxDateId}")
 
-    val initDate1 = initData
+    val getDates = udf(UDFs.dateUDF)
+
+    val processingDateMinus1 = Date.valueOf(processingDate.toLocalDate.minusDays(1))
+    val refDate = Date.valueOf(LocalDate.of(1900, 1, 1))
+
+    inputData.initData
       .drop("load_date", "entry_id")
       .filter($"date_id" === lit(Date.valueOf(processingDate.toLocalDate.minusDays(1))))
       .union(userPreprocessed)
@@ -88,10 +76,13 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .withColumn("date_id", $"date_metrics".getItem("date_id"))
       .withColumn("rcse_reg_users_new", $"date_metrics".getItem("rcse_reg_users_new"))
       .withColumn("rcse_reg_users_all", $"date_metrics".getItem("rcse_reg_users_all"))
-      .select("date_id", "natco_code", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id", "rcse_reg_users_new", "rcse_reg_users_all" )
+      .select("date_id", "natco_code", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id", "rcse_reg_users_new", "rcse_reg_users_all")
+  }
 
+  def getData = {
+    logger.info("Deting result")
 
-    val initUpdated = initData
+    val initUpdated = inputData.initData
       .drop("load_date", "entry_id")
       .filter($"date_id" < lit(processingDate))
       .union(initDate1)
@@ -171,7 +162,7 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .withColumn("l", lit(1))
       .join(
         teeABSort
-        .toDF(teeABSort.columns.map(_+"_right") :_*)
+          .toDF(teeABSort.columns.map(_ + "_right"): _*)
           .withColumn("r", lit(1)),
         $"date_id" === $"date_id_right" &&
           $"rcse_init_client_id" === $"rcse_init_client_id_right" &&
@@ -183,11 +174,11 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       .withColumn("rcse_reg_users_all", when($"r".isNotNull, $"rcse_reg_users_all" + $"rcse_reg_users_all_right").otherwise($"rcse_reg_users_all"))
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
-    val result = join3
+    join3
       .withColumn("l", lit(1))
       .join(
         teeABSort
-          .toDF(teeABSort.columns.map(_+"_right") :_*)
+          .toDF(teeABSort.columns.map(_ + "_right"): _*)
           .withColumn("r", lit(1)),
         $"date_id" === $"date_id_right" &&
           $"rcse_init_client_id" === $"rcse_init_client_id_right" &&
@@ -197,20 +188,5 @@ class InitUserAggregatesProcessor(processingDate: Date, settings: Settings)(impl
       )
       .filter($"r".isNull)
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
-
-    result
-      .coalesce(1)
-      .write
-      .mode(SaveMode.Overwrite)
-      .option("delimiter", "|")
-      .option("header", "false")
-      .option("nullValue", "")
-      .option("emptyValue", "")
-      .option("quoteAll", "false")
-      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
-      .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_x_rcse_init_user.TMD.csv");
-
-    logger.info(s"result count ${result.count()}")
-
   }
 }

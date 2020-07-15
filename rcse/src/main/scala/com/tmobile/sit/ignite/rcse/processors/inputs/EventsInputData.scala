@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.rcse.processors.events
+package com.tmobile.sit.ignite.rcse.processors.inputs
 
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
@@ -16,40 +16,6 @@ class EventsInputData(settings: Settings)(implicit sparkSession: SparkSession) {
     delimiter = "|"
   ) read()
 
-
-  val client = CSVReader(
-    path = settings.clientPath,
-    header = false,
-    schema = Some(CommonStructures.clientSchema),
-    timestampFormat = "yyyy-MM-dd HH:mm:ss",
-    delimiter = "|"
-  ).read()
-
-  val tac = CSVReader(
-    path = settings.tacPath,
-    header = false,
-    schema = Some(Terminal.tac_struct),
-    delimiter = "|"
-  ).read()
-    .filter($"valid_to" >= lit(MAX_DATE))
-    .withColumn("terminal_id", $"id")
-
-  val terminal = CSVReader(path = settings.terminalPath,
-    header = false,
-    schema = Some(Terminal.terminal_d_struct),
-    delimiter = "|")
-    .read()
-
-
-
-  val terminalSW = CSVReader(path = settings.terminalSWPath,
-    header = false,
-    schema = Some(CommonStructures.terminalSWSchema),
-    delimiter = "|",
-    timestampFormat = "yyyy-MM-dd HH:mm:ss")
-    .read()
-    .filter($"modification_date".isNotNull)
-    .withColumn("rcse_terminal_sw_desc", upper($"rcse_terminal_sw_desc"))
 
   val imsi3DesLookup = CSVReader(path = settings.imsisEncodedPath,
     header = false,

@@ -12,5 +12,12 @@ case class Settings (
                       tacPath: String,
                       maxDate: Date,
                       outputPath: String,
-                      encoderPath: String
+                      encoderPath: String,
+                      regDerEventsToday: String,
+                      regDerEventsYesterday: String,
+                      activeUsersToday: String,
+                      activeUsersYesterday: String,
+                      confFile: String,
+                      initUser: String,
+                      initConf: String
                     )
