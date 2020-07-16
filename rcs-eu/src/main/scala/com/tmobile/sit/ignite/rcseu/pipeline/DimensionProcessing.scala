@@ -56,6 +56,7 @@ class Dimension extends DimensionProcessing {
     }.drop("coll1")
 
     val dfUA23=dfUA22
+      .withColumn("_UserAgentID", monotonically_increasing_id)
       .withColumnRenamed("coll0", "OEM")
       .withColumnRenamed("letters", "FW")
       .withColumnRenamed("colly0", "Client")

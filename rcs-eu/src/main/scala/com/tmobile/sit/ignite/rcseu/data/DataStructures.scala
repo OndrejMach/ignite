@@ -7,7 +7,7 @@ case class InputData(activity: Reader, provision: Reader, register_requests: Rea
 
 case class PreprocessedData(activity: DataFrame, provision: DataFrame, registerRequests: DataFrame)
 
-case class OutputData(UserAgents: DataFrame)
+case class OutputData(UserAgents: DataFrame, ProvisionedDaily: DataFrame,RegisteredDaily: DataFrame)
 
 case class PersistentData(oldUserAgents: DataFrame)
 

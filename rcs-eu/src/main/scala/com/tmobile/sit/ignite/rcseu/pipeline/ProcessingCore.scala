@@ -25,8 +25,12 @@ class Core extends ProcessingCore {
     logger.info("Full user agents count: " + fullUserAgents.count())
 
     // Process facts
+    val fact = new Facts()
+    val provisionedDaily = fact.getProvisionedDaily(stageData.provision)
+    logger.info("Provisioned daily count: " + provisionedDaily.count())
 
-
-    OutputData(fullUserAgents)
+    val registeredDaily = fact.getRegisteredDaily(stageData.registerRequests)
+    logger.info("Registered daily count: " + registeredDaily.count())
+    OutputData(fullUserAgents,provisionedDaily,registeredDaily)
   }
 }

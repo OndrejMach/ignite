@@ -23,6 +23,8 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     //val fileSuffix = fileMetaData.file_date.replace("-","")+"_"+fileMetaData.file_natco_id
 
     CSVWriter(outputData.UserAgents, resultPaths.outputPath+"UserAgents.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath+"ProvisionedDaily.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredDaily, resultPaths.outputPath+"RegisteredDaily.csv", delimiter = ";").writeData()
 
   }
 }
