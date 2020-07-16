@@ -8,6 +8,7 @@ sourceCompatibility = 1.8
 
 
 dependencies {
+    implementation 'com.tmobile.sit:spark_common:1.8@jar'
     compile project(":ignite-common")
 
 }

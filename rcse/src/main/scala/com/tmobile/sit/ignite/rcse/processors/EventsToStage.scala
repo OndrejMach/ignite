@@ -2,14 +2,11 @@ package com.tmobile.sit.ignite.rcse.processors
 
 import java.sql.{Date, Timestamp}
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
-import com.tmobile.sit.ignite.rcse.processors.events.EventsProcessor
+import com.tmobile.sit.ignite.rcse.processors.events.{EventsOutput, EventsProcessor}
 import com.tmobile.sit.ignite.rcse.processors.inputs.{EventsInputData, LookupsData}
-import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.DateType
-import org.apache.spark.sql.{SaveMode, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /*
 lookups:
@@ -21,17 +18,16 @@ lookups:
  */
 
 
-class EventsToStage(settings: Settings, load_date: Timestamp)(implicit sparkSession: SparkSession) extends Processor {
+class EventsToStage( load_date: Timestamp)(implicit sparkSession: SparkSession, settings: Settings) extends Logger {
 
-  override def processData(): Unit = {
+   def processData(): EventsOutput = {
     // input file reading
-    import sparkSession.implicits._
 
-    val inputData = new EventsInputData(settings)
+    val inputData = new EventsInputData()
 
-    val lookups = new LookupsData(settings = settings)
+    val lookups = new LookupsData()
 
-    val events = new EventsProcessor(inputData = inputData, lookups = lookups,load_date = Date.valueOf(load_date.toLocalDateTime.toLocalDate ))
+    new EventsProcessor(inputData = inputData, lookups = lookups,load_date = Date.valueOf(load_date.toLocalDateTime.toLocalDate )).getDimensions
 /*
 
     logger.info(s"Getting new DM file, row count ${output.count()}")

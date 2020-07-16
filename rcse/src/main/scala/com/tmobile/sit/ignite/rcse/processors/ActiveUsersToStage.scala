@@ -1,19 +1,18 @@
 package com.tmobile.sit.ignite.rcse.processors
 
-import java.sql.Date
-
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.inputs.ActiveUsersInputs
-import org.apache.spark.sql.{SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
-class ActiveUsersToStage(settings: Settings, processingDate: Date)(implicit sparkSession: SparkSession) extends Processor {
+class ActiveUsersToStage(implicit sparkSession: SparkSession, settings: Settings) extends Logger {
 
-  override def processData(): Unit = {
-    val inputData = new ActiveUsersInputs(settings)
+  def processData(): DataFrame = {
+    val inputData = new ActiveUsersInputs()
 
-    val processor = new activeusers.ActiveUsersProcessor(inputData, processingDate)
-
-      processor.result
+    new activeusers.ActiveUsersProcessor(inputData, settings.app.processingDate).result
+/*
+      result
       .coalesce(1)
       .write
       .mode(SaveMode.Overwrite)
@@ -25,6 +24,8 @@ class ActiveUsersToStage(settings: Settings, processingDate: Date)(implicit spar
       .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
       .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_f_rcse_active_user.TMD.20200607.csv");
 
+
+ */
 
   }
 }

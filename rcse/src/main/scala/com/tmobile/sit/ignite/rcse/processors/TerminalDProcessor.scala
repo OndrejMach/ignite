@@ -1,40 +1,49 @@
 package com.tmobile.sit.ignite.rcse.processors
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.terminald.UpdateDTerminal
 import com.tmobile.sit.ignite.rcse.structures.Terminal
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
-class TerminalDProcessor(settings: Settings)(implicit sparkSession: SparkSession) extends Processor {
-  override def processData(): Unit = {
-    val terminalDData = CSVReader(path = settings.terminalPath,
-      header = false,
-      schema = Some(Terminal.terminal_d_struct),
-      delimiter = "|")
-      .read()
+class TerminalDProcessor(implicit sparkSession: SparkSession,settings: Settings ) extends Logger {
+   def processData(): DataFrame = {
+    val terminalDData = {
+      logger.info(s"Reading data from ${settings.stage.terminalPath}")
+      CSVReader(path = settings.stage.terminalPath,
+        header = false,
+        schema = Some(Terminal.terminal_d_struct),
+        delimiter = "|")
+        .read()
+    }
 
-    val tac = CSVReader(
-      path = settings.tacPath,
-      header = false,
-      schema = Some(Terminal.tac_struct),
-      delimiter = "|"
-    ).read()
+    val tac = {
+      logger.info(s"Reading data from ${settings.stage.tacPath}")
+      CSVReader(
+        path = settings.stage.tacPath,
+        header = false,
+        schema = Some(Terminal.tac_struct),
+        delimiter = "|"
+      ).read()
+    }
 
-    val terminalDResultData = new UpdateDTerminal(terminalDData, tac, settings.maxDate).getData()
+    new UpdateDTerminal(terminalDData, tac, settings.app.maxDate).getData()
 
+    /*
     //TODO quotation
     terminalDResultData
       .coalesce(1)
       .write
+      .mode(SaveMode.Overwrite)
       .option("delimiter", "|")
       .option("header", "true")
       .option("nullValue", "")
       .option("emptyValue", "")
       .option("quoteAll", "false")
       .csv(settings.outputPath);
-/*
+
     CSVWriter(
       data = terminalDResultData
         .na

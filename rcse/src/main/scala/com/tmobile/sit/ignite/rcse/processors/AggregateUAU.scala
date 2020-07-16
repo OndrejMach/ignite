@@ -2,28 +2,24 @@ package com.tmobile.sit.ignite.rcse.processors
 
 import java.sql.Date
 
-import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.aggregateuau.AgregateUAUProcessor
-import com.tmobile.sit.ignite.rcse.processors.inputs.AgregateUAUInputs
-import com.tmobile.sit.ignite.rcse.structures.{CommonStructures, Terminal}
-import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsData
+import com.tmobile.sit.ignite.rcse.processors.inputs.{AgregateUAUInputs, LookupsData}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import org.apache.spark.sql.types.{DateType, IntegerType, StringType, StructField, StructType, TimestampType}
-import org.apache.spark.sql.functions._
 
-class AggregateUAU(time_key: Date, settings: Settings)(implicit sparkSession: SparkSession) extends Processor {
+class AggregateUAU(implicit sparkSession: SparkSession, settings: Settings) extends Logger {
 
-  import sparkSession.implicits._
+  def processData(): DataFrame = {
 
-  override def processData(): Unit = {
+    val activeUsers = new AgregateUAUInputs()
 
-    val activeUsers = new AgregateUAUInputs(settings)
+    val lookups = new LookupsData()
 
-    val lookups = new LookupsData(settings)
+    new AgregateUAUProcessor(activeUsers, lookups, settings.app.processingDate).result
 
-    val processor = new AgregateUAUProcessor(activeUsers, lookups, time_key)
 
+    /*
     processor.result
       .coalesce(1)
       .write
@@ -36,7 +32,7 @@ class AggregateUAU(time_key: Date, settings: Settings)(implicit sparkSession: Sp
       .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
       .option("dateFormat", "yyyyMMdd")
       .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_x_rcse_uau_d.TMD.20200607.csv");
-
+*/
 
   }
 

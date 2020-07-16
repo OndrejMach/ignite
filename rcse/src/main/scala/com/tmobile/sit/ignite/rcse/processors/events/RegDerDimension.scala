@@ -19,7 +19,7 @@ class RegDerDimension(inputEventsRegDer: DataFrame,msisdn3DesLookup: DataFrame, 
     logger.info("Calaulating REGDER dimension")
     inputEventsRegDer
       .sort(asc("msisdn"), asc("rcse_event_type"), asc("date_id"))
-      .groupBy(asc("msisdn"), asc("rcse_event_type"))
+      .groupBy("msisdn","rcse_event_type")
       .agg(
         last("date_id").alias("date_id"),
         (for (i <- EventsStage.input if i != "msisdn" && i != "rcse_event_type" && i != "date_id") yield {

@@ -2,11 +2,12 @@ package com.tmobile.sit.ignite.rcse.processors.aggregateuau
 
 import java.sql.Date
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.inputs.{AgregateUAUInputs, LookupsData}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, concat_ws, count, first, lit}
 
-class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time_key:Date)(implicit sparkSession: SparkSession) {
+class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time_key:Date)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
 
   private val aggregKeys = Map(
@@ -32,46 +33,53 @@ class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time
 
 
 
-  private val activeUsersPreprocessed = inputs.activeUsersData
-    .sort("msisdn")
-    .groupBy("msisdn")
-    .agg(
-      first("date_id").alias("date_id"),
-      first("natco_code").alias("natco_code"),
-      first("rcse_tc_status_id").alias("rcse_tc_status_id"),
-      first("rcse_curr_client_id").alias("rcse_curr_client_id"),
-      first("rcse_curr_terminal_id").alias("rcse_curr_terminal_id"),
-      first("rcse_curr_terminal_sw_id").alias("rcse_curr_terminal_sw_id")
-    )
-    .withColumnRenamed("rcse_curr_client_id", "rcse_client_id")
-    .withColumnRenamed("rcse_curr_terminal_id", "rcse_terminal_id")
-    .withColumnRenamed("rcse_curr_terminal_sw_id", "rcse_terminal_sw_id")
-    .join(lookups.client, Seq("rcse_client_id"), "left_outer")
-    .join(lookups.terminal, Seq("rcse_terminal_id"), "left_outer")
-    .cache()
+  private val activeUsersPreprocessed = {
+    logger.info("GPreprocessing active users")
 
-
-  val result = (for (i <- aggregKeys.keySet) yield {
-    val aggreg = activeUsersPreprocessed
-      .groupBy(aggregKeys(i).map(col(_)): _*)
+    inputs.activeUsersData
+      .sort("msisdn")
+      .groupBy("msisdn")
       .agg(
-        count("*").alias("unique_users")
+        first("date_id").alias("date_id"),
+        first("natco_code").alias("natco_code"),
+        first("rcse_tc_status_id").alias("rcse_tc_status_id"),
+        first("rcse_curr_client_id").alias("rcse_curr_client_id"),
+        first("rcse_curr_terminal_id").alias("rcse_curr_terminal_id"),
+        first("rcse_curr_terminal_sw_id").alias("rcse_curr_terminal_sw_id")
       )
-    aggregKeys("key0")
-      .foldLeft(aggreg)((df, name) => if (aggregKeys(i).filter(_ == name).isEmpty) df.withColumn(name, lit("##")) else df)
-      .withColumn("date_id", lit(time_key))
-      .withColumn("rcse_client_key_code", concat_ws("_", $"rcse_client_vendor_ldesc", $"rcse_client_id"))
-      .withColumn("rcse_terminal_key_code", concat_ws("_", $"rcse_terminal_vendor_ldesc", $"rcse_terminal_id"))
-      .withColumnRenamed("rcse_terminal_sw_id", "rcse_terminal_sw_key_code")
-      .select(
-        $"date_id".as("time_key_code"),
-        $"natco_code".as("natco_key_code"),
-        $"rcse_client_key_code",
-        $"rcse_terminal_key_code",
-        $"rcse_terminal_sw_key_code",
-        $"unique_users"
-      )
-  })
-    .reduce(_.union(_))
+      .withColumnRenamed("rcse_curr_client_id", "rcse_client_id")
+      .withColumnRenamed("rcse_curr_terminal_id", "rcse_terminal_id")
+      .withColumnRenamed("rcse_curr_terminal_sw_id", "rcse_terminal_sw_id")
+      .join(lookups.client, Seq("rcse_client_id"), "left_outer")
+      .join(lookups.terminal, Seq("rcse_terminal_id"), "left_outer")
+      .cache()
+  }
+
+
+  val result = {
+    logger.info("Calculating final result")
+    (for (i <- aggregKeys.keySet) yield {
+      val aggreg = activeUsersPreprocessed
+        .groupBy(aggregKeys(i).map(col(_)): _*)
+        .agg(
+          count("*").alias("unique_users")
+        )
+      aggregKeys("key0")
+        .foldLeft(aggreg)((df, name) => if (aggregKeys(i).filter(_ == name).isEmpty) df.withColumn(name, lit("##")) else df)
+        .withColumn("date_id", lit(time_key))
+        .withColumn("rcse_client_key_code", concat_ws("_", $"rcse_client_vendor_ldesc", $"rcse_client_id"))
+        .withColumn("rcse_terminal_key_code", concat_ws("_", $"rcse_terminal_vendor_ldesc", $"rcse_terminal_id"))
+        .withColumnRenamed("rcse_terminal_sw_id", "rcse_terminal_sw_key_code")
+        .select(
+          $"date_id".as("time_key_code"),
+          $"natco_code".as("natco_key_code"),
+          $"rcse_client_key_code",
+          $"rcse_terminal_key_code",
+          $"rcse_terminal_sw_key_code",
+          $"unique_users"
+        )
+    })
+      .reduce(_.union(_))
+  }
 
 }
