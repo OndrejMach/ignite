@@ -3,6 +3,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcseu.data.{OutputData, ResultPaths}
+import com.tmobile.sit.ignite.rcseu.data.{OutputData, ResultPaths}
 import org.apache.spark.sql.SparkSession
 
 trait Writer extends Logger{

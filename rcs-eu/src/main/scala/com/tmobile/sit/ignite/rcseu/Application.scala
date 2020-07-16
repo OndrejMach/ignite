@@ -4,7 +4,8 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.config.Setup
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, ResultPaths}
-import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter, Stage}
+import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter}
+import com.tmobile.sit.ignite.rcseu.pipeline.Stage
 
 object Application extends App with Logger {
 
