@@ -43,7 +43,8 @@ class Setup(configFile: String = "rcse.conf") extends Logger {
       app = AppConfig(
         processingDate = getDate(serviceConf.getString("config.processingDate").get),
         inputFilesPath = serviceConf.getString("config.inputFilesPath").get,
-        maxDate = getDate(serviceConf.getString("config.maxDate").get)
+        maxDate = getDate(serviceConf.getString("config.maxDate").get),
+        master = serviceConf.getString("config.master").get
       ),
       stage = StageFilesConfig(
         clientPath = serviceConf.getString("config.stageFiles.clientPath").get,

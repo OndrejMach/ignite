@@ -3,9 +3,9 @@ package com.tmobile.sit.ignite
 import org.apache.spark.sql.SparkSession
 
 package object rcse {
-  def getSparkSession() = SparkSession.builder()
+  def getSparkSession(master: String) = SparkSession.builder()
     //.appName("Test FWLog Reader")
-    .master("local[*]")
+    .master(master)
     .config("spark.executor.instances", "6")
     .config("spark.executor.memory", "4g")
     .config("spark.executor.cores", "2")

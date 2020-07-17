@@ -1,9 +1,6 @@
 package com.tmobile.sit.ignite.rcse.processors.inputs
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.structures.{Conf, InitUsers}
 import org.apache.spark.sql.SparkSession
 
 class InitUserInputs(implicit sparkSession: SparkSession,settings: Settings) extends InputData(settings.app.processingDate) {
@@ -24,7 +21,7 @@ class InitUserInputs(implicit sparkSession: SparkSession,settings: Settings) ext
 
   val initData = {
     logger.info(s"Reading data from ${settings.stage.initUser + yesterdaysPartition}")
-    sparkSession.read.parquet(settings.stage.initUser + yesterdaysPartition)
+    sparkSession.read.parquet(settings.stage.initUser + yesterdaysPartition )
 
     /*CSVReader(
       path = settings.stage.initUser,//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/rcse/data/stage/cptm_ta_x_rcse_init_user.TMD.csv",

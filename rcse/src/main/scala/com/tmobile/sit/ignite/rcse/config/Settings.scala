@@ -49,7 +49,8 @@ case class OutputConfig(
 case class AppConfig(
                       processingDate: Date,
                       inputFilesPath: String,
-                      maxDate: Date
+                      maxDate: Date,
+                      master: String
                     ) extends RCSEConfig
 
 

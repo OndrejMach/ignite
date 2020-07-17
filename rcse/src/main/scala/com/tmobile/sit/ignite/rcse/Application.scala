@@ -5,9 +5,9 @@ import com.tmobile.sit.ignite.rcse.config.Setup
 import com.tmobile.sit.ignite.rcse.stages._
 
 object Application extends App with Logger{
-  implicit val sparkSession = getSparkSession()
 
   implicit val settings = new Setup().settings
+  implicit val sparkSession = getSparkSession(settings.app.master)
 
   settings.printAllFields()
 

@@ -1,8 +1,8 @@
 package com.tmobile.sit.ignite.jobtemplate
 
-import com.tmobile.sit.ignite.common.Logger
-import com.tmobile.sit.ignite.common.readers.{CSVReader, Reader}
-import com.tmobile.sit.ignite.common.writers.CSVWriter
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.common.readers.{CSVReader, Reader}
+import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.jobtemplate.config.Setup
 import com.tmobile.sit.ignite.jobtemplate.pipeline.{CoreLogicWithTransform, InputData, Pipeline, TemplateStage}
 
