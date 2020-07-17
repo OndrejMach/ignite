@@ -5,29 +5,34 @@ import java.time.LocalDateTime
 
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, ConfToStage, EventsToStage}
-import com.tmobile.sit.ignite.rcse.writer.{StageData, StageWriter}
+import com.tmobile.sit.ignite.rcse.writer.StageWriter
 import org.apache.spark.sql.SparkSession
 
 class Stage(implicit sparkSession: SparkSession, settings: Settings) extends Executor {
   override def runProcessing(): Unit = {
     logger.info("Getting Events data")
     val eventsData = new EventsToStage(Timestamp.valueOf(LocalDateTime.now())).processData()
-    logger.info("Getting Active Users data")
-    val activeUsers = new ActiveUsersToStage().processData()
+
+    logger.info("Writing RegDer data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = eventsData.regDer, settings.stage.regDerEvents, true).writeData()
+    logger.info("Writing DM data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = eventsData.dm, settings.stage.dmEventsFile, true).writeData()
+    logger.info("Writing client data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = eventsData.client, settings.stage.clientPath).writeData()
+    logger.info("Writing terminal data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = eventsData.terminal, settings.stage.terminalPath).writeData()
+    logger.info("Writing terminalSW data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = eventsData.terminalSW, settings.stage.terminalSWPath).writeData()
+
     logger.info("Getting Conf data")
     val conf = new ConfToStage().processData()
+    logger.info("Writing Conf data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = conf, settings.stage.confFile, true).writeData()
 
-    logger.info("Consolidating outputs")
-    val dataToWrite = StageData(
-      client = eventsData.client,
-      terminal = eventsData.terminal,
-      terminalSW = eventsData.terminalSW,
-      regDerEvents = eventsData.regDer,
-      dmEvents = eventsData.dm,
-      conf = conf,
-      activeUsers = activeUsers
-    )
-    logger.info("Writing data")
-    new StageWriter(processingDate = settings.app.processingDate, stageData = dataToWrite).writeData()
+    logger.info("Getting Active Users data")
+    val activeUsers = new ActiveUsersToStage().processData()
+    logger.info("Writing Conf data")
+    new StageWriter(processingDate = settings.app.processingDate, stageData = activeUsers, settings.stage.activeUsers, true).writeData()
+
   }
 }

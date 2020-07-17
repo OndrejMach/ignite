@@ -1,16 +1,17 @@
 package com.tmobile.sit.ignite.rcse.processors
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcse.config.Settings
+import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsData
 import com.tmobile.sit.ignite.rcse.processors.terminald.UpdateDTerminal
-import com.tmobile.sit.ignite.rcse.structures.Terminal
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class TerminalDProcessor(implicit sparkSession: SparkSession,settings: Settings ) extends Logger {
    def processData(): DataFrame = {
-    val terminalDData = {
+    val lookups = new LookupsData()
+
+     /*
+     val terminalDData = {
       logger.info(s"Reading data from ${settings.stage.terminalPath}")
       CSVReader(path = settings.stage.terminalPath,
         header = false,
@@ -29,7 +30,9 @@ class TerminalDProcessor(implicit sparkSession: SparkSession,settings: Settings 
       ).read()
     }
 
-    new UpdateDTerminal(terminalDData, tac, settings.app.maxDate).getData()
+      */
+
+    new UpdateDTerminal(lookups.terminal, lookups.tac, settings.app.maxDate).getData()
 
     /*
     //TODO quotation
@@ -57,6 +60,8 @@ class TerminalDProcessor(implicit sparkSession: SparkSession,settings: Settings 
     ).writeData()
 
  */
+
+     //data.write.mode(SaveMode.Overwrite).parquet(settings.stage.terminalPath)
   }
 
 }

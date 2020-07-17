@@ -5,6 +5,7 @@ import java.sql.Date
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{desc, first, lit, max, monotonically_increasing_id}
+import org.apache.spark.sql.types.IntegerType
 
 class ClientDimension(eventsEnriched: DataFrame, clientsOld: DataFrame, load_date: Date)(implicit sparkSession: SparkSession) extends Logger{
   val newClient = {
@@ -18,7 +19,7 @@ class ClientDimension(eventsEnriched: DataFrame, clientsOld: DataFrame, load_dat
       eventsEnriched
         .filter($"rcse_client_id".isNull)
         .select(
-          lit(-1).as("rcse_client_id"),
+          lit(-1).cast(IntegerType).as("rcse_client_id"),
           $"client_vendor".as("rcse_client_vendor_sdesc"),
           $"client_vendor".as("rcse_client_vendor_ldesc"),
           $"client_version".as("rcse_client_version_sdesc"),
@@ -32,7 +33,8 @@ class ClientDimension(eventsEnriched: DataFrame, clientsOld: DataFrame, load_dat
           first("rcse_client_version_ldesc").alias("rcse_client_version_ldesc"),
           first("modification_date").alias("modification_date")
         )
-        .withColumn("rcse_client_id", monotonically_increasing_id() + lit(clientMax))
+        .withColumn("rcse_client_id", (monotonically_increasing_id() + lit(clientMax)).cast(IntegerType))
+        .select(clientsOld.columns.head, clientsOld.columns.tail :_*)
 
     logger.info("Unioning old clients with the new ones")
     clientsOld

@@ -9,7 +9,13 @@ import org.apache.spark.sql.types.DateType
 
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
-class RegDerDimension(inputEventsRegDer: DataFrame,msisdn3DesLookup: DataFrame, imsi3DesLookup: DataFrame, lookups: LookupsData )(implicit sparkSession: SparkSession) extends Logger {
+class RegDerDimension(inputEventsRegDer: DataFrame,
+                      msisdn3DesLookup: DataFrame,
+                      imsi3DesLookup: DataFrame,
+                      client: DataFrame,
+                      terminal: DataFrame,
+                      terminalSW: DataFrame,
+                      tac: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
   val regDerOutput = {
     import sparkSession.implicits._
 
@@ -43,9 +49,9 @@ class RegDerDimension(inputEventsRegDer: DataFrame,msisdn3DesLookup: DataFrame, 
       .withColumn("terminal_vendor", upper($"terminal_vendor"))
       .withColumn("terminal_model", upper($"terminal_model"))
       .withColumn("terminal_sw_version", upper($"terminal_sw_version"))
-      .clientLookup(lookups.client)
-      .tacLookup(lookups.tac)
-      .terminalLookup(lookups.terminal)
+      .clientLookup(client)
+      .tacLookup(tac)
+      .terminalLookup(terminal)
       .withColumn("rcse_terminal_id",
         when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
           .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
@@ -53,7 +59,7 @@ class RegDerDimension(inputEventsRegDer: DataFrame,msisdn3DesLookup: DataFrame, 
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
-      .terminalSWLookup(lookups.terminalSW)
+      .terminalSWLookup(terminalSW)
       .select(
         EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
       )

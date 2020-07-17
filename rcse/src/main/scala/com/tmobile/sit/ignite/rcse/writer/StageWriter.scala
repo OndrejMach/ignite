@@ -2,24 +2,15 @@ package com.tmobile.sit.ignite.rcse.writer
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcse.config.Settings
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
-case class StageData(client: DataFrame,
-                     terminal: DataFrame,
-                     terminalSW: DataFrame,
-                     regDerEvents: DataFrame,
-                     dmEvents: DataFrame,
-                     activeUsers: DataFrame,
-                     conf: DataFrame
-                    )
 
-class StageWriter(processingDate: Date, stageData: StageData)(implicit sparkSession: SparkSession, settings: Settings) extends RCSEWriter(processingDate = processingDate) {
+class StageWriter(processingDate: Date, stageData: DataFrame, path: String, partitioned: Boolean = false )(implicit sparkSession: SparkSession) extends RCSEWriter(processingDate = processingDate) {
   def writeData(): Unit = {
-    logger.info(s"Writing client data")
-    writeParquet(stageData.client, settings.stage.clientPath)
+    logger.info(s"Writing  data to ${path}, partitioned ${partitioned}")
+    writeParquet(stageData, path, partitioned)
+
+    /*
     logger.info(s"Writing terminal data")
     writeParquet(stageData.terminal, settings.stage.terminalPath)
     logger.info(s"Writing terminalSW data")
@@ -32,5 +23,7 @@ class StageWriter(processingDate: Date, stageData: StageData)(implicit sparkSess
     writeParquet(stageData.conf, settings.stage.confFile, true)
     logger.info(s"Writing active users data")
     writeParquet(stageData.activeUsers, settings.stage.activeUsersToday, true)
+
+     */
   }
 }

@@ -16,13 +16,13 @@ class TacData(tac: DataFrame, maxDate: java.sql.Date)(implicit sparkSession: Spa
           )
         )
     )
-      .select($"terminal_id", $"tac_code", $"id", $"manufacturer", $"model")
+      .select($"terminal_id", $"tac_code", $"id", $"manufacturer", $"model", $"load_date")
   }
 
    val tacProcessed = {
      logger.info("Preparing final TAC data")
      tacFiltered
-       .select($"terminal_id", $"tac_code".substr(0, 6).as("tac_code"), $"id", $"manufacturer", $"model")
+       .select($"terminal_id", $"tac_code".substr(0, 6).as("tac_code"), $"id", $"manufacturer", $"model", $"load_date")
        .distinct()
        .groupBy("tac_code")
        .agg(
@@ -30,7 +30,8 @@ class TacData(tac: DataFrame, maxDate: java.sql.Date)(implicit sparkSession: Spa
          first("terminal_id").alias("terminal_id"),
          first("id").alias("id"),
          first("manufacturer").alias("manufacturer"),
-         first("model").alias("model")
+         first("model").alias("model"),
+         first("load_date").alias("load_date")
        )
        .filter($"count" === lit(1))
        .drop("count")

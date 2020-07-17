@@ -1,13 +1,8 @@
 package com.tmobile.sit.ignite.rcse
 
-import java.sql.{Date, Timestamp}
-import java.time.{LocalDate, LocalDateTime}
-
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcse.config.{Settings, Setup}
-import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsData
-import com.tmobile.sit.ignite.rcse.processors.{ActiveUsersToStage, AggregateUAU, ConfToStage, EventsToStage, InitConfAggregates, InitUserAggregates, TerminalDProcessor}
-import com.tmobile.sit.ignite.rcse.stages.{Aggregates, Helper, Outputs, Stage, TerminalD}
+import com.tmobile.sit.ignite.rcse.config.Setup
+import com.tmobile.sit.ignite.rcse.stages._
 
 object Application extends App with Logger{
   implicit val sparkSession = getSparkSession()

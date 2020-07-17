@@ -15,6 +15,7 @@ package object rcse {
     .config("spark.executor.extraJavaOptions", "-XX:InitiatingHeapOccupancyPercent=35")
     .config("spark.dynamicAllocation.enabled", "true")
     .config("spark.app.name", "RCSE_processing")
+    .config("spark.sql.sources.partitionOverwriteMode","dynamic")
     .getOrCreate()
 
 }

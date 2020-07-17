@@ -8,6 +8,7 @@ import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import com.tmobile.sit.ignite.rcse.processors.inputs.{EventsInputData, LookupsData}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.LongType
 
 case class EventsOutput(client: DataFrame, terminal: DataFrame, terminalSW: DataFrame, regDer: DataFrame, dm: DataFrame)
 
@@ -38,9 +39,9 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
       .clientLookup(lookups.client)
       .terminalLookup(lookups.terminal)
       .withColumn("rcse_terminal_id",
-        when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal")
-          .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac")
-            .otherwise($"rcse_terminal_id_desc")
+        when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal".cast(LongType))
+          .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac".cast(LongType))
+            .otherwise($"rcse_terminal_id_desc".cast(LongType))
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
@@ -52,7 +53,7 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
         (for (i <- EventsStage.withLookups if i != "msisdn" && i != "date_id" ) yield {
           last(i).alias(i)
         }): _*
-      ).persist()
+      ).cache()
   }
 
   private val inputEventsRegDer = inputData.dataInput.filter($"rcse_event_type" =!= lit("DM"))
@@ -60,16 +61,30 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
 
   def getDimensions: EventsOutput = {
     logger.info("Getting new data for terminaSW dimension")
-    val terminalSW = new TerminalSWDimension(enrichedEvents = withLookups, oldTerminalSW = lookups.terminalSW, load_date = load_date).newTerminalSW
+    val terminalSW = new TerminalSWDimension(enrichedEvents = withLookups, oldTerminalSW = lookups.terminalSW, load_date = load_date).newTerminalSW.cache()
     logger.info("Getting new data for terminal dimension")
-    val terminal = new TerminalDimension(enrichedEvents = withLookups, oldTerminal = lookups.terminal, tacData = lookups.tac, load_date = load_date).newTerminal
+    val terminal = new TerminalDimension(enrichedEvents = withLookups, oldTerminal = lookups.terminal, tacData = lookups.tac, load_date = load_date).newTerminal.cache()
     logger.info("Getting new data for client dimension")
-    val client = new ClientDimension(eventsEnriched = withLookups, clientsOld = lookups.client, load_date = load_date).newClient
+    val client = new ClientDimension(eventsEnriched = withLookups, clientsOld = lookups.client, load_date = load_date).newClient.cache()
+
 
     logger.info("Getting regDer output")
-    val regDer = new RegDerDimension(inputEventsRegDer = inputEventsRegDer, msisdn3DesLookup = inputData.msisdn3DesLookup, imsi3DesLookup = inputData.imsi3DesLookup, lookups = lookups).regDerOutput
+    val regDer = new RegDerDimension(inputEventsRegDer = inputEventsRegDer,
+      msisdn3DesLookup = inputData.msisdn3DesLookup,
+      imsi3DesLookup = inputData.imsi3DesLookup,
+      client = client,
+      terminal= terminal,
+      tac = lookups.tac,
+      terminalSW = terminalSW
+    ).regDerOutput
+
     logger.info("Getting DM data")
-    val dm = new DMDimension(eventInputsEnriched = withLookups, newClient = client, newTerminal = terminal, newTerminalSW = terminalSW, msisdn3DesLookup = inputData.msisdn3DesLookup).eventsDM
+    val dm = new DMDimension(eventInputsEnriched = withLookups,
+      newClient = client,
+      newTerminal = terminal,
+      newTerminalSW = terminalSW,
+      msisdn3DesLookup = inputData.msisdn3DesLookup)
+      .eventsDM
 
     EventsOutput(client = client, terminal = terminal, terminalSW = terminalSW, regDer = regDer, dm = dm)
   }

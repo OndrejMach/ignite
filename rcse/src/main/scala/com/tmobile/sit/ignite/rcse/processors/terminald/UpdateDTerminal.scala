@@ -1,6 +1,7 @@
 package com.tmobile.sit.ignite.rcse.processors.terminald
 
 import java.sql.Date
+import java.time.LocalDate
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.structures.Terminal
@@ -68,12 +69,15 @@ class UpdateDTerminal(terminalDData: DataFrame, tac: DataFrame, maxDate: Date )(
       )
       .select(tacNotNull.columns.head, tacNotNull.columns.tail: _*)
       val join2 = tuneDF(join2I.filter($"rcse_terminal_id" =!= lit(-1)))
+        .withColumn("modification_date",when($"modification_date".isNull,lit(Date.valueOf(LocalDate.now()))).otherwise($"modification_date"))
 
       val nullTerminalId =
         tuneDF(join2I.filter($"rcse_terminal_id" === lit(-1)))
           .withColumn("rcse_terminal_id", monotonically_increasing_id() + lit(maxTerminalID))
+          .withColumn("modification_date",when($"modification_date".isNull,lit(Date.valueOf(LocalDate.now()))).otherwise($"modification_date"))
 
-      (join2,nullTerminalId )
+
+    (join2,nullTerminalId )
     }
 
   def getData() : DataFrame = {

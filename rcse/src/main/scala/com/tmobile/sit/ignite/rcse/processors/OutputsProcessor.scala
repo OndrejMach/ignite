@@ -26,7 +26,7 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
       terminal = lookups.terminal.columnsToUpperCase(),
       terminalSW = lookups.terminalSW.columnsToUpperCase(),
       client = lookups.client.columnsToUpperCase(),
-      activeUser = sparkSession.read.parquet(s"${settings.stage.activeUsersToday}/date=${settings.app.processingDate}").columnsToUpperCase(),
+      activeUser = sparkSession.read.parquet(s"${settings.stage.activeUsers}/date=${settings.app.processingDate}").columnsToUpperCase(),
       initConf = sparkSession.read.parquet(s"${settings.stage.initConf}/date=${settings.app.processingDate}").columnsToUpperCase(),
       initUser = sparkSession.read.parquet(s"${settings.stage.initUser}/date=${settings.app.processingDate}").columnsToUpperCase(),
       uau = sparkSession.read.parquet(s"${settings.stage.uauFile}/date=${settings.app.processingDate}").columnsToUpperCase()
