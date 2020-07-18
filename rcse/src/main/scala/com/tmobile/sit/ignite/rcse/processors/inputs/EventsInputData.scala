@@ -6,6 +6,12 @@ import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.structures.{CommonStructures, Events}
 import org.apache.spark.sql.SparkSession
 
+/**
+ * Class contains input data for the Events calculation (updates client, terminal, terminalSW. regder, DM).
+ * @param sparkSession
+ * @param settings - input paths
+ */
+
 class EventsInputData(implicit sparkSession: SparkSession,settings: Settings) extends Logger {
   val dataInput = {
     logger.info(s"Reading data from ${settings.app.inputFilesPath}")

@@ -4,6 +4,13 @@ import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.functions.{count, first, length, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * This class containes preprocessed TAC data
+ * @param tac - actual tac data
+ * @param maxDate - date used for the upper validity date limit for actually valid rows
+ * @param sparkSession
+ */
+
 class TacData(tac: DataFrame, maxDate: java.sql.Date)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
 

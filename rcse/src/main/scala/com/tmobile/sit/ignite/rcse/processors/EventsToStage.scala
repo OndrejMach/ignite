@@ -17,7 +17,12 @@ lookups:
 - input events: TMD_{HcsRcsDwh_m4sxvmvsm6h?,RegAsDwh_Aggregate}_$ODATE.csv
  */
 
-
+/**
+ * this one is responsible for the biggest processing - reads inputs and updates most of the data structures organised int the EventsOutput case class.
+ * @param load_date - date for which data is processed
+ * @param sparkSession
+ * @param settings - paths to the input files
+ */
 class EventsToStage( load_date: Timestamp)(implicit sparkSession: SparkSession, settings: Settings) extends Logger {
 
    def processData(): EventsOutput = {
@@ -28,22 +33,7 @@ class EventsToStage( load_date: Timestamp)(implicit sparkSession: SparkSession, 
     val lookups = new LookupsData()
 
     new EventsProcessor(inputData = inputData, lookups = lookups,load_date = Date.valueOf(load_date.toLocalDateTime.toLocalDate )).getDimensions
-/*
 
-    logger.info(s"Getting new DM file, row count ${output.count()}")
-    output
-      .coalesce(1)
-      .write
-      .mode(SaveMode.Overwrite)
-      .option("delimiter", "|")
-      .option("header", "true")
-      .option("nullValue", "")
-      .option("emptyValue", "")
-      .option("quoteAll", "false")
-      .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
-      .csv("/Users/ondrejmachacek/tmp/rcse/stage/cptm_ta_f_rcse_events.TMD.20200607.dm.csv");
-
- */
   }
 
 }

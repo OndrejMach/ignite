@@ -37,6 +37,8 @@ class OutputsWriter(processingDate: Date, data: RCSEOutputs)(implicit sparkSessi
     writeData(path = settings.output.initConf, data = data.initConf)
     logger.info(s"writing init user output to ${settings.output.initUser}")
     writeData(path = settings.output.initUser, data = data.initUser)
+    logger.info(s"writing active user output to ${settings.output.activeUsers}")
+    writeData(path = settings.output.activeUsers, data = data.activeUser)
     logger.info(s"writing uau output to ${settings.output.uauFile}")
     writeData(path = settings.output.uauFile, data = data.uau, dateFormat = "yyyyMMdd")
   }

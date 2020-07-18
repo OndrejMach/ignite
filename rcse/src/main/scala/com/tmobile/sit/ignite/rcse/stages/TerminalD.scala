@@ -4,6 +4,11 @@ import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.TerminalDProcessor
 import org.apache.spark.sql.{SaveMode, SparkSession}
 
+/**
+ * A Simple class storing the first RCSE processing step result - terminal_d
+ * @param sparkSession
+ * @param settings - contains path where to store the data
+ */
 class TerminalD(implicit sparkSession: SparkSession, settings: Settings) extends Executor {
   override def runProcessing(): Unit = {
     val data = new TerminalDProcessor().processData().cache()

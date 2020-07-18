@@ -4,6 +4,13 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Setup
 import com.tmobile.sit.ignite.rcse.stages._
 
+/**
+ * Main object - rcse shall be running in the followint regimes (order is important for the daily run):
+ * 1) terminalD
+ * 2) stage
+ * 3) aggregates
+ * 4) output
+ */
 object Application extends App with Logger{
 
   implicit val settings = new Setup().settings

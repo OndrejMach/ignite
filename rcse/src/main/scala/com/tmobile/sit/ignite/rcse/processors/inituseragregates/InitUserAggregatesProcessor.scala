@@ -12,8 +12,17 @@ import org.apache.spark.sql.functions.{col, collect_list, count, datediff, explo
 import org.apache.spark.sql.types.{DateType, IntegerType}
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
+/**
+ * The core og the init User aggregates logic. Gets inputs and performs all the calculations for the resulting data. This is a bit tricky
+ * because a UDF is used for calculation of number of users for each group by key class.
+ * @param inputData - inputs
+ * @param lookups - terminal, tac, client
+ * @param maxDate - validity limit for the actually valid rows.
+ * @param processingDate - date for which data is calculated
+ * @param sparkSession
+ */
 
-class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsData, maxData: Date, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
+class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsData, maxDate: Date, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._
 
@@ -21,7 +30,7 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
   private val tacPreprocessed = {
     logger.info("Preparing TAC")
     lookups.tac
-      .filter($"valid_to" >= maxData && $"id".isNotNull)
+      .filter($"valid_to" >= maxDate && $"id".isNotNull)
       .terminalSimpleLookup(lookups.terminal)
       .withColumn("rcse_terminal_id_tac", $"rcse_terminal_id_tac")
       .withColumnRenamed("rcse_terminal_id_terminal", "rcse_terminal_id_term")

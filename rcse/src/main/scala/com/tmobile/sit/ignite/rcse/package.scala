@@ -2,6 +2,10 @@ package com.tmobile.sit.ignite
 
 import org.apache.spark.sql.SparkSession
 
+/**
+ * here spark session is created with certain parameters. The last one (timeout) tries to fix connection closing issues on the CDRs cluster
+ */
+
 package object rcse {
   def getSparkSession(master: String) = SparkSession.builder()
     //.appName("Test FWLog Reader")
@@ -16,6 +20,7 @@ package object rcse {
     .config("spark.dynamicAllocation.enabled", "true")
     .config("spark.app.name", "RCSE_processing")
     .config("spark.sql.sources.partitionOverwriteMode","dynamic")
+    .config("spark.network.timeout", "50000s")
     .getOrCreate()
 
 }

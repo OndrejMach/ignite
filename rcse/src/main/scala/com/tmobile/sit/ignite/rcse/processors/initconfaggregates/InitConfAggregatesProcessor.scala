@@ -10,6 +10,15 @@ import org.apache.spark.sql.functions.{col, first, lit, monotonically_increasing
 
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
+/**
+ * Kind of straight forward aggregates calculation. Reads Conf file and accept and deny requests per agggregate key.
+ * @param lookups - lookups for terminal and client details
+ * @param inputData - input dataframes
+ * @param maxDate - max date for actually valid rows
+ * @param processingDate - date for which data is calculated
+ * @param sparkSession
+ */
+
 class InitConfAggregatesProcessor(lookups: LookupsData, inputData: InitConfInputs, maxDate: Date, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._

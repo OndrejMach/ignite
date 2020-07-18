@@ -9,6 +9,15 @@ import org.apache.spark.sql.functions.{first, lit, monotonically_increasing_id, 
 import org.apache.spark.sql.types.{IntegerType, StringType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * Creates mew terminal_d data and is basically the first step of the whole RCSE processing.
+ * @param terminalDData - actual terminalD data
+ * @param tac - actual tac file
+ * @param maxDate - used as a validity end-limit for actually valid records
+ * @param sparkSession
+ */
+
+
 class UpdateDTerminal(terminalDData: DataFrame, tac: DataFrame, maxDate: Date )(implicit sparkSession: SparkSession) extends Logger{
   import sparkSession.implicits._
 

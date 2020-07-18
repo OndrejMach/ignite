@@ -15,7 +15,12 @@ object TransformDataFrameColumns {
   }
 }
 
-
+/**
+ * this class processes outputs - simply reads stage files used for output generation, transforms column names to upper case (using the implicit class above)
+ * and all done
+ * @param sparkSession
+ * @param settings - paths where to read required stage files
+ */
 class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) {
   def getData:RCSEOutputs = {
     val lookups = new LookupsData()
