@@ -7,6 +7,15 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{desc, first, lit, max, monotonically_increasing_id}
 import org.apache.spark.sql.types.IntegerType
 
+/**
+ * Logic for updating the terminalSW dimension - takes preprocessed input files and in case there is an unknown SW version for a certain
+ * terminal it is included in the new terminalSW data
+ * @param enrichedEvents - events preprocessed
+ * @param oldTerminalSW - actual terminalSW data
+ * @param load_date - modification date for the new items
+ * @param sparkSession
+ */
+
 class TerminalSWDimension(enrichedEvents: DataFrame, oldTerminalSW: DataFrame, load_date: Date)(implicit sparkSession: SparkSession) extends Logger {
   val newTerminalSW = {
     import sparkSession.implicits._

@@ -7,6 +7,17 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcse.config.Settings
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+/**
+ * Wrapped class for the outputs data
+ * @param client
+ * @param terminal
+ * @param terminalSW
+ * @param initConf
+ * @param initUser
+ * @param activeUser
+ * @param uau
+ */
+
 case class RCSEOutputs(client: DataFrame,
                        terminal: DataFrame,
                        terminalSW: DataFrame,
@@ -15,6 +26,15 @@ case class RCSEOutputs(client: DataFrame,
                        activeUser: DataFrame,
                        uau: DataFrame
                       )
+
+/**
+ * This class writes the output files. Takes processed stage data, adds BOM character in order to identify UTF-8 encoding and store them
+ * having proper filenames.
+ * @param processingDate - input data day
+ * @param data - stage data used for outputs
+ * @param sparkSession
+ * @param settings - paths
+ */
 
 class OutputsWriter(processingDate: Date, data: RCSEOutputs)(implicit sparkSession: SparkSession, settings: Settings) extends Logger {
   //def writeCSV

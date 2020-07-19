@@ -7,6 +7,15 @@ import com.tmobile.sit.ignite.rcse.processors.inputs.{AgregateUAUInputs, Lookups
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, concat_ws, count, first, lit}
 
+/**
+ * Aggregates calculated from the active user file. it creates aggregates for 17 different aggregation keys and stores them in the output data.
+ * In case the key is shorter than the biggest one column is filled with '##
+ * @param inputs - input data
+ * @param lookups - terminal and client data for lookup
+ * @param time_key - processing date in fact
+ * @param sparkSession
+ */
+
 class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time_key:Date)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
 

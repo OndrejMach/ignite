@@ -7,6 +7,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{desc, first, lit, max, monotonically_increasing_id}
 import org.apache.spark.sql.types.IntegerType
 
+/**
+ * Calculation of the Client dimension. Reads the actual client data and adds potential new ones appearing on the processing day.
+ * @param eventsEnriched - preprocessed incoming events
+ * @param clientsOld - actual client data
+ * @param load_date - processing day used later as a modification date
+ * @param sparkSession
+ */
+
 class ClientDimension(eventsEnriched: DataFrame, clientsOld: DataFrame, load_date: Date)(implicit sparkSession: SparkSession) extends Logger{
   val newClient = {
     import sparkSession.implicits._

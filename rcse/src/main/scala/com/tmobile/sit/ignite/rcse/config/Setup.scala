@@ -1,7 +1,6 @@
 package com.tmobile.sit.ignite.rcse.config
 
-import java.sql.{Date, Timestamp}
-import java.text.SimpleDateFormat
+import java.sql.Date
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -10,7 +9,7 @@ import com.tmobile.sit.common.config.ServiceConfig
 
 /**
  *
- * This class parses config file and stores all the parameters in case classes. It also does type conversions - especially strings to Timestamps
+ * This class parses config file and stores all the parameters in case classes. It also does type conversions - especially strings to Dates
  */
 
 class Setup(configFile: String = "rcse.conf") extends Logger {
@@ -26,15 +25,6 @@ class Setup(configFile: String = "rcse.conf") extends Logger {
       }
     }
   }
-
-  def getArray(stringArr: Option[String]): Option[Seq[String]] = {
-    if (!stringArr.isDefined) {
-      None
-    } else {
-      Some(stringArr.get.split(","))
-    }
-  }
-
 
   val settings = {
     val serviceConf = new ServiceConfig(Some(configFile))
@@ -62,15 +52,14 @@ class Setup(configFile: String = "rcse.conf") extends Logger {
         uauFile = serviceConf.getString("config.stageFiles.uauFile").get
       ),
       output = OutputConfig(
-        client=serviceConf.getString("config.outputs.client").get,
-        terminal=serviceConf.getString("config.outputs.terminal").get,
-        terminalSW=serviceConf.getString("config.outputs.terminalSW").get,
-        activeUsers=serviceConf.getString("config.outputs.activeUsers").get,
-        uauFile=serviceConf.getString("config.outputs.uauFile").get,
-        initConf=serviceConf.getString("config.outputs.initConf").get,
-        initUser=serviceConf.getString("config.outputs.initUser").get
+        client = serviceConf.getString("config.outputs.client").get,
+        terminal = serviceConf.getString("config.outputs.terminal").get,
+        terminalSW = serviceConf.getString("config.outputs.terminalSW").get,
+        activeUsers = serviceConf.getString("config.outputs.activeUsers").get,
+        uauFile = serviceConf.getString("config.outputs.uauFile").get,
+        initConf = serviceConf.getString("config.outputs.initConf").get,
+        initUser = serviceConf.getString("config.outputs.initUser").get
       )
-
 
 
     )

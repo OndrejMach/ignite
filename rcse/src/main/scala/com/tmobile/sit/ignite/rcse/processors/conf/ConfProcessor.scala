@@ -7,6 +7,15 @@ import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, Lookups
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, first, lit, when}
 
+/**
+ * Conf file processing. It takes incoming DM events and creates a new conf file. The intention is to create a new file for every new day.
+ * @param inputs - input events + the actual conf file
+ * @param lookups - lookups - tac, client, terminal..
+ * @param max_Date - max date which actually indicates that row is still valid - this one is a far-future date
+ * @param processing_date - input events processing date
+ * @param sparkSession
+ */
+
 class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: Date, processing_date: Date)(implicit sparkSession: SparkSession) extends Logger {
 
   import sparkSession.implicits._

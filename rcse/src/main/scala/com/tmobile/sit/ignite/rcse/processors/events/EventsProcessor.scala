@@ -10,7 +10,25 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.LongType
 
+/**
+ * Wrapper class for events processing outputs.
+ * @param client - client list
+ * @param terminal - list of the rcse terminals
+ * @param terminalSW - list of the RCSE terminal SW versions
+ * @param regDer - processed reg and der events
+ * @param dm - processed DM events
+ */
 case class EventsOutput(client: DataFrame, terminal: DataFrame, terminalSW: DataFrame, regDer: DataFrame, dm: DataFrame)
+
+/**
+ * Class performing events processing logic. First it enriches input events and then orchestrates calculation for client, terminal, terminalSW,
+ * regDer and DM dimensions.
+ *
+ * @param inputData - input daily
+ * @param lookups - lookups - actual client, terminal and terminalSW
+ * @param load_date - used as a modification date in the tables
+ * @param sparkSession
+ */
 
 class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_date: Date)(implicit sparkSession: SparkSession) extends Logger{
   import sparkSession.implicits._

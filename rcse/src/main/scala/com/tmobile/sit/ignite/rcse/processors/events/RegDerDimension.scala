@@ -9,6 +9,18 @@ import org.apache.spark.sql.types.DateType
 
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
+/**
+ * from the input events only registration and deregistration events are extracted and further processed.
+ * @param inputEventsRegDer - input events - only REG or DER type
+ * @param msisdn3DesLookup - 3DES encoded MSISDNs
+ * @param imsi3DesLookup - 3DES encoded IMSIs
+ * @param client - client for lookup
+ * @param terminal - terminal for lookup
+ * @param terminalSW - terminalSW for lookup
+ * @param tac - tac for lookup
+ * @param sparkSession
+ */
+
 class RegDerDimension(inputEventsRegDer: DataFrame,
                       msisdn3DesLookup: DataFrame,
                       imsi3DesLookup: DataFrame,

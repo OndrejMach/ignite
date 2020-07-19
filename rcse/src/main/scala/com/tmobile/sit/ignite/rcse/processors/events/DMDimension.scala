@@ -7,6 +7,16 @@ import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
+/**
+ * Calculation of the DM dimension. Resulting data is used for further processing.
+ * @param eventInputsEnriched - preprocessed input events
+ * @param newClient - new clients - including the ones coming on the processing day
+ * @param newTerminal - new terminal file - including the ones coming on the processing day
+ * @param msisdn3DesLookup - 3DES encoded MSISDNs appeared in the incoming events
+ * @param newTerminalSW - new terminalSW file - including the ones coming on the processing day
+ * @param sparkSession
+ */
+
 class DMDimension(eventInputsEnriched: DataFrame,
                   newClient: DataFrame,
                   newTerminal: DataFrame,

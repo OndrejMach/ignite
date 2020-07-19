@@ -7,6 +7,14 @@ import com.tmobile.sit.ignite.rcse.processors.inputs.ActiveUsersInputs
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{first, lit, when}
 
+/**
+ * from the registration/deregistration events it calculates list of active users. Quite straightforward. resulting data is then forwarded
+ * as one of the outputs
+ * @param inputs - regdef dimension from the incoming events
+ * @param processingDate - input data day
+ * @param sparkSession
+ */
+
 class ActiveUsersProcessor(inputs: ActiveUsersInputs, processingDate: Date)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
 

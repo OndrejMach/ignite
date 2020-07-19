@@ -5,6 +5,11 @@ import java.sql.Date
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.config.GenericSettings
 
+/**
+ * Wrapper classes for holding application parameters and their values. Also implements couple of methods for printing and validating of the
+ * configuration.
+ */
+
 abstract class RCSEConfig extends Logger {
   def printAllFields(): Unit = {
     logger.info("PARAMETER VALUES: ")

@@ -7,6 +7,15 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{lit, when, max, monotonically_increasing_id}
 import org.apache.spark.sql.types.{IntegerType, LongType}
 
+/**
+ * Logic for updating the terminal dimension. In case a new terminal appears in the input data it is added to the termianl file.
+ * @param enrichedEvents - preprocessed input events
+ * @param oldTerminal - actual terminal data
+ * @param tacData - tac data for potential enrichment
+ * @param load_date - date is added as a modification data
+ * @param sparkSession
+ */
+
 class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacData: DataFrame, load_date: Date)(implicit sparkSession: SparkSession) extends Logger{
 
   val newTerminal = {
