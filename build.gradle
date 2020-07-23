@@ -76,7 +76,6 @@ dependencies {
     compile project(':hotspot')
     compile project(':inflight')
     compile project(':rcse')
-
 }
 
 
