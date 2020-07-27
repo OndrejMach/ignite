@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.deviceatlas.processing.data.{InputData, LookupData}
+import com.tmobile.sit.ignite.deviceatlas.data.{InputData, LookupData}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}

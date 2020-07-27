@@ -1,4 +1,5 @@
-package com.tmobile.sit.ignite.deviceatlas.processing.data
+package com.tmobile.sit.ignite.deviceatlas.data
+
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.SparkSession
 import com.tmobile.sit.common.readers.CSVReader

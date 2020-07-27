@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.deviceatlas.processing.data
+package com.tmobile.sit.ignite.deviceatlas.data
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter

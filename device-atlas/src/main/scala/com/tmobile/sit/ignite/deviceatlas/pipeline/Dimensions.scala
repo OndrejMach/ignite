@@ -243,7 +243,7 @@ class Dimensions(implicit sparkSession: SparkSession) extends DimensionProcessin
 
     val lookup_key = Seq("terminal_id" , "terminal_spec_name")
     val schema : Array[String] = d_terminal.columns
-exploded.unpersist()
+    exploded.unpersist()
     historize_dim(term_spec_update, d_terminal, schema, lookup_key, ODATE)
 
   }
