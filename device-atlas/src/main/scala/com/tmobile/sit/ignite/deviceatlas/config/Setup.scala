@@ -13,6 +13,7 @@ class Setup(configFile: String = "device-atlas.conf")  {
       , lookupPath = Option(serviceConf.envOrElseConfig("configuration.lookupPath.value"))
       , outputPath = Option(serviceConf.envOrElseConfig("configuration.outputPath.value"))
       , workPath = Option(serviceConf.envOrElseConfig("configuration.workPath.value"))
+      , stagePath = Option(serviceConf.envOrElseConfig("configuration.stagePath.value"))
      )
   }
 }

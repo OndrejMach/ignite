@@ -6,6 +6,7 @@ case class Settings(inputPath: Option[String]
                     , lookupPath: Option[String]
                     , outputPath: Option[String]
                     , workPath: Option [String]
+                    , stagePath: Option [String]
                     , appName: Option[String]
                    ) extends GenericSettings
 {
@@ -15,6 +16,7 @@ case class Settings(inputPath: Option[String]
       this.lookupPath.isDefined && this.lookupPath.get.nonEmpty &&
       this.outputPath.isDefined && this.outputPath.get.nonEmpty &&
       this.workPath.isDefined && this.workPath.get.nonEmpty &&
+      this.stagePath.isDefined && this.stagePath.get.nonEmpty &&
       this.appName.isDefined && this.appName.get.nonEmpty
   }
 }
