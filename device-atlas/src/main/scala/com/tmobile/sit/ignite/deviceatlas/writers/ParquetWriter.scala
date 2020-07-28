@@ -13,12 +13,13 @@ abstract class ParquetWriter (processingDate: Date)
     data.cache()
     logger.info(s"Writing to path ${path}, rowcount: ${data.count()}")
     val dataToWrite =
-      (if (partitioned) data.withColumn("load_date", lit(processingDate)) else data)
+      //(if (partitioned) data.withColumn("load_date", lit(processingDate)) else data)
+        data
         .coalesce(1)
         .write
 
     val writer =
-      if (partitioned) dataToWrite.partitionBy("date") else dataToWrite
+      if (partitioned) dataToWrite.partitionBy("load_date") else dataToWrite
 
     writer
       .mode(SaveMode.Overwrite)
