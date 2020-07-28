@@ -53,7 +53,7 @@ object Application extends Logger{
         arg.split("=")(0) match {
           case "-date" => ODATE = arg.split("=")(1)
           case "-file" => file_name_argument = arg.split("=")(1)
-          case _ => {logger.error(s"Unknown argument '$arg'. Required options: -date=<date yyyyMMdd>] -file=<file_name_argument>")
+          case _ => {logger.error(s"Unknown argument '$arg'. Required options: -date=<date yyyyMMdd> -file=<file_name_argument>")
             System.exit(1)}
         }
       }
