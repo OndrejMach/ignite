@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.deviceatlas.writers
 import java.sql.Date
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.{col, date_format}
 
 abstract class ParquetWriter (processingDate: Date)
                     (implicit sparkSession: SparkSession) extends Logger {
@@ -13,8 +13,8 @@ abstract class ParquetWriter (processingDate: Date)
     data.cache()
     logger.info(s"Writing to path ${path}, rowcount: ${data.count()}")
     val dataToWrite =
-      //(if (partitioned) data.withColumn("load_date", lit(processingDate)) else data)
-        data
+      (if (partitioned) data.withColumn("load_date", date_format(col("load_date"), "yyyy-MM-dd")) else data)
+        //data
         .coalesce(1)
         .write
 
