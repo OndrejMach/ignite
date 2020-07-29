@@ -43,8 +43,8 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
         path = s"${resultPaths.outputPath}cptm_ta_d_terminal_spec_${ODATE}.csv",  delimiter = ";", writeHeader = false, escape = "", quote = "", encoding = "CP1250").writeData()
 
       logger.info(s"Writing parquet files to stage")
-      new StageWriter(processingDate = Date.valueOf(ODATE), stageData = outputData.d_tac,
-        path = s"${resultPaths.outputPath}cptm_ta_d_tac.parquet", partitioned = true).writeData()
+      new StageWriter(stageData = outputData.d_tac, partitioned = true,
+        path = s"${resultPaths.outputPath}cptm_ta_d_tac.parquet").writeData()
 
     }
 }
