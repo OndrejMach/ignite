@@ -6,7 +6,7 @@ class StageWriter(stageData: DataFrame, path: String, partitioned: Boolean = fal
                  (implicit sparkSession: SparkSession) extends ParquetWriter {
 
   def writeData(): Unit = {
-    logger.info(s"Writing  data to ${path}, partitioned ${partitioned}")
+    //logger.info(s"Writing data to ${path}, partitioned ${partitioned}")
     writeParquet(stageData, path, partitioned)
     }
   }

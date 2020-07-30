@@ -8,7 +8,7 @@ abstract class ParquetWriter(implicit sparkSession: SparkSession) extends Logger
 
   def writeParquet(data: DataFrame, path: String, partitioned: Boolean = false) = {
     data.cache()
-    logger.info(s"Writing to path ${path}, rowcount: ${data.count()}")
+    logger.info(s"Writing to path ${path}, rowcount: ${data.count()},  partitioned ${partitioned} ")
     val dataToWrite =
       (if (partitioned)
         data.withColumn("load_date", date_format(col("load_date"), "yyyy-MM-dd"))

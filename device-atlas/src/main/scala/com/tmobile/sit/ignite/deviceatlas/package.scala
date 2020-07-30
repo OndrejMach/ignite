@@ -15,7 +15,8 @@ package object deviceatlas {
       .config("spark.executor.JavaOptions", "-XX:+UseG1GC")
       .config("spark.executor.extraJavaOptions", "-XX:InitiatingHeapOccupancyPercent=35")
       .config("spark.dynamicAllocation.enabled", "true")
-//      .config("spark.sql.broadcastTimeout", "36000")
+      //.config("spark.sql.broadcastTimeout", "36000")
+      .config("spark.sql.autoBroadcastJoinThreshold", "-1")
       .config("spark.app.name", sparkAppName)
       .getOrCreate()
   }
