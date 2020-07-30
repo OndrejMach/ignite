@@ -1,9 +1,10 @@
-package com.tmobile.sit.ignite.deviceatlas
+package com.tmobile.sit.ignite.deviceatlas.debug
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.{CSVReader}
+import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.deviceatlas.config.Setup
 import com.tmobile.sit.ignite.deviceatlas.datastructures.FileStructures
+import com.tmobile.sit.ignite.deviceatlas.getSparkSession
 import com.tmobile.sit.ignite.deviceatlas.writers.StageWriter
 
 object ParquetTest extends App with Logger {
@@ -29,7 +30,7 @@ object ParquetTest extends App with Logger {
   ).read()
 
   logger.info(s"Writing parquet files to stage")
-  new StageWriter(stageData = cptm_ta_d_tac, partitioned = true,
-    path = s"D:\\spark\\workspace\\deviceatlas\\output\\cptm_ta_d_tac.parquet").writeData()
+  StageWriter(stageData = cptm_ta_d_tac, partitioned = true,
+    path = s"D:\\spark\\workspace\\deviceatlas\\stage\\cptm_ta_d_tac.parquet").writeData()
 
 }

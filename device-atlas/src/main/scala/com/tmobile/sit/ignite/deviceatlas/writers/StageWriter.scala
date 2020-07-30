@@ -12,4 +12,8 @@ class StageWriter(stageData: DataFrame, path: String, partitioned: Boolean = fal
 
   }
 
+object StageWriter {
+  def apply(stageData: DataFrame, path: String, partitioned: Boolean)(implicit sparkSession: SparkSession): StageWriter = new StageWriter(stageData, path, partitioned)(sparkSession)
+}
+
 

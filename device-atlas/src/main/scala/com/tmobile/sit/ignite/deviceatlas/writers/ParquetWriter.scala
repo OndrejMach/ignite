@@ -6,7 +6,6 @@ import org.apache.spark.sql.functions.{col, date_format}
 
 abstract class ParquetWriter(implicit sparkSession: SparkSession) extends Logger {
 
-
   def writeParquet(data: DataFrame, path: String, partitioned: Boolean = false) = {
     data.cache()
     logger.info(s"Writing to path ${path}, rowcount: ${data.count()}")
