@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.deviceatlas.datastructures
+package com.tmobile.sit.ignite.deviceatlas.data
 
 import org.apache.spark.sql.types._
 

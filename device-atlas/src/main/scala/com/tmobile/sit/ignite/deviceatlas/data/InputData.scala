@@ -3,7 +3,6 @@ package com.tmobile.sit.ignite.deviceatlas.data
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.SparkSession
 import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.ignite.deviceatlas.datastructures.FileStructures
 
 class InputData (inputPath : String, fileName: String)(implicit sparkSession : SparkSession) extends Logger {
   val deviceAtlas = {

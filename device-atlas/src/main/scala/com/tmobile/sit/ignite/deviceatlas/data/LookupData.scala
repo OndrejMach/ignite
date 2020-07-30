@@ -2,7 +2,6 @@ package com.tmobile.sit.ignite.deviceatlas.data
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.ignite.deviceatlas.datastructures.FileStructures
 import org.apache.spark.sql.SparkSession
 
 class LookupData(lookupPath : String)(implicit sparkSession : SparkSession) extends Logger {

@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.deviceatlas
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.deviceatlas.config.Setup
 import com.tmobile.sit.ignite.deviceatlas.data.{InputData, LookupData}
-import com.tmobile.sit.ignite.deviceatlas.pipeline.{CoreProcessing,Pipeline, ResultPaths, ResultWriter}
+import com.tmobile.sit.ignite.deviceatlas.pipeline.{CoreProcessing,Pipeline, ResultWriter}
 
 /**
  * processing starts here:
@@ -60,15 +60,15 @@ object Application extends Logger{
     }
     logger.info(s"Job arguments -> processed file: '$file_name_argument', processing date: '$ODATE'")
 
+    // Inputs and lookups
     val lookups = new LookupData(settings.lookupPath.get)
     val input = new InputData(settings.inputPath.get, file_name_argument)
 
-    // Prepare processing blocks
+    // Core processing
     val processingCore = new CoreProcessing()
 
-    val resultPaths = ResultPaths(settings.lookupPath.get, settings.outputPath.get)
-
-    val resultWriter = new ResultWriter(resultPaths)
+    // Results writer
+    val resultWriter = new ResultWriter(settings)
 
     // Prepare orchestration pipeline
     val pipeline = new Pipeline(input,lookups,processingCore,resultWriter, settings, ODATE)
@@ -77,5 +77,5 @@ object Application extends Logger{
     pipeline.run()
 
     logger.info("Processing finished")
-  } // def main(...){
+  }
 }
