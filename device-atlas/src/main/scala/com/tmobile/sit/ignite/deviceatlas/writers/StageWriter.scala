@@ -9,7 +9,6 @@ class StageWriter(stageData: DataFrame, path: String, partitioned: Boolean = fal
     logger.info(s"Writing  data to ${path}, partitioned ${partitioned}")
     writeParquet(stageData, path, partitioned)
     }
-
   }
 
 object StageWriter {
