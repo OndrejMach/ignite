@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.deviceatlas.config
 
 import com.tmobile.sit.common.config.ServiceConfig
 
-class Setup(configFile: String = "device-atlas.conf")  {
+class Setup(configFile: String = "device-atlas-dev.conf")  {
 
   val settings = {
     val serviceConf = new ServiceConfig(Some(configFile))
