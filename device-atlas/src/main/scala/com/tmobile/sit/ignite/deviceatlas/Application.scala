@@ -23,22 +23,6 @@ object Application extends Logger{
 
   def main(args: Array[String]): Unit = {
 
-    logger.info(s"Reading configuration file")
-    val setup = new Setup()
-    logger.info(s"Configuration parameters check")
-    if (!setup.settings.isAllDefined) {
-      logger.error("Application parameters not properly defined")
-      setup.settings.printMissingFields()
-    }
-    logger.info("Configuration parameters OK")
-    setup.settings.printAllFields()
-
-    logger.info("Getting SparkSession")
-    implicit val sparkSession = getSparkSession(setup.settings.appName.get)
-    implicit val settings = setup.settings
-
-    println("Web UI: " + sparkSession.sparkContext.uiWebUrl.get)
-
     var ODATE : String = ""
     var file_name_argument : String = ""
     if (args.length != 2) {
@@ -59,6 +43,33 @@ object Application extends Logger{
       }
     }
     logger.info(s"Job arguments -> processed file: '$file_name_argument', processing date: '$ODATE'")
+
+    logger.info("Detecting operating system")
+    val configFile = if(System.getProperty("os.name").startsWith("Windows")) {
+      logger.info(s"Detected development configuration (${System.getProperty("os.name")})")
+      "device-atlas-dev.conf"
+    } else {
+      logger.info(s"Detected production configuration (${System.getProperty("os.name")})")
+      "device-atlas-prod"
+    }
+
+    logger.info(s"Reading configuration file")
+    val setup = new Setup(configFile)
+    logger.info(s"Configuration parameters check")
+    if (!setup.settings.isAllDefined) {
+      logger.error("Application parameters not properly defined")
+      setup.settings.printMissingFields()
+    }
+    logger.info("Configuration parameters OK")
+    setup.settings.printAllFields()
+
+    logger.info("Getting SparkSession")
+    implicit val sparkSession = getSparkSession(setup.settings.appName.get)
+    implicit val settings = setup.settings
+
+    println("Web UI: " + sparkSession.sparkContext.uiWebUrl.get)
+
+
 
     // Inputs and lookups
     val lookups = new LookupData(settings.lookupPath.get)
