@@ -2,6 +2,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcseu.data.{OutputData, PersistentData, PreprocessedData}
+import org.apache.spark.sql.functions.monotonically_increasing_id
 
 
 trait ProcessingCore extends Logger{
@@ -20,7 +21,9 @@ class Core extends ProcessingCore {
 
     // logic for UserAgents dimension
     val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
-    val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
+
+    val fullUserAgents0 = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
+    val fullUserAgents =fullUserAgents0.withColumn("_UserAgentID", monotonically_increasing_id)
     fullUserAgents.cache()
     logger.info("Full user agents count: " + fullUserAgents.count())
 
@@ -29,8 +32,11 @@ class Core extends ProcessingCore {
     val provisionedDaily = fact.getProvisionedDaily(stageData.provision)
     logger.info("Provisioned daily count: " + provisionedDaily.count())
 
-    val registeredDaily = fact.getRegisteredDaily(stageData.registerRequests)
+    val registeredDaily = fact.getRegisteredDaily(stageData.registerRequests,fullUserAgents)
     logger.info("Registered daily count: " + registeredDaily.count())
-    OutputData(fullUserAgents,provisionedDaily,registeredDaily)
+
+    val activeDaily = fact.getActiveDaily(stageData.activity,fullUserAgents)
+    logger.info("Active daily count: " + activeDaily.count())
+    OutputData(fullUserAgents,provisionedDaily,registeredDaily,activeDaily)
   }
 }

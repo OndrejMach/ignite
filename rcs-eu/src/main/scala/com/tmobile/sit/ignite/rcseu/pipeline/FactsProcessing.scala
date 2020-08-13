@@ -21,21 +21,227 @@ class Facts extends FactsProcessing {
     provisionedDaily
   }
 
-  def getRegisteredDaily(register_requests: DataFrame): DataFrame = {
+  def getRegisteredDaily(register_requests: DataFrame,fullUserAgents: DataFrame): DataFrame = {
     //TODO: add logic here to aggregate registered users
     val dfRMT1=register_requests.withColumn("ConKeyR1", regexp_extract(input_file_name, ".*/register_requests_(.*).csv.gz", 1))
       .groupBy("msisdn")
-      .agg(max("user_agent").alias("user_agent"),max("ConKeyR1").alias("ConKeyR1"))
+      .agg(max("user_agent").alias("UserAgent"),max("ConKeyR1").alias("ConKeyR1"))
       .withColumn("ConKeyR1",regexp_replace(col("ConKeyR1"), "_", "|"))
-      .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("user_agent")))
+      //.withColumn("ConKeyR1",concat("ConKeyR1", lit("|"), "user_agent").alias("ConKeyR1"))
+      .join(fullUserAgents, "UserAgent")
+      .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("_UserAgentID")))
+      .select("_UserAgentID","ConKeyR1","msisdn")
 
-    val dfRMT2=register_requests
-      .groupBy("msisdn").count()
 
-    val joinedDS = dfRMT1.join(dfRMT2, "msisdn")
-      .select("ConKeyR1","count" )
-      .withColumnRenamed("count", "Registered_Daily")
+    val dfRMT2=dfRMT1
+      .groupBy("_UserAgentID").count().alias("_UserAgentID")
+
+    val joinedDS = dfRMT1.join(dfRMT2, "_UserAgentID")
+      .groupBy("_UserAgentID")
+      .agg(max("ConKeyR1").alias("ConKeyR1"),max("count").alias("Registered_Daily"))
+      .select("ConKeyR1","Registered_Daily")
     joinedDS
+  }
+
+
+  def getActiveDaily(activity: DataFrame,fullUserAgents: DataFrame): DataFrame = {
+    //TODO: add logic here to aggregate unique active users
+
+    //////ORIGINATED and TERMINATED
+    //successfully originated for CHAT
+    val df1 = activity
+     // .na.fill("NULL",Seq("user_agent"))
+
+    val df2 =df1
+      .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .select("from_user","user_agent","creation_date")
+      .withColumnRenamed("from_user","uau")
+
+    //successfully originated for FILES
+    val df3 =df1
+      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .select("from_user","user_agent","creation_date")
+      .withColumnRenamed("from_user","uau")
+
+    //successfully terminated (received by another user) for CHAT
+    val df4 =df1
+      .filter(df1("sip_code") <=> 200  and col("to_user").startsWith("+")and df1("to_network") <=> "dt-magyar-telecom")
+      .withColumn("user_agent",  lit(null))
+      .withColumnRenamed("to_user","uau")
+      .select("uau","user_agent","creation_date")
+
+    /////////////////////////////////////////////////
+    val ft_get = df1
+      .filter(df1("type") <=> "FT_GET"  and col("from_user").startsWith("+"))
+      .select("call_id","user_agent","creation_date")
+      .withColumnRenamed("call_id", "call_id1")
+
+    val ft_post = df1
+      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("to_network") <=> "dt-magyar-telecom")
+      .select("call_id","from_user","to_network")
+
+    //successfully terminated (received by another user) for FILES
+    val df5 = ft_get
+      .join(ft_post, ft_get("call_id1") <=> ft_post("call_id"))
+      .withColumnRenamed("from_user", "uau")
+      .select("uau","user_agent","creation_date")
+
+    //create one table from the four preceding
+    val result = df2
+      .union(df3)
+      .union(df4)
+      .union(df5)
+
+    //filter user_agents starting with IM_client
+    val result1=result
+      .filter(col("user_agent").startsWith("IM-client"))
+
+    //filter null user_agents
+    val result2=result
+      //.filter(result("user_agent") <=> "NULL")
+      .filter("user_agent is null")
+
+    //create one table from IM-client and null user_agents
+    val result3 = result1
+      .union(result2)
+      .groupBy("uau")
+      .agg(max("creation_date").alias("creation_date"),max("user_agent").alias("user_agent"))
+      .withColumnRenamed("uau","uau_temp")
+
+    //final count of successful users
+    val result4=result3
+      .groupBy("user_agent").count()
+
+    ////////////////////////////////////////////////////////////
+    //UNsuccessfully originated for CHAT (UNsuccessfully originated FILES data are not present in the input)
+    val resultU =df1
+      .select("from_user","user_agent","creation_date")
+      //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
+      .filter(col("from_user").startsWith("+") && col("from_network").contains("dt-magyar-telecom")  && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
+      .withColumnRenamed("from_user","uau_UNS")
+      .withColumnRenamed("user_agent","user_agent_UNS")
+      .withColumnRenamed("creation_date","creation_date_UNS")
+
+    //filter user_agents starting with IM_client
+    val resultU1=resultU
+      .filter(col("user_agent_UNS").startsWith("IM-client"))
+
+    //filter null user_agents
+    val resultU2=resultU
+      .filter("user_agent_UNS is null")
+
+    //create one table from IM-client and null user_agents
+    val resultU3 = resultU1
+      .union(resultU2)
+      .groupBy("uau_UNS")
+      .agg(max("creation_date_UNS").alias("creation_date_UNS"),max("user_agent_UNS").alias("user_agent_UNS"))
+
+    //filtering out UNsuccessful users that are also present in the successful table
+    //they are counted as successful
+    val dfx1=result3
+      .join(resultU3,result3("uau_temp") <=>  resultU3("uau_UNS"),"inner")
+      .select("uau_temp","user_agent","creation_date")
+
+
+    val dfx2=resultU3.join(dfx1,resultU3("uau_UNS") <=>  dfx1("uau_temp"),"left_anti")
+    // .withColumnRenamed("uau_temp","uau")
+
+    //final count of UNsuccessful users
+    val resultU4=dfx2
+      .groupBy("user_agent_UNS").count()
+      .withColumnRenamed("count","count_UNS")
+
+    //final join
+    val finaldf=result4
+      .join(resultU4,result4("user_agent") <=>  resultU4("user_agent_UNS"),"outer")
+      .select("user_agent","count","count_UNS")
+
+
+    ///////////////////////////////////////////////////////
+    /////ORIGINATED
+    //uspesne odoslane CHAT
+    val df2O =df1
+      .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .select("from_user","user_agent","creation_date")
+      .withColumnRenamed("from_user","uau")
+
+    //uspesne odoalane FILES
+    val df3O =df1
+      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .select("from_user","user_agent","creation_date")
+      .withColumnRenamed("from_user","uau")
+
+    //spojit tabulky
+
+    val resultO = df2O
+      .union(df3O)
+
+    val result1O=resultO
+      .filter(col("user_agent").startsWith("IM-client"))
+
+    val result2O=resultO
+      .filter("user_agent is null")
+
+
+    val result3O = result1O
+      .union(result2O)
+      .groupBy("uau")
+      .agg(max("creation_date").alias("creation_date"),max("user_agent").alias("user_agent"))
+
+    val result4O=result3O
+      .groupBy("user_agent").count()
+
+
+    ////////////////////////////////////////////////////////////úúú
+
+    val resultUO =df1
+      //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
+      .filter(col("from_user").startsWith("+") && col("from_network").contains("dt-magyar-telecom")  && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
+      .select("from_user","user_agent","creation_date")
+      .withColumnRenamed("from_user","uau_UNS")
+      .withColumnRenamed("user_agent","user_agent_UNS")
+      .withColumnRenamed("creation_date","creation_date_UNS")
+
+    val resultU1O=resultUO
+      .filter(col("user_agent_UNS").startsWith("IM-client"))
+
+
+    val resultU2O=resultUO
+      .filter("user_agent_UNS is null")
+
+
+    val resultU3O = resultU1O
+      .union(resultU2O)
+      .groupBy("uau_UNS")
+      .agg(max("creation_date_UNS").alias("creation_date_UNS"),max("user_agent_UNS").alias("user_agent_UNS"))
+
+    val dfxx1=result3O
+      .join(resultU3O,result3O("uau") <=>  resultU3O("uau_UNS"),"inner")
+      .select("uau","user_agent","creation_date")
+
+    val dfxx2=resultU3O.join(dfxx1,resultU3O("uau_UNS") <=>  dfxx1("uau"),"left_anti")
+
+    val resultU4O=dfxx2
+      .groupBy("user_agent_UNS").count()
+      .withColumnRenamed("count","count_UNS")
+
+
+    val finaldfO=result4O
+      .join(resultU4O,result4O("user_agent") <=>  resultU4O("user_agent_UNS"),"outer")
+      .select("user_agent","count","count_UNS")
+      .withColumnRenamed("count","Active_daily_succ_orig")
+      .withColumnRenamed("count_UNS","Active_daily_unsucc_orig")
+      .withColumnRenamed("user_agent","user_agent_UNS")
+
+
+    val finalTable=finaldf
+      .join(finaldfO,finaldf("user_agent") <=>  finaldfO("user_agent_UNS"),"left_outer")
+      .withColumnRenamed("count","Active_daily_succ_origterm")
+      .withColumnRenamed("count_UNS","Active_daily_unsucc_origterm")
+      .drop("user_agent_UNS")
+
+    finalTable
+
   }
 
 }

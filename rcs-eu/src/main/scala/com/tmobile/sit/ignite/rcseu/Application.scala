@@ -38,7 +38,7 @@ object Application extends App with Logger {
   )
 
   val persistentData = PersistentData(
-    oldUserAgents = new CSVReader(conf.settings.inputPath.get + "UserAgents.csv", header = true, delimiter = ";").read()
+    oldUserAgents = new CSVReader(conf.settings.outputPath.get + "UserAgents.csv", header = true, delimiter = ";").read()
   )
 
   val stageProcessing = new Stage()
