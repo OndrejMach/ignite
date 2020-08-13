@@ -19,7 +19,7 @@ object ParquetTest extends App with Logger {
 
   conf.settings.printAllFields()
 
-  implicit val sparkSession = getSparkSession(conf.settings.appName.get)
+  implicit val sparkSession = getSparkSession(conf.settings)
 
   println("Web UI: " + sparkSession.sparkContext.uiWebUrl)
 

@@ -161,7 +161,7 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
     logger.info(s"Last terminal_id used: $max_id")
 
     // dedup NEW_df by "fixed_manufacturer", "model"
-    // assign new terminal_id to each record. Last value in terminadb_terminal_id.hwm file
+    // assign new terminal_id to each record. Last value in terminaldb_terminal_id.hwm file
     // assign same terminal_id to duplicates with same "fixed_manufacturer", "model"
     val NEW_device_ids = NEW_device_df.select("fixed_manufacturer", "model")
       .sort("fixed_manufacturer", "model")

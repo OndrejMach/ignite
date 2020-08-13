@@ -1,15 +1,16 @@
 package com.tmobile.sit.ignite
 
+import com.tmobile.sit.ignite.deviceatlas.config.Settings
 import org.apache.spark.sql.SparkSession
 
 package object deviceatlas {
-  def getSparkSession(sparkAppName: String): SparkSession = {
+  def getSparkSession(implicit settings: Settings): SparkSession = {
     SparkSession.builder()
       //.appName("Test FWLog Reader")
-      .master("local[*]")
+      //.master("local[*]")
       .config("spark.executor.instances", "4")
       .config("spark.executor.memory", "4g")
-      .config("spark.executor.cores", "1")
+      .config("spark.executor.cores", "8")
       .config("spark.driver.memory", "10g")
       .config("spark.driver.maxResultSize", "10g")
       .config("spark.executor.JavaOptions", "-XX:+UseG1GC")
@@ -17,7 +18,7 @@ package object deviceatlas {
       .config("spark.dynamicAllocation.enabled", "true")
       //.config("spark.sql.broadcastTimeout", "36000")
       .config("spark.sql.autoBroadcastJoinThreshold", "-1")
-      .config("spark.app.name", sparkAppName)
+      .config("spark.app.name", settings.appName.get)
       .getOrCreate()
   }
 }

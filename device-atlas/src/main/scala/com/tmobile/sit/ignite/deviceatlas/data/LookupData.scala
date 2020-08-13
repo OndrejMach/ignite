@@ -67,7 +67,7 @@ class LookupData(lookupPath : String)(implicit sparkSession : SparkSession) exte
   }
 
   val terminalId = {
-    val file = lookupPath + "terminadb_terminal_id.hwm"
+    val file = lookupPath + "terminaldb_terminal_id.hwm"
     logger.info(s"Reading file: ${file}")
     CSVReader(file,
       header = false,

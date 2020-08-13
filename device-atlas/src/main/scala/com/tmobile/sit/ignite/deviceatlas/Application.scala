@@ -64,12 +64,10 @@ object Application extends Logger{
     setup.settings.printAllFields()
 
     logger.info("Getting SparkSession")
-    implicit val sparkSession = getSparkSession(setup.settings.appName.get)
     implicit val settings = setup.settings
+    implicit val sparkSession = getSparkSession(settings)
 
     println("Web UI: " + sparkSession.sparkContext.uiWebUrl.get)
-
-
 
     // Inputs and lookups
     val lookups = new LookupData(settings.lookupPath.get)
