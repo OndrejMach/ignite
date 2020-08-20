@@ -28,11 +28,12 @@ class Dimension extends DimensionProcessing {
         registerRequests
           .select("user_agent")
       )
-      .distinct()
-      .sort("user_agent")
+     .distinct()
+     .sort("user_agent")
      .withColumnRenamed("user_agent","UserAgent")
 
-    val dfUA1=activityandregistered.select("UserAgent")
+
+    val dfUA1=activityandregistered.select("UserAgent").dropDuplicates()
       .withColumn("temp", split(col("UserAgent"), " "))
       .select(col("*") +: (0 until 4)
         .map(i => col("temp")

@@ -17,12 +17,20 @@ class Core extends ProcessingCore {
     //stageData.provision.show()
     //stageData.registerRequests.show()
 
+    val stage = new Stage()
+
+    val acc_activity = stage.preprocessActivity(persistentData.accumulated_activity,stageData.activity)
+    logger.info("Activity accumulator count: " + acc_activity.count())
+
+
+
+
     val dim = new Dimension()
 
     // logic for UserAgents dimension
     val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
 
-    val fullUserAgents0 = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
+    val fullUserAgents0 = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents).dropDuplicates("UserAgent")
     val fullUserAgents =fullUserAgents0.withColumn("_UserAgentID", monotonically_increasing_id)
     fullUserAgents.cache()
     logger.info("Full user agents count: " + fullUserAgents.count())
@@ -37,6 +45,9 @@ class Core extends ProcessingCore {
 
     val activeDaily = fact.getActiveDaily(stageData.activity,fullUserAgents)
     logger.info("Active daily count: " + activeDaily.count())
-    OutputData(fullUserAgents,provisionedDaily,registeredDaily,activeDaily)
+
+
+    OutputData(acc_activity,fullUserAgents,provisionedDaily,registeredDaily,activeDaily)
+    //TODO: add also here writer
   }
 }

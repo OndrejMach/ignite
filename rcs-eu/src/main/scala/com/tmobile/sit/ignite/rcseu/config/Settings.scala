@@ -12,7 +12,7 @@ case class Settings(inputPath: Option[String]
 
   def isAllDefined: Boolean = {
     this.inputPath.isDefined && this.inputPath.get.nonEmpty &&
-     this.lookupPath.isDefined && this.outputPath.get.nonEmpty &&
+     this.lookupPath.isDefined && this.lookupPath.get.nonEmpty &&
       this.outputPath.isDefined && this.outputPath.get.nonEmpty &&
       this.appName.isDefined && this.appName.get.nonEmpty
   }
