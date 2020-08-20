@@ -12,14 +12,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 
 trait StageProcessing extends Logger{
-  def preprocessActivity(activity: DataFrame, accumulated_activity: DataFrame) : DataFrame
+  def preprocessActivity(activity: DataFrame) : DataFrame
   def preprocessProvision(input: DataFrame) : DataFrame
   def preprocessRegisterRequests(input: DataFrame) : DataFrame
 }
 
 
 class Stage extends StageProcessing {
-  override def preprocessActivity(activity: DataFrame, accumulated_activity:DataFrame): DataFrame = {
+  override def preprocessActivity(activity: DataFrame): DataFrame = {
 
     //TODO: add logic, similar to RBM
     logger.info("Preprocessing Activity Accumulator")
