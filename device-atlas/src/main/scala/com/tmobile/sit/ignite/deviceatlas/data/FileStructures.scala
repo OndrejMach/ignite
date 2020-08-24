@@ -306,7 +306,7 @@ object FileStructures {
       StructField("video_record"                  , StringType  , true),
       StructField("valid_from"                    , StringType    , true),
       StructField("valid_to"                      , StringType    , true),
-      StructField("entry_id"                      , IntegerType , true),
+      StructField("entry_id"                      , LongType , true),
       StructField("load_date"                     , StringType    , true)
     )
   )
