@@ -256,4 +256,142 @@ class Facts extends FactsProcessing {
 
   }
 
+  def getServiceFactsDaily(activity: DataFrame): DataFrame = {
+    //TODO: add logic here to aggregate service facts
+    val sf1=activity
+    //Files SENT-OnNet:
+    val sf2 =sf1
+      .withColumn("_NetworkingID",lit("1"))
+      .withColumn("_ServiceID",lit("5"))
+      .filter(sf1("type") === "FT_POST" and sf1("from_network") === sf1("to_network"))
+      //.select("from_user","user_agent","creation_date")
+      .groupBy("_NetworkingID","_ServiceID")
+      .count()
+
+    //.agg(max("_NetworkingID").alias("_NetworkingID"),max("user_agent_UNS").alias("user_agent_UNS"))
+
+    //Files SENT-OffNet:
+    val sf3 =sf1
+      .withColumn("_NetworkingID",lit("2"))
+      .withColumn("_ServiceID",lit("5"))
+      .filter((sf1("type") === "FT_POST") and  not(sf1("from_network") === sf1("to_network")))
+      //.select("from_user","user_agent","creation_date")
+      .groupBy("_NetworkingID","_ServiceID")
+      .count
+    //Files RECEIVED-OnNet:
+    val sf_get = sf1
+      .withColumnRenamed("call_id", "call_id1")
+      .filter(sf1("type") === "FT_GET")
+      .select("call_id1","user_agent","creation_date")
+
+
+    val sf_post = sf1
+      .filter(sf1("type") === "FT_POST"  and sf1("from_network") === sf1("to_network"))
+      .select("call_id","to_network")
+
+
+    val sf4 = sf_get
+      .join(sf_post, sf_get("call_id1") === sf_post("call_id"))
+      .withColumnRenamed("from_user", "uau")
+      .withColumn("_NetworkingID",lit("1"))
+      .withColumn("_ServiceID",lit("6"))
+      //.select("uau","user_agent","creation_date")
+      .groupBy("_NetworkingID","_ServiceID")
+      .count
+
+    //Files RECEIVED-OffNet:
+    val sf_get1 = sf1
+      .withColumnRenamed("call_id", "call_id1")
+      .filter(sf1("type") === "FT_GET"  and col("from_user").startsWith("+"))
+      .select("call_id1","user_agent","creation_date")
+
+
+    val sf_post1 = sf1
+      .filter(sf1("type") === "FT_POST"  and col("from_user").startsWith("+") and sf1("from_network") =!= sf1("to_network"))
+      .select("call_id","to_network")
+
+    val sf5 = sf_get1
+      .join(sf_post1, sf_get1("call_id1") === sf_post1("call_id"))
+      .withColumnRenamed("from_user", "uau")
+      .withColumn("_NetworkingID",lit("2"))
+      .withColumn("_ServiceID",lit("6"))
+      //.select("uau","user_agent","creation_date")
+      .groupBy("_NetworkingID","_ServiceID")
+      .count
+    //GroupChat SENT-OnNet:
+    val sf6 =sf1
+      .filter(sf1("type") === "GROUP_CHAT" and col("from_user").startsWith("+") and sf1("sip_code") === 200)
+      //.filter(sf1("type") === "GROUP_CHAT" and col("to_user").startsWith("+") and sf1("sip_code") === 200)
+      .select("from_user","user_agent","creation_date","messages_sent")
+      .agg(sum("messages_sent").alias("count"))
+      .withColumn("_NetworkingID",lit("1"))
+      .withColumn("_ServiceID",lit("3"))
+      .select("_NetworkingID","_ServiceID","count")
+
+    //GroupChat RECEIVED-OnNet:
+    val sf7 =sf1
+      .filter(sf1("type") === "GROUP_CHAT" and col("from_user").startsWith("+") and sf1("sip_code") === 200)
+      //.filter(sf1("type") === "GROUP_CHAT" and col("to_user").startsWith("+") and sf1("sip_code") === 200)
+      .select("from_user","user_agent","creation_date","messages_received")
+      .agg(sum("messages_received").alias("count"))
+      .withColumn("_NetworkingID",lit("1"))
+      .withColumn("_ServiceID",lit("4"))
+      .select("_NetworkingID","_ServiceID","count")
+
+    //Group chat OffNet nerozlišuje
+
+    //Chat SENT-OnNet:
+    val sf8 =sf1
+      .filter(sf1("type") === "CHAT" and sf1("sip_code") === 200 and sf1("from_network") === sf1("to_network"))
+      .select("from_user","user_agent","creation_date","messages_sent")
+      .agg(sum("messages_sent").alias("count"))
+      .withColumn("_NetworkingID",lit("1"))
+      .withColumn("_ServiceID",lit("1"))
+      .select("_NetworkingID","_ServiceID","count")
+
+    //Chat SENT-OffNet:
+    val sf9 =sf1
+      .filter(sf1("type") === "CHAT" and sf1("sip_code") === 200 and sf1("from_network") =!= sf1("to_network"))
+      .select("from_user","user_agent","creation_date","messages_sent")
+      .agg(sum("messages_sent").alias("count"))
+      .withColumn("_NetworkingID",lit("2"))
+      .withColumn("_ServiceID",lit("1"))
+      .select("_NetworkingID","_ServiceID","count")
+
+
+    //Chat RECEIVED-OnNet:
+    val sf10 =sf1
+      .filter(sf1("type") === "CHAT" and sf1("sip_code") === 200 and sf1("from_network") === sf1("to_network"))
+      .select("from_user","user_agent","creation_date","messages_received")
+      .agg(sum("messages_received").alias("count"))
+      .withColumn("_NetworkingID",lit("1"))
+      .withColumn("_ServiceID",lit("2"))
+      .select("_NetworkingID","_ServiceID","count")
+
+    //Chat RECEIVED-OffNet:
+    val sf11 =sf1
+      .filter(sf1("type") === "CHAT" and sf1("sip_code") === 200 and sf1("from_network") =!= sf1("to_network"))
+      .select("from_user","user_agent","creation_date","messages_received")
+      .agg(sum("messages_received").alias("count"))
+      .withColumn("_NetworkingID",lit("2"))
+      .withColumn("_ServiceID",lit("2"))
+      .select("_NetworkingID","_ServiceID","count")
+
+
+    val finalsf = sf2.union(sf3)
+      .union(sf4)
+      .union(sf5)
+      .union(sf6)
+      .union(sf7)
+      .union(sf8)
+      .union(sf9)
+      .union(sf10)
+      .union(sf11)
+
+    finalsf
+
+
+  }
+
+
 }

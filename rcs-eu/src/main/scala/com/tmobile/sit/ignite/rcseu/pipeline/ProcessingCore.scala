@@ -46,8 +46,11 @@ class Core extends ProcessingCore {
     val activeDaily = fact.getActiveDaily(stageData.activity,fullUserAgents)
     logger.info("Active daily count: " + activeDaily.count())
 
+    val serviceDaily = fact.getServiceFactsDaily(stageData.activity)
+    logger.info("Service facts daily count: " + activeDaily.count())
 
-    OutputData(acc_activity,fullUserAgents,provisionedDaily,registeredDaily,activeDaily)
+
+    OutputData(acc_activity,fullUserAgents,provisionedDaily,registeredDaily,activeDaily,serviceDaily)
     //TODO: add also here writer
   }
 }

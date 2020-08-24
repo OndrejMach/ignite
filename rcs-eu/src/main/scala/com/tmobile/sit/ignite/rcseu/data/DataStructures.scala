@@ -7,7 +7,7 @@ case class InputData(activity: Reader, provision: Reader, register_requests: Rea
 //TODO:HERE!!! activity or activity_accumulator????
 case class PreprocessedData( activity:DataFrame,provision: DataFrame, registerRequests: DataFrame)
 
-case class OutputData(AccActivity:DataFrame,UserAgents: DataFrame, ProvisionedDaily: DataFrame,RegisteredDaily: DataFrame,ActiveDaily: DataFrame)
+case class OutputData(AccActivity:DataFrame,UserAgents: DataFrame, ProvisionedDaily: DataFrame,RegisteredDaily: DataFrame,ActiveDaily: DataFrame,ServiceDaily:DataFrame)
 
 case class PersistentData(oldUserAgents: DataFrame, accumulated_activity: DataFrame)
 
