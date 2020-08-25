@@ -28,7 +28,7 @@ class Stage extends StageProcessing {
       //.select("FileDate", "creation_date",	"from_user",	"to_user",	"from_network",	"to_network",	"type",	"call_id",	"sip_code",	"user_agent",	"messages_sent",	"messages_received",	"from_tenant",	"to_tenant")
         .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
-  /* val dailyFile1= accumulated_activity
+   /*val dailyFile1= accumulated_activity
      .withColumn("FileDate",lit(null))
      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
