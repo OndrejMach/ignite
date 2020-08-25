@@ -12,14 +12,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 
 trait StageProcessing extends Logger{
-  def preprocessActivity(activity: DataFrame) : DataFrame
+  def preprocessActivity(activity: DataFrame,accumulated_activity:DataFrame) : DataFrame
   def preprocessProvision(input: DataFrame) : DataFrame
   def preprocessRegisterRequests(input: DataFrame) : DataFrame
 }
 
 
 class Stage extends StageProcessing {
-  override def preprocessActivity(activity: DataFrame): DataFrame = {
+  override def preprocessActivity(activity: DataFrame,accumulated_activity:DataFrame): DataFrame = {
 
     //TODO: add logic, similar to RBM
     logger.info("Preprocessing Activity Accumulator")
@@ -28,7 +28,7 @@ class Stage extends StageProcessing {
       //.select("FileDate", "creation_date",	"from_user",	"to_user",	"from_network",	"to_network",	"type",	"call_id",	"sip_code",	"user_agent",	"messages_sent",	"messages_received",	"from_tenant",	"to_tenant")
         .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
-   /*val dailyFile1= accumulated_activity
+   val dailyFile1= accumulated_activity
      .withColumn("FileDate",lit(null))
      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
@@ -37,9 +37,9 @@ class Stage extends StageProcessing {
       //.withColumn("FileDate", col("FileDate").cast("date"))
       //.select("FileDate",  "Date", "NatCo", "user_id")
       .union(dailyFile)
-      .orderBy("FileDate")*/
+      .orderBy("FileDate")
 
-    dailyFile
+    dailyFile1
   }
 
 

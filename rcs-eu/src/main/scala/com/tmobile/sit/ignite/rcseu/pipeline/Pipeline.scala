@@ -13,7 +13,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stageData: 
     val inputRegisterRequests = inputData.register_requests.read()
 
     // Preprocess input files
-    val stageActivityAcc = stageData.preprocessActivity(inputActivity)
+    val stageActivityAcc = stageData.preprocessActivity(inputActivity,persistentData.accumulated_activity)
     val stageProvision = stageData.preprocessProvision(inputProvision)
     val stageRegisterRequests =  stageData.preprocessRegisterRequests(inputRegisterRequests)
 

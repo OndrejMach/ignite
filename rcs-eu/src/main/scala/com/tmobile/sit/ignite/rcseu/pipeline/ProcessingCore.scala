@@ -19,7 +19,7 @@ class Core extends ProcessingCore {
 
     val stage = new Stage()
 
-    val acc_activity = stage.preprocessActivity(stageData.activity)
+    val acc_activity = stage.preprocessActivity(stageData.activity,persistentData.accumulated_activity)
     logger.info("Activity accumulator count: " + acc_activity.count())
 
 
