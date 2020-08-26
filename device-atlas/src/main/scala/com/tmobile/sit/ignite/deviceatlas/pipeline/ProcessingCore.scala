@@ -23,11 +23,11 @@ class CoreProcessing(implicit sparkSession: SparkSession) extends ProcessingCore
    */
   override def process(inputData: InputData, lookupData: LookupData, settings: Settings, ODATE: String): OutputData = {
     logger.info("Executing  processing core")
-    val terminalDBupdate = new TerminalDB()
+    val terminalDB = new TerminalDB()
     val dimFiles = new Dimensions()
     val files_to_send = new ExportOutputs()
 
-    val updatedTerminalDB = terminalDBupdate.updateTerminalDB(inputData, lookupData, ODATE, settings.outputPath.get).cache()
+    val updatedTerminalDB = terminalDB.update(inputData, lookupData, ODATE, settings.outputPath.get).cache()
     val updatedD_terminal = dimFiles.update_d_terminal(updatedTerminalDB, inputData.d_terminal_spec, settings.workPath.get, ODATE).cache()
     val updatedD_tac = dimFiles.update_d_tac(updatedTerminalDB, inputData.d_tac, settings.workPath.get, ODATE).cache()
     val cptm_ta_d_terminal_spec = files_to_send.generateSpec(updatedD_terminal, ODATE, settings.outputPath.get)

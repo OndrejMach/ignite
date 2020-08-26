@@ -10,7 +10,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 trait TerminalDBProcessing extends Logger{
-  def updateTerminalDB(input: InputData, lookups: LookupData, ODATE: String, output_path: String): DataFrame
+  def update(input: InputData, lookups: LookupData, ODATE: String, output_path: String): DataFrame
 }
 
 class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProcessing {
@@ -23,7 +23,7 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
       .otherwise(lit(""))
   }
 
-  override def updateTerminalDB(input: InputData, lookups: LookupData, ODATE: String, output_path: String): DataFrame = {
+  override def update(input: InputData, lookups: LookupData, ODATE: String, output_path: String): DataFrame = {
     //input.deviceAtlas uniq on "tac"
     // split ^ to NEW and OLD: [done after all fields are fixed]
     // drop records with "tac" = tac_blacklist.tac
@@ -38,6 +38,7 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
     logger.info("Updating Terminal-DB data")
     val formatStr = new SimpleDateFormat("dd-MMM-yyyy")
     val formatYMD = new SimpleDateFormat("yyyy-MM-dd")
+
     val device_map_clean = input.deviceAtlas
       .select(    // selecting only necessary columns
         "tac",
