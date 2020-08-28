@@ -24,15 +24,12 @@ class Stage extends StageProcessing {
     //TODO: add logic, similar to RBM
     logger.info("Preprocessing Activity Accumulator")
     val dailyFile = activity
-      .withColumn("FileDate", regexp_extract(input_file_name, ".*/activity(.*)_.*csv.gz", 1))
-      //.select("FileDate", "creation_date",	"from_user",	"to_user",	"from_network",	"to_network",	"type",	"call_id",	"sip_code",	"user_agent",	"messages_sent",	"messages_received",	"from_tenant",	"to_tenant")
+      .withColumn("FileDate", lit(date))
         .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
    val dailyFile1= accumulated_activity
-     .withColumn("FileDate",lit(null))
      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
-
-      .filter(col("FileDate") =!= "2020-02-28")
+      .filter(col("FileDate") =!= date)
       //.withColumn("Date", col("Date").cast("date"))
       //.withColumn("FileDate", col("FileDate").cast("date"))
       //.select("FileDate",  "Date", "NatCo", "user_id")
