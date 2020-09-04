@@ -14,11 +14,11 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stageData: 
 
     // Preprocess input files
     val stageActivityAcc = stageData.preprocessActivity(inputActivity,persistentData.accumulated_activity)
-    val stageProvision = stageData.preprocessProvision(inputProvision)
-    val stageRegisterRequests =  stageData.preprocessRegisterRequests(inputRegisterRequests)
+    val stageProvisionAcc = stageData.preprocessProvision(inputProvision,persistentData.accumulated_provision)
+    val stageRegisterRequestsAcc =  stageData.preprocessRegisterRequests(inputRegisterRequests,persistentData.accumulated_register_requests)
 
     // Create preprocessedData object
-    val preprocessedData = PreprocessedData(stageActivityAcc,stageProvision,stageRegisterRequests)
+    val preprocessedData = PreprocessedData(stageActivityAcc,stageProvisionAcc,stageRegisterRequestsAcc)
 
     // Calculate output data from core processing
     val result = core.process(preprocessedData, persistentData)

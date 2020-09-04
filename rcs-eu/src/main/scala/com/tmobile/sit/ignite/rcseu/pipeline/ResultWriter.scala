@@ -27,8 +27,10 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath+"ProvisionedDaily.csv", delimiter = ";").writeData()
     CSVWriter(outputData.RegisteredDaily, resultPaths.outputPath+"RegisteredDaily.csv", delimiter = ";").writeData()
     CSVWriter(outputData.ActiveDaily, resultPaths.outputPath+"ActiveDaily.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
     CSVWriter(outputData.ServiceDaily, resultPaths.outputPath+"ServiceFactsDaily.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.AccRegisterRequests, resultPaths.lookupPath+"acc_register_requests.csv", delimiter = ";").writeData()
 
     //TODO: add result path and writer, same as above
   }

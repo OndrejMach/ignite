@@ -39,7 +39,9 @@ object Application extends App with Logger {
 
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(conf.settings.outputPath.get + "UserAgents - Copy.csv", header = true, delimiter = ";").read(),
-    accumulated_activity = new CSVReader(conf.settings.lookupPath.get + "acc_activity.csv", header = true, delimiter = ";").read()
+    accumulated_activity = new CSVReader(conf.settings.lookupPath.get + "acc_activity.csv", header = true, delimiter = ";").read(),
+    accumulated_provision = new CSVReader(conf.settings.lookupPath.get + "acc_provision.csv", header = true, delimiter = ";").read(),
+    accumulated_register_requests = new CSVReader(conf.settings.lookupPath.get + "acc_register_requests.csv", header = true, delimiter = ";").read()
 
   )
 

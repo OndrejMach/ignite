@@ -22,7 +22,11 @@ class Core extends ProcessingCore {
     val acc_activity = stage.preprocessActivity(stageData.activity,persistentData.accumulated_activity)
     logger.info("Activity accumulator count: " + acc_activity.count())
 
+    val acc_provision = stage.preprocessProvision(stageData.provision,persistentData.accumulated_provision)
+    logger.info("Provision accumulator count: " + acc_provision.count())
 
+    val acc_register_requests = stage.preprocessRegisterRequests(stageData.registerRequests,persistentData.accumulated_register_requests)
+    logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
 
     val dim = new Dimension()
@@ -50,7 +54,7 @@ class Core extends ProcessingCore {
     logger.info("Service facts daily count: " + activeDaily.count())
 
 
-    OutputData(acc_activity,fullUserAgents,provisionedDaily,registeredDaily,activeDaily,serviceDaily)
+    OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,provisionedDaily,registeredDaily,activeDaily,serviceDaily)
     //TODO: add also here writer
   }
 }
