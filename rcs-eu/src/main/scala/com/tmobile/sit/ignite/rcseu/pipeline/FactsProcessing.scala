@@ -21,6 +21,7 @@ class Facts extends FactsProcessing {
     provisionedDaily
   }
 
+
   def getRegisteredDaily(register_requests: DataFrame,fullUserAgents: DataFrame): DataFrame = {
     //TODO: add logic here to aggregate registered users
     val dfRMT1=register_requests.withColumn("ConKeyR1", regexp_extract(input_file_name, ".*/register_requests_(.*).csv.gz", 1))
