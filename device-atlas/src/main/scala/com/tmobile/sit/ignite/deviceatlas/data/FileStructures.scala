@@ -264,7 +264,7 @@ object FileStructures {
 
   val terminal_id_lkp = StructType(
     Seq(
-      StructField("id", IntegerType)
+      StructField("id", LongType)
     )
   )
   val cptm_ta_d_tac = StructType(

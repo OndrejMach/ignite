@@ -36,10 +36,154 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
     // if standardised_marketing_name not null: model = standardised_marketing_name       [model is a new column]
     // else: model = gsma_marketing_name
     logger.info("Updating Terminal-DB data")
-    val formatStr = new SimpleDateFormat("dd-MMM-yyyy")
-    val formatYMD = new SimpleDateFormat("yyyy-MM-dd")
 
-    val device_map_clean = input.deviceAtlas
+    val debugTAC = "01581300"
+
+    logger.info(s"Source device_map file has ${input.deviceAtlas.count} records")
+    val device_map_clean = getDeviceMapClean(input.deviceAtlas, lookups)
+    logger.info(s"The device_map_clean file has ${device_map_clean.count} records")
+    //TODO: delete
+    //CSVWriter(device_map_clean.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/device_map_clean.csv", delimiter = ",", writeHeader = true).writeData()
+
+    // if os_name not null: lookup os_name vs. operating_system_lkp_df.gsma_os_name
+    // match: fixed_operating_system = operating_system_lkp_df.terminaldb
+    // if fixed_operating_system still empty: fixed_operating_system = os_name
+    // if fixed_operating_system == "SERIES X" :
+    // lookup os_version vs. os_nokia_lkp_df.gsma_os_version:
+    // match: fixed_operating_system = os_nokia_lkp_df.terminaldb
+    // else:  fixed_operating_system = os_name
+    // else: (os_name not null)
+    // fixed_operating_system = null
+    val device_os_name = getDeviceWithOS(device_map_clean, lookups)
+    logger.info(s"The device_os_name file has ${device_os_name.count} records")
+    //TODO: delete
+    //CSVWriter(device_os_name.filter($"tac" === lit(debugTAC)),path = s"/data/sit/deviceatlas/differences/device_os_name.csv",delimiter = ",",writeHeader = true).writeData()
+
+    val device_os_nokia = getDeviceWithOSNokia(device_os_name, lookups)
+    logger.info(s"The device_os_nokia file has ${device_os_nokia.count} records")
+    //TODO: delete
+    //CSVWriter(device_os_nokia.filter($"tac" === lit(debugTAC)),path = s"/data/sit/deviceatlas/differences/device_os_nokia.csv",delimiter = ",",writeHeader = true).writeData()
+
+    val device_map_clean_fixed = getDeviceMapFixed(device_map_clean, device_os_name, device_os_nokia)
+    logger.info(s"The device_map_clean_fixed file has ${device_map_clean_fixed.count} records")
+    //TODO: delete
+    //CSVWriter(device_map_clean_fixed.filter($"tac" === lit(debugTAC)),path = s"/data/sit/deviceatlas/differences/device_map_clean_fixed.csv",delimiter = ",",writeHeader = true).writeData()
+
+    // Split records to NEW and OLD (as mentioned in the first comment) - lookup device_map.tac(uniq) vs. terminal_db.tac_code:
+    // match: terminal_id = terminal_db.terminal_id // INPUT RECORD goes to OLD stream
+    // no match: terminal_id = -1                   // INPUT RECORD goes to NEW stream
+    val OLD_device_map_records = getOldDeviceMapRecords(device_map_clean_fixed, lookups.terminalDB)
+    logger.info(s"The OLD_device_map_records file has ${OLD_device_map_records.count} records")
+    //TODO: delete
+    //CSVWriter(OLD_device_map_records.filter($"tac" === lit(debugTAC)),path = s"/data/sit/deviceatlas/differences/OLD_device_map_records.csv",delimiter = ",",writeHeader = true).writeData()
+
+    val NEW_device_map_records = getNewDeviceMapRecords(device_map_clean_fixed, lookups.terminalDB)
+    logger.info(s"The NEW_device_map_records file has ${NEW_device_map_records.count} records")
+    //TODO: delete
+    //CSVWriter(NEW_device_map_records.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/NEW_device_map_records.csv", delimiter = ",", writeHeader = true).writeData()
+
+    // get last used terminal_id
+    var max_id: Long = lookups.terminalId.first().getLong(0)
+    logger.info(s"Previous max terminal_id used: $max_id")
+
+    // dedup NEW_df by "fixed_manufacturer", "model"
+    // assign new terminal_id to each record. Last value in terminaldb_terminal_id.hwm file
+    // assign same terminal_id to duplicates with same "fixed_manufacturer", "model"
+    val NEW_device_ids = NEW_device_map_records.select("fixed_manufacturer", "model")
+      .sort("fixed_manufacturer", "model")
+      .dropDuplicates("fixed_manufacturer", "model")
+      .withColumn("row_nr", row_number.over(Window.orderBy("fixed_manufacturer", "model")))
+      .withColumn("terminal_id", expr(s"$max_id + row_nr"))
+      .drop("row_nr")
+    logger.info(s"Unique new id's ${NEW_device_ids.count} ")
+
+    // update last used terminal_id
+    max_id += NEW_device_ids.count()
+
+    logger.info(s"New max terminal_id: $max_id")
+
+    CSVWriter(Seq(max_id).toDF("max_id"),
+      path = s"${output_path}terminaldb_terminal_id.hwm",
+      delimiter = "|",
+      writeHeader = false).writeData()
+    logger.info(s"New max terminal_id: $max_id")
+
+    val NEW_device_withIDs = NEW_device_map_records
+      .join(NEW_device_ids, Seq("fixed_manufacturer", "model"),
+      "left_outer")
+    logger.info(s"The NEW_device_withIDs file has ${NEW_device_withIDs.count} records")
+    //TODO: delete
+    //CSVWriter(NEW_device_withIDs.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/NEW_device_withIDs.csv", delimiter = ",", writeHeader = true).writeData()
+
+    // concat OLD_df with NEW (with new terminal_ids) (and sort by "tac" column) ['left' in below join]
+    // join above with some historical export file [lookups.historical_terminalDB] (sorted by "tac_code" column) as follows:  # ="$EVL_PROJECT_STAGE_DIR/terminal_database_export.csv" file from 2018-02-12
+    // join on "tac"="tac_code"  # output in terminalDB_full_lkp structure
+    // if match use values from historical file [val hist_records = ... ]
+    // else [val not_hist_records = ... ]
+    // crazy ass mapping, check the source file: EVM_JOIN="$EVL_PROJECT_DIR/evm/join/terminaldb.evm"
+
+    val OLD_and_NEW_device_records = OLD_device_map_records.union(NEW_device_withIDs.select(OLD_device_map_records.columns.head, OLD_device_map_records.columns.tail:_*))
+      .sort("tac")
+    logger.info(s"The OLD_and_NEW_device_records file has ${OLD_and_NEW_device_records.count} records")
+    //TODO: delete
+    //CSVWriter(OLD_and_NEW_device_records.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/OLD_and_NEW_device_records.csv", delimiter = ",", writeHeader = true).writeData()
+
+    // IMPORTANT - get the historical records from the previous terminalDB file
+    val hist_records = OLD_and_NEW_device_records.select("tac")
+      .join(lookups.historical_terminalDB,
+        $"tac" === $"tac_code",
+        "inner")
+      .drop("tac")
+
+    logger.info(s"The lookups.historical_terminalDB file has ${lookups.historical_terminalDB.count} records")
+    logger.info(s"There are ${hist_records.count} historical records in the device_map")
+    // Don't these need to be mapped like the not_hist_records?
+    // hist_records.show(5)
+    //TODO: delete
+    //CSVWriter(hist_records.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/hist_records.csv", delimiter = ",", writeHeader = true).writeData()
+
+    sparkSession.conf.set("spark.sql.crossJoin.enabled", "true")
+
+    val not_hist_records = OLD_and_NEW_device_records.join(lookups.historical_terminalDB.select("tac_code"),
+      $"tac" === $"tac_code",
+      "left_outer")
+      .where("tac_code is NULL")
+      .drop("tac_code")
+    logger.info(s"There are ${not_hist_records.count} non-historical records in the device_map")
+    //TODO: delete
+    //CSVWriter(not_hist_records.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/not_hist_records.csv", delimiter = ",", writeHeader = true).writeData()
+
+    // START of crazy mapping
+    logger.info("Mapping non-historical records")
+    val not_hist_records_mapped = getMappedNonHistoricRecords(not_hist_records)
+
+    //TODO: delete
+    //CSVWriter(not_hist_records_mapped.filter($"tac" === lit(debugTAC)), path = s"/data/sit/deviceatlas/differences/not_hist_records_mapped.csv", delimiter = ",", writeHeader = true).writeData()
+
+    // Merge[=EVL command] extra_in_terminaldb.csv with join output on "tac_code" (stream X)
+    val new_terminalDB = not_hist_records_mapped
+      .select(lookups.terminalDB.columns.head, lookups.terminalDB.columns.tail:_*)
+      .union(hist_records)
+      .union(lookups.extra_terminalDB_records)
+      .sort("tac_code").dropDuplicates("tac_code")
+
+    logger.info(s"There are ${lookups.extra_terminalDB_records.count} extra records in the extra_in_terminaldb.csv file")
+    logger.info(s"There are ${new_terminalDB.count} total output records in the new terminalDB")
+
+    // write merged output (stream X) to "$EVL_PROJECT_STAGE_DIR/terminaldb_$ODATE.csv" ==> first output file
+    /*CSVWriter(new_terminalDB,
+      path = s"${output_path}terminaldb_$ODATE.csv",
+      delimiter = "|",
+      writeHeader = false)
+    */
+
+    logger.info("Terminal-DB update DONE...")
+
+    new_terminalDB
+  }
+
+  def getDeviceMapClean(deviceAtlas: DataFrame, lookups: LookupData): DataFrame = {
+    deviceAtlas
       .select(    // selecting only necessary columns
         "tac",
         "gsma_marketing_name",
@@ -74,9 +218,10 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
         "wi_fi")
       .sort($"tac", $"deviceatlas_id".desc)
       .dropDuplicates("tac")
-      .join(lookups.tacBlacklist, input.deviceAtlas("tac") === lookups.tacBlacklist("tac"), "leftanti")
+
+      .join(lookups.tacBlacklist, deviceAtlas("tac") === lookups.tacBlacklist("tac"), "leftanti")
       .sort("tac")
-      .join(lookups.manufacturerVendor
+      .join(lookups.manufacturerVendor.as("lkp1")
         .select('gsma_manufacturer as "lkp_gsma_manufacturer",
           'gsma_standardised_device_vendor as "lkp_device_vendor",
           'terminal_db_manufacturer as "lkp_manufacturer_vendor"),
@@ -84,7 +229,9 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
           $"standardised_device_vendor" === $"lkp_device_vendor",
         "left_outer")
       .drop("lkp_gsma_manufacturer", "lkp_device_vendor")
-      .join(lookups.manufacturer.select('gsma_manufacturer as "lkp_gsma_manufacturer", 'terminal_db_manufacturer as "lkp_manufacturer"),
+
+      .join(lookups.manufacturer
+        .select('gsma_manufacturer as "lkp_gsma_manufacturer", 'terminal_db_manufacturer as "lkp_manufacturer"),
         $"gsma_manufacturer" === $"lkp_gsma_manufacturer",
         "left_outer")
       .drop("lkp_gsma_manufacturer", "lkp_device_vendor")
@@ -94,25 +241,18 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
             .otherwise($"lkp_manufacturer"))
           .otherwise($"lkp_manufacturer_vendor"))
       .drop("lkp_manufacturer_vendor", "lkp_manufacturer")
+
       .withColumn("terminal_full_name",
         when(col("standardised_full_name").isNull, concat_ws(" ", $"fixed_manufacturer", $"gsma_marketing_name"))
           .otherwise(col("standardised_full_name")))
       .withColumn("model",
         when(col("standardised_marketing_name").isNull, col("gsma_marketing_name"))
           .otherwise(col("standardised_marketing_name")))
-.cache()
+      .cache()
+  }
 
-    // if os_name not null: lookup os_name vs. operating_system_lkp_df.gsma_os_name
-    // match: fixed_operating_system = operating_system_lkp_df.terminaldb
-    // if fixed_operating_system still empty: fixed_operating_system = os_name
-    // if fixed_operating_system == "SERIES X" :
-    // lookup os_version vs. os_nokia_lkp_df.gsma_os_version:
-    // match: fixed_operating_system = os_nokia_lkp_df.terminaldb
-    // else:  fixed_operating_system = os_name
-    // else: (os_name not null)
-    // fixed_operating_system = null
-
-    val device_os_name = device_map_clean.as("left")
+  def getDeviceWithOS(device_map_clean: DataFrame, lookups: LookupData): DataFrame = {
+    device_map_clean.as("left")
       .select("tac", "deviceatlas_id", "os_name", "os_version")
       //.select(device_map_clean.col("os_name"), operating_system_lkp_df.col("terminaldb"))
       .join(lookups.operatingSystem.as("right"),
@@ -122,8 +262,10 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
         when(col("right.terminaldb").isNull, col("left.os_name"))
           .otherwise(col("right.terminaldb")))
       .drop("gsma_os_name", "terminaldb")
+  }
 
-    val device_os_nokia = device_os_name
+  def getDeviceWithOSNokia(device_os_name: DataFrame, lookups: LookupData): DataFrame = {
+    device_os_name
       .where("fixed_os_name = \"SERIES X\"")
       .join(lookups.osNokia, $"os_version" === $"gsma_os_version",
         "left_outer")
@@ -131,8 +273,10 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
         when(col("terminaldb").isNull, col("os_name"))
           .otherwise(col("terminaldb")))
       .drop("gsma_os_version", "terminaldb")
+  }
 
-    val device_map_clean_fixed = device_map_clean
+  def getDeviceMapFixed(device_map_clean: DataFrame, device_os_name: DataFrame, device_os_nokia: DataFrame): DataFrame = {
+    device_map_clean
       .join(device_os_name.select('tac as "tac_tmp", 'deviceatlas_id as "atlas_id_tmp", 'fixed_os_name),
         $"tac" === $"tac_tmp" && $"deviceatlas_id" === $"atlas_id_tmp",
         "left_outer")
@@ -142,72 +286,36 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
         "left_outer")
       .withColumn("fixed_os_name", when($"nokia_os_fix".isNotNull, $"nokia_os_fix").otherwise($"fixed_os_name"))
       .drop("tac_tmp", "atlas_id_tmp", "nokia_os_fix")
+  }
 
-    // Split records to NEW and OLD (as mentioned in the first comment) - lookup device_map.tac(uniq) vs. terminal_db.tac_code:
-    // match: terminal_id = terminal_db.terminal_id // INPUT RECORD goes to OLD stream
-    // no match: terminal_id = -1                   // INPUT RECORD goes to NEW stream
-    val OLD_device_df = device_map_clean_fixed
-      .join(lookups.terminalDB.select('tac_code, 'terminal_id, 'manufacturer as "manufacturer_old" ),
+  def getOldDeviceMapRecords(device_map_clean_fixed: DataFrame, terminalDB: DataFrame): DataFrame = {
+  /*
+    device_map_clean_fixed
+      .join(terminalDB.select('tac_code, 'terminal_id, 'manufacturer as "manufacturer_old" ),
         $"tac" === $"tac_code", "inner")
       .drop("tac_code", "fixed_manufacturer")
       .withColumnRenamed("manufacturer_old", "fixed_manufacturer")
-    val NEW_device_df = device_map_clean_fixed
-      .join(lookups.terminalDB.select("tac_code" /*, "terminal_id"*/),
+*/
+
+    // Don't keep old manufacturer, use newly calculated manufacturer
+
+    device_map_clean_fixed
+      .join(terminalDB.select('tac_code, 'terminal_id ),
+        $"tac" === $"tac_code", "inner")
+      .drop("tac_code")
+
+  }
+
+  def getNewDeviceMapRecords(device_map_clean_fixed: DataFrame, terminalDB: DataFrame): DataFrame = {
+    device_map_clean_fixed
+      .join(terminalDB.select("tac_code" /*, "terminal_id"*/),
         $"tac" === $"tac_code", "left_outer")
       .where("tac_code is NULL")
       .drop("tac_code")
+  }
 
-    // get last used terminal_id
-    var max_id: Int = lookups.terminalId.first().getInt(0)
-    logger.info(s"Last terminal_id used: $max_id")
-
-    // dedup NEW_df by "fixed_manufacturer", "model"
-    // assign new terminal_id to each record. Last value in terminaldb_terminal_id.hwm file
-    // assign same terminal_id to duplicates with same "fixed_manufacturer", "model"
-    val NEW_device_ids = NEW_device_df.select("fixed_manufacturer", "model")
-      .sort("fixed_manufacturer", "model")
-      .dropDuplicates("fixed_manufacturer", "model")
-      .withColumn("row_nr", row_number.over(Window.orderBy("fixed_manufacturer", "model")))
-      .withColumn("terminal_id", expr(s"$max_id + row_nr"))
-      .drop("row_nr")
-
-    // update last used terminal_id
-    max_id += NEW_device_ids.count().toInt
-    CSVWriter(Seq(max_id).toDF("max_id"),
-      path = s"${output_path}terminaldb_terminal_id.hwm",
-      delimiter = "|",
-      writeHeader = false).writeData()
-    logger.info(s"New max terminal_id: $max_id")
-
-    val NEW_device_withIDs = NEW_device_df.join(NEW_device_ids, Seq("fixed_manufacturer", "model"),
-      "left_outer")
-
-    // concat OLD_df with NEW (with new terminal_ids) (and sort by "tac" column) ['left' in below join]
-    // join above with some historical export file [lookups.historical_terminalDB] (sorted by "tac_code" column) as follows:  # ="$EVL_PROJECT_STAGE_DIR/terminal_database_export.csv" file from 2018-02-12
-    // join on "tac"="tac_code"  # output in terminalDB_full_lkp structure
-    // if match use values from historical file [val hist_records = ... ]
-    // else [val not_hist_records = ... ]
-    // crazy ass mapping, check the source file: EVM_JOIN="$EVL_PROJECT_DIR/evm/join/terminaldb.evm"
-
-    val OLD_and_NEW_device = OLD_device_df.union(NEW_device_withIDs.select(OLD_device_df.columns.head, OLD_device_df.columns.tail:_*))
-      .sort("tac")
-
-    val hist_records = OLD_and_NEW_device.select("tac")
-      .join(lookups.historical_terminalDB,
-        $"tac" === $"tac_code",
-        "inner")
-      .drop("tac")
-
-    sparkSession.conf.set("spark.sql.crossJoin.enabled", "true")
-
-    val not_hist_records = OLD_and_NEW_device.join(lookups.historical_terminalDB.select("tac_code"),
-      $"tac" === $"tac_code",
-      "left_outer")
-      .where("tac_code is NULL")
-      .drop("tac_code")
-
-    // START of crazy mapping
-    val not_hist_records_mapped = not_hist_records
+  def getMappedNonHistoricRecords(not_hist_records: DataFrame):DataFrame = {
+    not_hist_records
       // populate "gsm_bandwidth" column, only following values from original column counts: "GSM850", "GSM900", "GSM1800", "GSM1900"
       .withColumn("noSpace", regexp_replace($"gsma_bands", " ", "")) // remove spaces from original column to fix values like "GSM 850"
       .withColumn("band1", when(locate("GSM850", $"noSpace") > 0, 1).otherwise(0))
@@ -324,22 +432,6 @@ class TerminalDB (implicit  sparkSession: SparkSession) extends TerminalDBProces
       .withColumn("master_terminal_id", lit("N/A"))
       .withColumn("notice_freetext", lit("N/A"))
     // END of crazy mapping
-
-    // Merge[=EVL command] extra_in_terminaldb.csv with join output on "tac_code" (stream X)
-    val new_terminalDB = not_hist_records_mapped
-      .select(lookups.terminalDB.columns.head, lookups.terminalDB.columns.tail:_*)
-      .union(hist_records)
-      .union(lookups.extra_terminalDB_records)
-
-    // write merged output (stream X) to "$EVL_PROJECT_STAGE_DIR/terminaldb_$ODATE.csv" ==> first output file
-    /*CSVWriter(new_terminalDB,
-      path = s"${output_path}terminaldb_$ODATE.csv",
-      delimiter = "|",
-      writeHeader = false)
-    */
-
-    logger.info("Terminal-DB update DONE...")
-
-    new_terminalDB.sort("tac_code").dropDuplicates("tac_code")
   }
+
 }

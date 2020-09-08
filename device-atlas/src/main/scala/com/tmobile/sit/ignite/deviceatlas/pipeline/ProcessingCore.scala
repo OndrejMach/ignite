@@ -28,8 +28,10 @@ class CoreProcessing(implicit sparkSession: SparkSession) extends ProcessingCore
     val files_to_send = new ExportOutputs()
 
     val updatedTerminalDB = terminalDB.update(inputData, lookupData, ODATE, settings.outputPath.get).cache()
+
     val updatedD_terminal = dimFiles.update_d_terminal(updatedTerminalDB, inputData.d_terminal_spec, settings.workPath.get, ODATE).cache()
     val updatedD_tac = dimFiles.update_d_tac(updatedTerminalDB, inputData.d_tac, settings.workPath.get, ODATE).cache()
+
     val cptm_ta_d_terminal_spec = files_to_send.generateSpec(updatedD_terminal, ODATE, settings.outputPath.get)
     val cptm_vi_d_tac_terminal = files_to_send.generateTac(updatedD_tac, ODATE, settings.outputPath.get)
 
