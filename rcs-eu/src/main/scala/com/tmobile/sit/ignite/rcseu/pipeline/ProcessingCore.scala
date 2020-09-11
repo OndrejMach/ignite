@@ -2,7 +2,11 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcseu.data.{OutputData, PersistentData, PreprocessedData}
-import org.apache.spark.sql.functions.monotonically_increasing_id
+import org.apache.spark.sql.functions.{col, monotonically_increasing_id}
+import com.tmobile.sit.ignite.rcseu.Application.date
+import com.tmobile.sit.ignite.rcseu.Application.month
+import com.tmobile.sit.ignite.rcseu.Application.year
+
 
 
 trait ProcessingCore extends Logger{
@@ -41,13 +45,24 @@ class Core extends ProcessingCore {
 
     // Process facts
     val fact = new Facts()
-    val provisionedDaily = fact.getProvisionedDaily(stageData.provision)
+
+    //val filtered_monthly_provision = persistentData.accumulated_provision.filter(col("FileDate").startsWith("2020-02"))
+    //val provisionedMonthly = fact.getProvisionedDaily(filtered_monthly_provision)
+    //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
+
+    /* toto je teraz mesacne na skusku*/
+    val filtered_daily_provision= persistentData.accumulated_provision.filter(col("FileDate").contains(month))
+    val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision,month)
     logger.info("Provisioned daily count: " + provisionedDaily.count())
 
-    val registeredDaily = fact.getRegisteredDaily(stageData.registerRequests,fullUserAgents)
+
+    val filtered_daily_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains(month))
+    val registeredDaily = fact.getRegisteredDaily(filtered_daily_register,fullUserAgents,month)
     logger.info("Registered daily count: " + registeredDaily.count())
 
-    val activeDaily = fact.getActiveDaily(stageData.activity,fullUserAgents)
+
+    val filtered_daily_active= persistentData.accumulated_activity.filter(col("creation_date").contains(month))
+    val activeDaily = fact.getActiveDaily(filtered_daily_active,fullUserAgents,month)
     logger.info("Active daily count: " + activeDaily.count())
 
     val serviceDaily = fact.getServiceFactsDaily(stageData.activity)
@@ -55,6 +70,5 @@ class Core extends ProcessingCore {
 
 
     OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,provisionedDaily,registeredDaily,activeDaily,serviceDaily)
-    //TODO: add also here writer
   }
 }

@@ -1,33 +1,41 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 //import breeze.linalg.split
+import java.time.Period
+import java.util.Date
+
 import com.tmobile.sit.common.Logger
-import org.apache.spark.sql.DataFrame
+import com.tmobile.sit.ignite.rcseu.Application.date
+import com.tmobile.sit.ignite.rcseu.Application.natco
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 
 trait FactsProcessing extends Logger{
-  def getProvisionedDaily(provisionData: DataFrame): DataFrame
+  def getProvisionedDaily(provisionData: DataFrame,period_for_process:String): DataFrame /*aj tu som pridala period for process*/
 }
 
 class Facts extends FactsProcessing {
 
-  def getProvisionedDaily(provision: DataFrame): DataFrame = {
+  def getProvisionedDaily(provision: DataFrame,period_for_process:String): DataFrame = {
     //TODO: add logic here to aggregate provisioned users
     val provisionedDaily = provision
-      .withColumn("ConKeyP1", regexp_extract(input_file_name, ".*/provision_(.*)_.*csv.gz", 1))
-      .withColumn("NatCo", regexp_extract(input_file_name, ".*/provision_.*_(.*).csv.gz", 1))
+      .withColumn("ConKeyP1",lit(period_for_process))
+      .withColumn("NatCo", lit(natco))
       .withColumn("ConKeyP1", concat_ws("|",col("ConKeyP1"),col("NatCo")))
       .groupBy("ConKeyP1").count().withColumnRenamed("count","Provisioned_daily")
     provisionedDaily
   }
 
 
-  def getRegisteredDaily(register_requests: DataFrame,fullUserAgents: DataFrame): DataFrame = {
+  def getRegisteredDaily(register_requests: DataFrame,fullUserAgents: DataFrame,period_for_process:String): DataFrame = {
     //TODO: add logic here to aggregate registered users
-    val dfRMT1=register_requests.withColumn("ConKeyR1", regexp_extract(input_file_name, ".*/register_requests_(.*).csv.gz", 1))
+    val dfRMT1=register_requests
+      .withColumn("ConKeyR1",lit(period_for_process))
+      .withColumn("NatCo", lit(natco))
+      .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("NatCo")))
       .groupBy("msisdn")
       .agg(max("user_agent").alias("UserAgent"),max("ConKeyR1").alias("ConKeyR1"))
-      .withColumn("ConKeyR1",regexp_replace(col("ConKeyR1"), "_", "|"))
+      //.withColumn("ConKeyR1",regexp_replace(col("ConKeyR1"), "_", "|"))
       //.withColumn("ConKeyR1",concat("ConKeyR1", lit("|"), "user_agent").alias("ConKeyR1"))
       .join(fullUserAgents, "UserAgent")
       .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("_UserAgentID")))
@@ -45,7 +53,7 @@ class Facts extends FactsProcessing {
   }
 
 
-  def getActiveDaily(activity: DataFrame,fullUserAgents: DataFrame): DataFrame = {
+  def getActiveDaily(activity: DataFrame,fullUserAgents: DataFrame,period_for_process:String): DataFrame = {
     //TODO: add logic here to aggregate unique active users
 
     //////ORIGINATED and TERMINATED
@@ -242,8 +250,8 @@ class Facts extends FactsProcessing {
       .drop("user_agent_UNS")
 
     val keyTable= activity
-      .withColumn("ConKeyA1", regexp_extract(input_file_name, ".*/activity_(.*)_.*csv.gz", 1))
-      .withColumn("NatCo", regexp_extract(input_file_name, ".*/activity_.*_(.*).csv.gz", 1))
+      .withColumn("ConKeyA1",lit(period_for_process))
+      .withColumn("NatCo", lit(natco))
       .withColumn("ConKeyA1", concat_ws("|",col("ConKeyA1"),col("NatCo")))
       .select("ConKeyA1","user_agent").distinct()
 

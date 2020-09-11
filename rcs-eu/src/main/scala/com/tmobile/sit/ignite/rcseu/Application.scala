@@ -16,6 +16,8 @@ object Application extends App with Logger {
 
   val date = args(0)
   val natco = args(1)
+  val month = "2020-02"
+  val year = "2020"
 
   logger.info(s"Date: $date, natco: $natco")
 
