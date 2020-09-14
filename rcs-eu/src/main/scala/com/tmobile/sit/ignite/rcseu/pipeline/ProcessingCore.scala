@@ -50,11 +50,23 @@ class Core extends ProcessingCore {
     //val provisionedMonthly = fact.getProvisionedDaily(filtered_monthly_provision)
     //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
 
-    /* toto je teraz mesacne na skusku*/
-    val filtered_daily_provision= persistentData.accumulated_provision.filter(col("FileDate").contains(month))
-    val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision,month)
+
+    val filtered_daily_provision= persistentData.accumulated_provision.filter(col("FileDate").contains(date))
+    val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision,date)
     logger.info("Provisioned daily count: " + provisionedDaily.count())
 
+    val filtered_monthly_provision= persistentData.accumulated_provision.filter(col("FileDate").contains(month))
+    val provisionedMonthly = fact.getProvisionedDaily(filtered_monthly_provision,month)
+    logger.info("Provisioned monthly count: " + provisionedMonthly.count())
+
+    val filtered_yearly_provision= persistentData.accumulated_provision.filter(col("FileDate").contains(year))
+    val provisionedYearly = fact.getProvisionedDaily(filtered_yearly_provision,year)
+    logger.info("Provisioned yearly count: " + provisionedYearly.count())
+
+    val filtered_total_provision= persistentData.accumulated_provision.filter(col("FileDate").contains("20"))
+    val provisionedTotal = fact.getProvisionedDaily(filtered_total_provision,"20")
+    logger.info("Provisioned total count: " + provisionedTotal.count())
+    //----------------------------------------------------------------------------
 
     val filtered_daily_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains(month))
     val registeredDaily = fact.getRegisteredDaily(filtered_daily_register,fullUserAgents,month)
@@ -69,6 +81,9 @@ class Core extends ProcessingCore {
     logger.info("Service facts daily count: " + activeDaily.count())
 
 
-    OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,provisionedDaily,registeredDaily,activeDaily,serviceDaily)
+    OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,
+      provisionedDaily,provisionedMonthly,provisionedYearly,provisionedTotal,
+      registeredDaily,
+      activeDaily,serviceDaily)
   }
 }
