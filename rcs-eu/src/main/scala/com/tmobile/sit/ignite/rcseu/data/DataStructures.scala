@@ -9,8 +9,9 @@ case class PreprocessedData( activity:DataFrame,provision: DataFrame, registerRe
 
 case class OutputData(AccActivity:DataFrame,AccProvision:DataFrame,AccRegisterRequests:DataFrame,UserAgents: DataFrame,
                       ProvisionedDaily: DataFrame,ProvisionedMonthly:DataFrame,ProvisionedYearly:DataFrame,ProvisionedTotal:DataFrame,
-                      RegisteredDaily: DataFrame,
-                      ActiveDaily: DataFrame,ServiceDaily:DataFrame)
+                      RegisteredDaily: DataFrame,RegisteredMonthly: DataFrame,RegisteredYearly: DataFrame,RegisteredTotal: DataFrame,
+                      ActiveDaily: DataFrame,ActiveMonthly: DataFrame,ActiveYearly: DataFrame,ActiveTotal: DataFrame,
+                      ServiceDaily:DataFrame)
 
 case class PersistentData(oldUserAgents: DataFrame, accumulated_activity: DataFrame,accumulated_provision:DataFrame,accumulated_register_requests:DataFrame)
 

@@ -68,22 +68,46 @@ class Core extends ProcessingCore {
     logger.info("Provisioned total count: " + provisionedTotal.count())
     //----------------------------------------------------------------------------
 
-    val filtered_daily_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains(month))
-    val registeredDaily = fact.getRegisteredDaily(filtered_daily_register,fullUserAgents,month)
+    val filtered_daily_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains(date))
+    val registeredDaily = fact.getRegisteredDaily(filtered_daily_register,fullUserAgents,date)
     logger.info("Registered daily count: " + registeredDaily.count())
 
+    val filtered_monthly_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains(month))
+    val registeredMonthly = fact.getRegisteredDaily(filtered_monthly_register,fullUserAgents,month)
+    logger.info("Registered monthly count: " + registeredMonthly.count())
 
-    val filtered_daily_active= persistentData.accumulated_activity.filter(col("creation_date").contains(month))
-    val activeDaily = fact.getActiveDaily(filtered_daily_active,fullUserAgents,month)
+    val filtered_yearly_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains(year))
+    val registeredYearly = fact.getRegisteredDaily(filtered_yearly_register,fullUserAgents,year)
+    logger.info("Registered yearly count: " + registeredYearly.count())
+
+    val filtered_total_register= persistentData.accumulated_register_requests.filter(col("FileDate").contains("20"))
+    val registeredTotal = fact.getRegisteredDaily(filtered_total_register,fullUserAgents,"20")
+    logger.info("Registered total count: " + registeredTotal.count())
+    //----------------------------------------------------------------------------
+    val filtered_daily_active= persistentData.accumulated_activity.filter(col("creation_date").contains(date))
+    val activeDaily = fact.getActiveDaily(filtered_daily_active,fullUserAgents,date)
     logger.info("Active daily count: " + activeDaily.count())
 
+    val filtered_monthly_active= persistentData.accumulated_activity.filter(col("creation_date").contains(month))
+    val activeMonthly = fact.getActiveDaily(filtered_monthly_active,fullUserAgents,month)
+    logger.info("Active monthly count: " + activeMonthly.count())
+
+    val filtered_yearly_active= persistentData.accumulated_activity.filter(col("creation_date").contains(year))
+    val activeYearly = fact.getActiveDaily(filtered_yearly_active,fullUserAgents,year)
+    logger.info("Active yearly count: " + activeYearly.count())
+
+    val filtered_total_active= persistentData.accumulated_activity.filter(col("creation_date").contains("20"))
+    val activeTotal = fact.getActiveDaily(filtered_total_active,fullUserAgents,"20")
+    logger.info("Active total count: " + activeTotal.count())
+//----------------------------------------------------------------------------
     val serviceDaily = fact.getServiceFactsDaily(stageData.activity)
-    logger.info("Service facts daily count: " + activeDaily.count())
+    logger.info("Service facts daily count: " + serviceDaily.count())
 
 
     OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,
       provisionedDaily,provisionedMonthly,provisionedYearly,provisionedTotal,
-      registeredDaily,
-      activeDaily,serviceDaily)
+      registeredDaily,registeredMonthly,registeredYearly,registeredTotal,
+      activeDaily,activeMonthly,activeYearly,activeTotal,
+      serviceDaily)
   }
 }

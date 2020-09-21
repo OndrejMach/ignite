@@ -30,7 +30,15 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     CSVWriter(outputData.ProvisionedTotal, resultPaths.outputPath+"ProvisionedTotal.csv", delimiter = ";").writeData()
 
     CSVWriter(outputData.RegisteredDaily, resultPaths.outputPath+"RegisteredDaily.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredMonthly, resultPaths.outputPath+"RegisteredMonthly.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredYearly, resultPaths.outputPath+"RegisteredYearly.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredTotal, resultPaths.outputPath+"RegisteredTotal.csv", delimiter = ";").writeData()
+
     CSVWriter(outputData.ActiveDaily, resultPaths.outputPath+"ActiveDaily.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveMonthly, resultPaths.outputPath+"ActiveMonthly.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveYearly, resultPaths.outputPath+"ActiveYearly.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveTotal, resultPaths.outputPath+"ActiveTotal.csv", delimiter = ";").writeData()
+
     CSVWriter(outputData.ServiceDaily, resultPaths.outputPath+"ServiceFactsDaily.csv", delimiter = ";").writeData()
     CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
     CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()

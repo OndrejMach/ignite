@@ -22,6 +22,7 @@ class Facts extends FactsProcessing {
       .withColumn("ConKeyP1",lit(period_for_process))
       .withColumn("NatCo", lit(natco))
       .withColumn("ConKeyP1", concat_ws("|",col("ConKeyP1"),col("NatCo")))
+      .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count","Provisioned_daily")
     provisionedDaily
   }
