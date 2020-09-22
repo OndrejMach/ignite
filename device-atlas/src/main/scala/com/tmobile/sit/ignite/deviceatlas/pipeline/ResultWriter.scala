@@ -27,13 +27,13 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
       CSVWriter(data = outputData.terminalDB,
         path = s"${settings.outputPath.get}terminaldb_$ODATE.csv",  delimiter = "|", writeHeader = false, escape = "", quote = "", encoding = "CP1250").writeData()
 
-      logger.info(s"Writing ${settings.outputPath.get}cptm_ta_d_terminal_spec.tmp")
+      logger.info(s"Writing ${settings.outputPath.get}cptm_ta_d_terminal_spec.csv")
       CSVWriter(data = outputData.d_terminal,
-        path = s"${settings.outputPath.get}cptm_ta_d_terminal_spec.tmp",  delimiter = "|", writeHeader = false, escape = "", quote = "").writeData()
+        path = s"${settings.outputPath.get}cptm_ta_d_terminal_spec.csv",  delimiter = "|", writeHeader = false, escape = "", quote = "").writeData()
 
-      logger.info(s"Writing ${settings.outputPath.get}cptm_ta_d_tac.tmp")
+      logger.info(s"Writing ${settings.outputPath.get}cptm_ta_d_tac.csv")
       CSVWriter(data = outputData.d_tac,
-        path = s"${settings.outputPath.get}cptm_ta_d_tac.tmp",  delimiter = "|", writeHeader = false, escape = "", quote = "").writeData()
+        path = s"${settings.outputPath.get}cptm_ta_d_tac.csv",  delimiter = "|", writeHeader = false, escape = "", quote = "").writeData()
 
       logger.info(s"Writing ${settings.outputPath.get}cptm_vi_d_tac_terminal_${ODATE}.csv")
       CSVWriter(data = outputData.cptm_vi_d_tac_terminal,

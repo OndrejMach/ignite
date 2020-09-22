@@ -6,6 +6,38 @@ import org.apache.spark.sql.SparkSession
 
 class LookupData(lookupPath : String)(implicit sparkSession : SparkSession) extends Logger {
 
+  val terminalDB = {
+    val file = lookupPath + "terminaldb.csv"
+    logger.info(s"Reading file: ${file}")
+    CSVReader(file,
+      header = false,
+      schema = Some(FileStructures.terminalDB_full_lkp),
+      delimiter = "|")
+      .read()
+  }
+
+  val d_terminal_spec = {
+    val file = lookupPath + "cptm_ta_d_terminal_spec.csv"
+    logger.info(s"Reading file: ${file}")
+    CSVReader(file,
+      header = false,
+      schema = Some(FileStructures.cptm_term_spec),
+      delimiter = "|",
+      encoding = "CP1250")
+      .read()
+  }
+
+  val d_tac = {
+    val file = lookupPath + "cptm_ta_d_tac.csv"
+    logger.info(s"Reading file: ${file}")
+    CSVReader(file,
+      header = false,
+      schema = Some(FileStructures.cptm_ta_d_tac),
+      delimiter = "|",
+      encoding = "CP1250")
+      .read()
+  }
+
   val manufacturer = {
     val file = lookupPath + "manufacturer.csv"
     logger.info(s"Reading file: ${file}")
@@ -42,16 +74,6 @@ class LookupData(lookupPath : String)(implicit sparkSession : SparkSession) exte
     CSVReader(file,
       header = false,
       schema = Some(FileStructures.osNokia_Lkp),
-      delimiter = "|")
-      .read()
-  }
-
-  val terminalDB = {
-    val file = lookupPath + "terminaldb.csv" // TODO: check correct path
-    logger.info(s"Reading file: ${file}")
-    CSVReader(file,
-      header = false,
-      schema = Some(FileStructures.terminalDB_full_lkp),
       delimiter = "|")
       .read()
   }
