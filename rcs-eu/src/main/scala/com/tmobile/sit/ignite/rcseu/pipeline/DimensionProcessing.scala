@@ -11,6 +11,7 @@ trait DimensionProcessing extends Logger{
 }
 
 class Dimension extends DimensionProcessing {
+  // adding new user agents from today's activity and register requests data
 
   def processUserAgentsSCD(oldUserAgents: DataFrame, newUserAgents: DataFrame): DataFrame = {
     oldUserAgents
@@ -21,7 +22,18 @@ class Dimension extends DimensionProcessing {
   }
 
   override def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {
-    //TODO: add logic here to split user_agents into parts
+    // splitting user_agent data into the relevant columns
+    /*
+    UserAgent	=	Unique user agent
+    OEM	=	OEM of the user agent
+    Device	=	Device of the user agent
+    Client	=	Client of the user agent
+    FW	=	FW of the user agent
+    Client_vs	=	Version of the client
+    _UserAgentID	= generated	ID of the UserAgent
+
+    */
+
    val activityandregistered = activity
       .select("user_agent")
       .union(

@@ -24,6 +24,7 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     //val fileSuffix = fileMetaData.file_date.replace("-","")+"_"+fileMetaData.file_natco_id
 
     CSVWriter(outputData.UserAgents, resultPaths.outputPath+"UserAgents.csv", delimiter = ";").writeData()
+
     CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath+"ProvisionedDaily.csv", delimiter = ";").writeData()
     CSVWriter(outputData.ProvisionedMonthly, resultPaths.outputPath+"ProvisionedMonthly.csv", delimiter = ";").writeData()
     CSVWriter(outputData.ProvisionedYearly, resultPaths.outputPath+"ProvisionedYearly.csv", delimiter = ";").writeData()
@@ -44,6 +45,5 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()
     CSVWriter(outputData.AccRegisterRequests, resultPaths.lookupPath+"acc_register_requests.csv", delimiter = ";").writeData()
 
-    //TODO: add result path and writer, same as above
   }
 }

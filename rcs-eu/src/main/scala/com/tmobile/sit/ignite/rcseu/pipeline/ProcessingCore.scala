@@ -21,6 +21,8 @@ class Core extends ProcessingCore {
     //stageData.provision.show()
     //stageData.registerRequests.show()
 
+
+    //in Stage creating accumulators for activity data, provision data and register requests data
     val stage = new Stage()
 
     val acc_activity = stage.preprocessActivity(stageData.activity,persistentData.accumulated_activity)
@@ -33,9 +35,10 @@ class Core extends ProcessingCore {
     logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
 
+    //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
+   //TODO: change monotonically_increasing_id
     val dim = new Dimension()
 
-    // logic for UserAgents dimension
     val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
 
     val fullUserAgents0 = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents).dropDuplicates("UserAgent")
@@ -43,13 +46,11 @@ class Core extends ProcessingCore {
     fullUserAgents.cache()
     logger.info("Full user agents count: " + fullUserAgents.count())
 
-    // Process facts
+
+    // Processing facts, filtering data by date, month, year
+    // and calling the FactsProcessing function on the filtered data
+    //creating separate variable for each output
     val fact = new Facts()
-
-    //val filtered_monthly_provision = persistentData.accumulated_provision.filter(col("FileDate").startsWith("2020-02"))
-    //val provisionedMonthly = fact.getProvisionedDaily(filtered_monthly_provision)
-    //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
-
 
     val filtered_daily_provision= persistentData.accumulated_provision.filter(col("FileDate").contains(date))
     val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision,date)
@@ -100,6 +101,9 @@ class Core extends ProcessingCore {
     val activeTotal = fact.getActiveDaily(filtered_total_active,fullUserAgents,"20")
     logger.info("Active total count: " + activeTotal.count())
 //----------------------------------------------------------------------------
+
+    //calling ServiceFactsDaily function from FactsProcessing
+    //generating one file each day (only daily processing needed)
     val serviceDaily = fact.getServiceFactsDaily(stageData.activity)
     logger.info("Service facts daily count: " + serviceDaily.count())
 

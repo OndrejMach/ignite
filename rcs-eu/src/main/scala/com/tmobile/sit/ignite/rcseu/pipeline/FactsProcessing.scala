@@ -14,10 +14,13 @@ trait FactsProcessing extends Logger{
   def getProvisionedDaily(provisionData: DataFrame,period_for_process:String): DataFrame /*aj tu som pridala period for process*/
 }
 
+//functions with "Daily" suffix, but in fact these are aggregating data based on the previous filtering
+//from ProcessingCore
+
 class Facts extends FactsProcessing {
+//aggregating unique number of provisioned users in the specific period_for_process and natco
 
   def getProvisionedDaily(provision: DataFrame,period_for_process:String): DataFrame = {
-    //TODO: add logic here to aggregate provisioned users
     val provisionedDaily = provision
       .withColumn("ConKeyP1",lit(period_for_process))
       .withColumn("NatCo", lit(natco))
@@ -29,7 +32,10 @@ class Facts extends FactsProcessing {
 
 
   def getRegisteredDaily(register_requests: DataFrame,fullUserAgents: DataFrame,period_for_process:String): DataFrame = {
-    //TODO: add logic here to aggregate registered users
+    //aggregating unique number of registered users in the specific period_for_process and natco
+    // and for the specific user agent
+    //then joining with user agent id from Dimension processing
+
     val dfRMT1=register_requests
       .withColumn("ConKeyR1",lit(period_for_process))
       .withColumn("NatCo", lit(natco))
@@ -55,10 +61,12 @@ class Facts extends FactsProcessing {
 
 
   def getActiveDaily(activity: DataFrame,fullUserAgents: DataFrame,period_for_process:String): DataFrame = {
-    //TODO: add logic here to aggregate unique active users
+    //aggregated according to the QlikSense script from Jarda
 
-    //////ORIGINATED and TERMINATED
-    //successfully originated for CHAT
+    ////// 1. ORIGINATED and TERMINATED
+    // a.) SUCCESSFULY
+
+    // successfully originated for CHAT
     val df1 = activity
      // .na.fill("NULL",Seq("user_agent"))
 
@@ -123,7 +131,9 @@ class Facts extends FactsProcessing {
       .groupBy("user_agent").count()
 
     ////////////////////////////////////////////////////////////
-    //UNsuccessfully originated for CHAT (UNsuccessfully originated FILES data are not present in the input)
+
+    //b.) UNSUCCESSFULY
+    //UNsuccessfully originated for CHAT (UNsuccessfully originated FILES data are not present in the input data)
     val resultU =df1
       .select("from_user","user_agent","creation_date")
       //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
@@ -168,42 +178,47 @@ class Facts extends FactsProcessing {
 
 
     ///////////////////////////////////////////////////////
-    /////ORIGINATED
-    //uspesne odoslane CHAT
+    /////2. ORIGINATED
+    //a.)SUCCESSFULY
+
+    //successfuly originated for  CHAT
     val df2O =df1
       .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau")
 
-    //uspesne odoalane FILES
+    //successfuly originated for FILES
     val df3O =df1
       .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau")
 
-    //spojit tabulky
+    //joining tables
 
     val resultO = df2O
       .union(df3O)
 
+    //filter user_agents starting with IM_client
     val result1O=resultO
       .filter(col("user_agent").startsWith("IM-client"))
 
+    //filtering null user agents
     val result2O=resultO
       .filter("user_agent is null")
 
-
+    //create one table from IM-client and null user_agents
     val result3O = result1O
       .union(result2O)
       .groupBy("uau")
       .agg(max("creation_date").alias("creation_date"),max("user_agent").alias("user_agent"))
 
+    //final count of successful users
     val result4O=result3O
       .groupBy("user_agent").count()
 
 
     ////////////////////////////////////////////////////////////úúú
-
+    //b.) UNSUCCESSFULY
     val resultUO =df1
       //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
       .filter(col("from_user").startsWith("+") && col("from_network").contains("dt-magyar-telecom")  && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
@@ -212,14 +227,15 @@ class Facts extends FactsProcessing {
       .withColumnRenamed("user_agent","user_agent_UNS")
       .withColumnRenamed("creation_date","creation_date_UNS")
 
+    //filter user_agents starting with IM_client
     val resultU1O=resultUO
       .filter(col("user_agent_UNS").startsWith("IM-client"))
 
-
+    //filtering null user agents
     val resultU2O=resultUO
       .filter("user_agent_UNS is null")
 
-
+    //create one table from IM-client and null user_agents
     val resultU3O = resultU1O
       .union(resultU2O)
       .groupBy("uau_UNS")
@@ -231,18 +247,19 @@ class Facts extends FactsProcessing {
 
     val dfxx2=resultU3O.join(dfxx1,resultU3O("uau_UNS") <=>  dfxx1("uau"),"left_anti")
 
+    //final count of UNsuccessful users
     val resultU4O=dfxx2
       .groupBy("user_agent_UNS").count()
       .withColumnRenamed("count","count_UNS")
 
-
+//then joining all counted values and renaming them to the final table
+    //also joining with the full user agents dimension to get the user agent id
     val finaldfO=result4O
       .join(resultU4O,result4O("user_agent") <=>  resultU4O("user_agent_UNS"),"outer")
       .select("user_agent","count","count_UNS")
       .withColumnRenamed("count","Active_daily_succ_orig")
       .withColumnRenamed("count_UNS","Active_daily_unsucc_orig")
       .withColumnRenamed("user_agent","user_agent_UNS")
-
 
     val finalTable=finaldf
       .join(finaldfO,finaldf("user_agent") <=>  finaldfO("user_agent_UNS"),"left_outer")
@@ -267,7 +284,27 @@ class Facts extends FactsProcessing {
   }
 
   def getServiceFactsDaily(activity: DataFrame): DataFrame = {
-    //TODO: add logic here to aggregate service facts
+    //
+    //aggregated according to the QlikSense script from Jarda
+    //count = number of specific service used OnNet or Offnet within the specific date and natco
+    /*
+    Image share-OnNet: does not exist in v5 files
+    Image share-OffNet: does not exist in v5 files
+    Files sent-OnNet: count(*) WHERE type=FT_POST AND from_network=to_network
+    Files sent-OffNet: count(*) WHERE type=FT_POST AND from_network!=to_network
+    Files received-OnNet: in source files to_network is always null where type = FT_GET,
+                          Therefore we have to link to_network from records where type = FT_POST according to call_id (same as user_agent for unique active users)
+    Files received-OffNet: same as "Files received-OnNet"
+    GroupChat sent-OnNet: (sum(messages_sent) WHERE type='GROUP_CHAT' AND LEFT(from_user, 1)='+') AND sip_code='200' + (sum(messages_received) WHERE type='GROUP_CHAT' AND LEFT(to_user, 1)='+' AND sip_code='200')
+    GroupChat received-OnNet: (sum(messages_received) WHERE type='GROUP_CHAT' AND LEFT(from_user, 1)='+' AND sip_code='200') + (sum(messages_sent) WHERE type='GROUP_CHAT' AND LEFT(to_user, 1)='+' AND sip_code='200')
+    GroupChat sent-OffNet: not able to distinguish in v5 files
+    GroupChat received-OffNet: not able to distinguish in v5 files
+    Chat sent-OnNet: sum(messages_sent) WHERE type=CHAT and sip_code=200 AND from_network=to_network
+    Chat sent-OffNet: sum(messages_sent) WHERE type=CHAT and sip_code=200 AND from_network!=to_network
+    Chat received-OnNet: sum(messages_received) WHERE type=CHAT AND sip_code=200 AND from_network=to_network
+    Chat received-OffNet: sum(messages_received) WHERE type=CHAT AND sip_code=200 AND from_network!=to_network
+
+     */
     val sf1=activity
     //Files SENT-OnNet:
     val sf2 =sf1

@@ -17,11 +17,14 @@ trait StageProcessing extends Logger{
   def preprocessRegisterRequests(register_requests: DataFrame, accumulated_register_requests:DataFrame) : DataFrame
 }
 
-
+//Creating accumulators for activity data, provision data and register requests data
 class Stage extends StageProcessing {
   override def preprocessActivity(activity: DataFrame,accumulated_activity:DataFrame): DataFrame = {
 
-    //TODO: add logic, similar to RBM
+    //taking today's file (the file with the date from program argument) and adding it to the accumulator
+    //eventually replacing the data from the current day processing
+    //dropping unused columns
+
     logger.info("Preprocessing Activity Accumulator")
     val dailyFile = activity
       .withColumn("FileDate", lit(date))
