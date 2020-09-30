@@ -10,6 +10,8 @@ import com.tmobile.sit.ignite.rcseu.Application.natco
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 
+
+
 trait FactsProcessing extends Logger{
   def getProvisionedDaily(provisionData: DataFrame,period_for_process:String): DataFrame /*aj tu som pridala period for process*/
 }
@@ -59,8 +61,8 @@ class Facts extends FactsProcessing {
     joinedDS
   }
 
-
-  def getActiveDaily(activity: DataFrame,fullUserAgents: DataFrame,period_for_process:String): DataFrame = {
+  //TODO: add NatcoNetwork
+  def getActiveDaily(activity: DataFrame,fullUserAgents: DataFrame,period_for_process:String,natcoNetwork:String): DataFrame = {
     //aggregated according to the QlikSense script from Jarda
 
     ////// 1. ORIGINATED and TERMINATED
@@ -71,19 +73,19 @@ class Facts extends FactsProcessing {
      // .na.fill("NULL",Seq("user_agent"))
 
     val df2 =df1
-      .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and (df1("from_network") <=> natcoNetwork or df1("from_network") === "dt.jibecloud.net"))
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau")
 
     //successfully originated for FILES
     val df3 =df1
-      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and (df1("from_network") <=> natcoNetwork or df1("from_network") === "dt.jibecloud.net"))
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau")
 
     //successfully terminated (received by another user) for CHAT
     val df4 =df1
-      .filter(df1("sip_code") <=> 200  and col("to_user").startsWith("+")and df1("to_network") <=> "dt-magyar-telecom")
+      .filter(df1("sip_code") <=> 200  and col("to_user").startsWith("+")and (df1("to_network") <=> natcoNetwork or df1("to_network") === "dt.jibecloud.net"))
       .withColumn("user_agent",  lit(null))
       .withColumnRenamed("to_user","uau")
       .select("uau","user_agent","creation_date")
@@ -95,7 +97,7 @@ class Facts extends FactsProcessing {
       .withColumnRenamed("call_id", "call_id1")
 
     val ft_post = df1
-      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("to_network") <=> "dt-magyar-telecom")
+      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and (df1("to_network") <=> natcoNetwork or df1("to_network") === "dt.jibecloud.net"))
       .select("call_id","from_user","to_network")
 
     //successfully terminated (received by another user) for FILES
@@ -137,7 +139,7 @@ class Facts extends FactsProcessing {
     val resultU =df1
       .select("from_user","user_agent","creation_date")
       //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
-      .filter(col("from_user").startsWith("+") && col("from_network").contains("dt-magyar-telecom")  && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
+      .filter(col("from_user").startsWith("+") && (col("from_network").contains(natcoNetwork) or col("from_network").contains("dt.jibecloud.net") ) && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
       .withColumnRenamed("from_user","uau_UNS")
       .withColumnRenamed("user_agent","user_agent_UNS")
       .withColumnRenamed("creation_date","creation_date_UNS")
@@ -183,13 +185,13 @@ class Facts extends FactsProcessing {
 
     //successfuly originated for  CHAT
     val df2O =df1
-      .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .filter(df1("sip_code") <=> 200  and col("from_user").startsWith("+")and (df1("from_network") <=> natcoNetwork) or df1("from_network") === "dt.jibecloud.net")
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau")
 
     //successfuly originated for FILES
     val df3O =df1
-      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and df1("from_network") <=> "dt-magyar-telecom")
+      .filter(df1("type") <=> "FT_POST"  and col("from_user").startsWith("+")and (df1("from_network") <=> natcoNetwork) or df1("from_network") === "dt.jibecloud.net")
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau")
 
@@ -221,7 +223,7 @@ class Facts extends FactsProcessing {
     //b.) UNSUCCESSFULY
     val resultUO =df1
       //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
-      .filter(col("from_user").startsWith("+") && col("from_network").contains("dt-magyar-telecom")  && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
+      .filter(col("from_user").startsWith("+") && (col("from_network").contains(natcoNetwork) or col("from_network").contains("dt.jibecloud.net")) && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
       .select("from_user","user_agent","creation_date")
       .withColumnRenamed("from_user","uau_UNS")
       .withColumnRenamed("user_agent","user_agent_UNS")

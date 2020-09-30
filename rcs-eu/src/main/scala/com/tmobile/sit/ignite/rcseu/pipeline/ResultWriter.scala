@@ -5,6 +5,11 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcseu.data.{OutputData, ResultPaths}
 import com.tmobile.sit.ignite.rcseu.data.{OutputData, ResultPaths}
 import org.apache.spark.sql.SparkSession
+import com.tmobile.sit.ignite.rcseu.Application.date
+import com.tmobile.sit.ignite.rcseu.Application.month
+import com.tmobile.sit.ignite.rcseu.Application.year
+import com.tmobile.sit.ignite.rcseu.Application.natco
+
 
 trait Writer extends Logger{
   def write(output: OutputData): Unit
@@ -25,22 +30,22 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
 
     CSVWriter(outputData.UserAgents, resultPaths.outputPath+"UserAgents.csv", delimiter = ";").writeData()
 
-    CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath+"ProvisionedDaily.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.ProvisionedMonthly, resultPaths.outputPath+"ProvisionedMonthly.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.ProvisionedYearly, resultPaths.outputPath+"ProvisionedYearly.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.ProvisionedTotal, resultPaths.outputPath+"ProvisionedTotal.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath+"provisioned_daily."+natco+"."+date+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ProvisionedMonthly, resultPaths.outputPath+"provisioned_monthly."+natco+"."+month+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ProvisionedYearly, resultPaths.outputPath+"provisioned_yearly."+natco+"."+year+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ProvisionedTotal, resultPaths.outputPath+"provisioned_total."+natco+".csv", delimiter = ";").writeData()
 
-    CSVWriter(outputData.RegisteredDaily, resultPaths.outputPath+"RegisteredDaily.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.RegisteredMonthly, resultPaths.outputPath+"RegisteredMonthly.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.RegisteredYearly, resultPaths.outputPath+"RegisteredYearly.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.RegisteredTotal, resultPaths.outputPath+"RegisteredTotal.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredDaily, resultPaths.outputPath+"registered_daily."+natco+"."+date+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredMonthly, resultPaths.outputPath+"registered_monthly."+natco+"."+month+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredYearly, resultPaths.outputPath+"registered_yearly."+natco+"."+year+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.RegisteredTotal, resultPaths.outputPath+"registered_total."+natco+".csv", delimiter = ";").writeData()
 
-    CSVWriter(outputData.ActiveDaily, resultPaths.outputPath+"ActiveDaily.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.ActiveMonthly, resultPaths.outputPath+"ActiveMonthly.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.ActiveYearly, resultPaths.outputPath+"ActiveYearly.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.ActiveTotal, resultPaths.outputPath+"ActiveTotal.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveDaily, resultPaths.outputPath+"activity_daily."+natco+"."+date+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveMonthly, resultPaths.outputPath+"activity_monthly."+natco+"."+month+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveYearly, resultPaths.outputPath+"activity_yearly."+natco+"."+year+".csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ActiveTotal, resultPaths.outputPath+"activity_total."+natco+".csv", delimiter = ";").writeData()
 
-    CSVWriter(outputData.ServiceDaily, resultPaths.outputPath+"ServiceFactsDaily.csv", delimiter = ";").writeData()
+    CSVWriter(outputData.ServiceDaily, resultPaths.outputPath+"service_fact."+natco+"."+date+".csv", delimiter = ";").writeData()
     CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
     CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()
     CSVWriter(outputData.AccRegisterRequests, resultPaths.lookupPath+"acc_register_requests.csv", delimiter = ";").writeData()

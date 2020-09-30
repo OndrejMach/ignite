@@ -25,7 +25,18 @@ object Application extends App with Logger {
   val (year, monthNum) = (splitted(0), splitted(1))
   val month = year + "-" + monthNum
 
-  logger.info(s"Date: $date, month:$month, year:$year, natco: $natco")
+  val mt="dt-magyar-telecom"
+  val st="dt-slovak-telecom"
+  val cg="dt-cosmote-greece"
+  val cr="dt-telecom-romania"
+
+  val natcoNetwork = if (natco == "mt") mt
+                    else if (natco == "st") st
+                    else if (natco == "cr") cr
+                    else if (natco == "cg") cg
+  else "natco network is not correct"
+
+  logger.info(s"Date: $date, month:$month, year:$year, natco: $natco, natcoNetwork: $natcoNetwork")
 
   val conf = new Setup()
 

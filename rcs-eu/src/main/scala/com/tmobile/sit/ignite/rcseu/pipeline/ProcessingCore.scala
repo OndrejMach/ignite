@@ -6,6 +6,7 @@ import org.apache.spark.sql.functions.{col, monotonically_increasing_id}
 import com.tmobile.sit.ignite.rcseu.Application.date
 import com.tmobile.sit.ignite.rcseu.Application.month
 import com.tmobile.sit.ignite.rcseu.Application.year
+import com.tmobile.sit.ignite.rcseu.Application.natcoNetwork
 
 
 
@@ -86,19 +87,19 @@ class Core extends ProcessingCore {
     logger.info("Registered total count: " + registeredTotal.count())
     //----------------------------------------------------------------------------
     val filtered_daily_active= persistentData.accumulated_activity.filter(col("creation_date").contains(date))
-    val activeDaily = fact.getActiveDaily(filtered_daily_active,fullUserAgents,date)
+    val activeDaily = fact.getActiveDaily(filtered_daily_active,fullUserAgents,date,natcoNetwork)
     logger.info("Active daily count: " + activeDaily.count())
 
     val filtered_monthly_active= persistentData.accumulated_activity.filter(col("creation_date").contains(month))
-    val activeMonthly = fact.getActiveDaily(filtered_monthly_active,fullUserAgents,month)
+    val activeMonthly = fact.getActiveDaily(filtered_monthly_active,fullUserAgents,month,natcoNetwork)
     logger.info("Active monthly count: " + activeMonthly.count())
 
     val filtered_yearly_active= persistentData.accumulated_activity.filter(col("creation_date").contains(year))
-    val activeYearly = fact.getActiveDaily(filtered_yearly_active,fullUserAgents,year)
+    val activeYearly = fact.getActiveDaily(filtered_yearly_active,fullUserAgents,year,natcoNetwork)
     logger.info("Active yearly count: " + activeYearly.count())
 
     val filtered_total_active= persistentData.accumulated_activity.filter(col("creation_date").contains("20"))
-    val activeTotal = fact.getActiveDaily(filtered_total_active,fullUserAgents,"20")
+    val activeTotal = fact.getActiveDaily(filtered_total_active,fullUserAgents,"20",natcoNetwork)
     logger.info("Active total count: " + activeTotal.count())
 //----------------------------------------------------------------------------
 
