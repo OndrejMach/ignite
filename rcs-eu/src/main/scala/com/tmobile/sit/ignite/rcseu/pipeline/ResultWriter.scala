@@ -46,9 +46,16 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     CSVWriter(outputData.ActiveTotal, resultPaths.outputPath+"activity_total."+natco+".csv", delimiter = ";").writeData()
 
     CSVWriter(outputData.ServiceDaily, resultPaths.outputPath+"service_fact."+natco+"."+date+".csv", delimiter = ";").writeData()
-    CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()
-    CSVWriter(outputData.AccRegisterRequests, resultPaths.lookupPath+"acc_register_requests.csv", delimiter = ";").writeData()
+
+
+
+    outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_activity.parquet")
+    outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_provision.parquet")
+    outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_register_requests.parquet")
+
+    //CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
+    //CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()
+    //CSVWriter(outputData.AccRegisterRequests, resultPaths.lookupPath+"acc_register_requests.csv", delimiter = ";").writeData()
 
   }
 }

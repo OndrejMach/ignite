@@ -27,12 +27,15 @@ class Core extends ProcessingCore {
     val stage = new Stage()
 
     val acc_activity = stage.preprocessActivity(stageData.activity,persistentData.accumulated_activity)
+    acc_activity.cache()
     logger.info("Activity accumulator count: " + acc_activity.count())
 
     val acc_provision = stage.preprocessProvision(stageData.provision,persistentData.accumulated_provision)
+    acc_provision.cache()
     logger.info("Provision accumulator count: " + acc_provision.count())
 
     val acc_register_requests = stage.preprocessRegisterRequests(stageData.registerRequests,persistentData.accumulated_register_requests)
+    acc_register_requests.cache()
     logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
 

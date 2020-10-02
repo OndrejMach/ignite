@@ -12,7 +12,7 @@ import com.tmobile.sit.ignite.rcseu.pipeline.Stage
 
 object Application extends App with Logger {
 
-  if(args.length != 2) {
+  if(args.length != 3) {
     logger.error("No arguments specified. Usage: ... <date> <natco>")
     System.exit(0)
   }
@@ -20,6 +20,7 @@ object Application extends App with Logger {
 // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
   val natco = args(1)
+  val isHistoric : Boolean=args(2).toBoolean
 
   val splitted = date.split('-')
   val (year, monthNum) = (splitted(0), splitted(1))
@@ -60,9 +61,13 @@ object Application extends App with Logger {
 
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(conf.settings.outputPath.get + "UserAgents - Copy.csv", header = true, delimiter = ";").read(),
-    accumulated_activity = new CSVReader(conf.settings.lookupPath.get + "acc_activity.csv", header = true, delimiter = ";").read(),
-    accumulated_provision = new CSVReader(conf.settings.lookupPath.get + "acc_provision.csv", header = true, delimiter = ";").read(),
-    accumulated_register_requests = new CSVReader(conf.settings.lookupPath.get + "acc_register_requests.csv", header = true, delimiter = ";").read()
+    accumulated_activity =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_activity.parquet"),
+    accumulated_provision =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_provision.parquet"),
+    accumulated_register_requests =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_register_requests.parquet")
+
+    //accumulated_activity = new CSVReader(conf.settings.lookupPath.get + "acc_activity.csv", header = true, delimiter = ";").read(),
+    //accumulated_provision = new CSVReader(conf.settings.lookupPath.get + "acc_provision.csv", header = true, delimiter = ";").read(),
+    //accumulated_register_requests = new CSVReader(conf.settings.lookupPath.get + "acc_register_requests.csv", header = true, delimiter = ";").read()
 
   )
 
