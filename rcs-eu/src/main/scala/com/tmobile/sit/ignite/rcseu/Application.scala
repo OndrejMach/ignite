@@ -16,7 +16,7 @@ object Application extends App with Logger {
     logger.error("No arguments specified. Usage: ... <date> <natco>")
     System.exit(0)
   }
-  //TODO: month, year!!!
+  //TODO: natco network for Macedonia
 // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
   val natco = args(1)
@@ -29,11 +29,13 @@ object Application extends App with Logger {
   val st="dt-slovak-telecom"
   val cg="dt-cosmote-greece"
   val cr="dt-telecom-romania"
+  val mk="-"
 
   val natcoNetwork = if (natco == "mt") mt
                     else if (natco == "st") st
                     else if (natco == "cr") cr
                     else if (natco == "cg") cg
+                    else if (natco == "mk") mk
   else "natco network is not correct"
 
   logger.info(s"Date: $date, month:$month, year:$year, natco: $natco, natcoNetwork: $natcoNetwork")
