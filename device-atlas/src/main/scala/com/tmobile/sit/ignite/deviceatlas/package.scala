@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 package object deviceatlas {
   def getSparkSession(implicit settings: Settings): SparkSession = {
     SparkSession.builder()
-      //.appName("Test FWLog Reader")
+      //.appName("deviceatlas-ignite")
       //.master("local[*]")
       .config("spark.executor.instances", "4")
       .config("spark.executor.memory", "4g")
