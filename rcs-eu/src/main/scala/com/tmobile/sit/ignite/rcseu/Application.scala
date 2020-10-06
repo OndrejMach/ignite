@@ -68,7 +68,7 @@ object Application extends App with Logger {
   )
 
   val persistentData = PersistentData(
-    oldUserAgents = new CSVReader(conf.settings.outputPath.get + "UserAgents - Copy.csv", header = true, delimiter = ";").read(),
+    oldUserAgents = new CSVReader(conf.settings.outputPath.get + "UserAgents.csv", header = true, delimiter = ";").read(),
     accumulated_activity =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_activity.parquet"),
     accumulated_provision =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_provision.parquet"),
     accumulated_register_requests =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_register_requests.parquet")
