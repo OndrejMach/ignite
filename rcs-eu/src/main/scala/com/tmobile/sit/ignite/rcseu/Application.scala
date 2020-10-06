@@ -20,7 +20,7 @@ object Application extends App with Logger {
 // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
   val natco = args(1)
-  val isHistoric : Boolean=args(2).toBoolean
+  val isHistoric : Boolean =args(2).toBoolean
 
   val splitted = date.split('-')
   val (year, monthNum) = (splitted(0), splitted(1))
@@ -39,7 +39,7 @@ object Application extends App with Logger {
                     else if (natco == "mk") mk
   else "natco network is not correct"
 
-  logger.info(s"Date: $date, month:$month, year:$year, natco: $natco, natcoNetwork: $natcoNetwork")
+  logger.info(s"Date: $date, month:$month, year:$year, natco: $natco, natcoNetwork: $natcoNetwork, isHistoric: $isHistoric")
 
   val conf = new Setup()
 
