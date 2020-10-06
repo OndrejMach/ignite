@@ -20,7 +20,7 @@ object Application extends App with Logger {
 // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
   val natco = args(1)
-  val isHistoric : Boolean =args(2).toBoolean
+  val isHistoric = args(2).toBoolean
 
   val splitted = date.split('-')
   val (year, monthNum) = (splitted(0), splitted(1))
@@ -41,7 +41,15 @@ object Application extends App with Logger {
 
   logger.info(s"Date: $date, month:$month, year:$year, natco: $natco, natcoNetwork: $natcoNetwork, isHistoric: $isHistoric")
 
-  val conf = new Setup()
+  val configFile = if(System.getProperty("os.name").startsWith("Windows")) {
+    logger.info(s"Detected development configuration (${System.getProperty("os.name")})")
+    "rcs-eu.windows.conf"
+  } else {
+    logger.info(s"Detected production configuration (${System.getProperty("os.name")})")
+    "rcs-eu.linux.conf"
+  }
+
+  val conf = new Setup(configFile)
 
   if (!conf.settings.isAllDefined) {
     logger.error("Application not properly configured!!")
