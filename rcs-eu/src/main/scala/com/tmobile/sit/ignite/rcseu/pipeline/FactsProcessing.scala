@@ -1,16 +1,9 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-//import breeze.linalg.split
-import java.time.Period
-import java.util.Date
-
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcseu.Application.date
 import com.tmobile.sit.ignite.rcseu.Application.natco
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.{DataFrame}
 import org.apache.spark.sql.functions._
-
-
 
 trait FactsProcessing extends Logger{
   def getProvisionedDaily(provisionData: DataFrame,period_for_process:String): DataFrame /*aj tu som pridala period for process*/

@@ -1,13 +1,11 @@
 package com.tmobile.sit.ignite.rcseu
 
-import breeze.linalg.split
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.config.Setup
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, ResultPaths}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter}
 import com.tmobile.sit.ignite.rcseu.pipeline.Stage
-//import org.apache.spark.sql.functions._
 
 
 object Application extends App with Logger {

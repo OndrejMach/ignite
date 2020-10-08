@@ -9,8 +9,6 @@ import com.tmobile.sit.ignite.rcseu.Application.year
 import com.tmobile.sit.ignite.rcseu.Application.natcoNetwork
 import com.tmobile.sit.ignite.rcseu.Application.isHistoric
 
-
-
 trait ProcessingCore extends Logger{
   def process(preprocessedData: PreprocessedData, persistentData: PersistentData) : OutputData
 }
