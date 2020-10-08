@@ -50,6 +50,7 @@ object Application extends App with Logger {
   }
 
   val conf = new Setup(configFile)
+  logger.info("Configuration set up")
 
   if (!conf.settings.isAllDefined) {
     logger.error("Application not properly configured!!")
