@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite
 
 import org.apache.spark.sql.SparkSession
 
-package object rcseu {
+package object jobtemplate {
   def getSparkSession(sparkAppName: String): SparkSession = {
     SparkSession.builder()
       //.appName("Test FWLog Reader")

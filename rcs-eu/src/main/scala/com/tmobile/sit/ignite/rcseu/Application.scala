@@ -49,8 +49,9 @@ object Application extends App with Logger {
     "rcs-eu.linux.conf"
   }
 
+
+  logger.info("Configuration setup for " + configFile)
   val conf = new Setup(configFile)
-  logger.info("Configuration set up")
 
   if (!conf.settings.isAllDefined) {
     logger.error("Application not properly configured!!")

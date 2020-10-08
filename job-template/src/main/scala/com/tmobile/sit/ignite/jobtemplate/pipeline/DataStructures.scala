@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.rcseu.pipeline
+package com.tmobile.sit.ignite.jobtemplate.pipeline
 
 import com.tmobile.sit.common.readers.Reader
 import org.apache.spark.sql.DataFrame

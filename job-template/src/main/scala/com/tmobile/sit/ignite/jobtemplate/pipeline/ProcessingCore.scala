@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.rcseu.pipeline
+package com.tmobile.sit.ignite.jobtemplate.pipeline
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.count

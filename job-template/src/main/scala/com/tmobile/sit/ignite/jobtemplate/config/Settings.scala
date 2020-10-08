@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.rcseu.config
+package com.tmobile.sit.ignite.jobtemplate.config
 
 import com.tmobile.sit.common.config.GenericSettings
 
