@@ -6,7 +6,7 @@ package object rcseu {
   def getSparkSession(sparkAppName: String): SparkSession = {
     SparkSession.builder()
       //.appName("Test FWLog Reader")
-      .master("local[*]")
+      //.master("local[*]")
       .config("spark.executor.instances", "4")
       .config("spark.executor.memory", "4g")
       .config("spark.executor.cores", "1")
