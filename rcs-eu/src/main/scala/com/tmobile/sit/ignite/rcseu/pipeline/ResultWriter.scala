@@ -33,6 +33,7 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     if(isHistoric) {
 
       CSVWriter(outputData.UserAgents, resultPaths.outputPath+"UserAgents.csv", delimiter = ";").writeData()
+
       outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_activity.parquet")
       outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_provision.parquet")
       outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_register_requests.parquet")

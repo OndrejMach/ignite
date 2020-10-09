@@ -74,8 +74,9 @@ dependencies {
     compile subprojects
     compile project(':ignite-common')
     compile project(':hotspot')
-    compile project(':inflight')
+    //compile project(':inflight')
     compile project(':rcse')
+    compile project(':rcs-eu')
 
 }
 
