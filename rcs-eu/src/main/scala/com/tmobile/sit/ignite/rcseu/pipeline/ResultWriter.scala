@@ -31,7 +31,6 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
 
     //if isHistoric = true (if the config parameter is true)
     if(isHistoric) {
-
       CSVWriter(outputData.UserAgents, resultPaths.outputPath+"UserAgents.csv", delimiter = ";").writeData()
 
       outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_activity.parquet")
