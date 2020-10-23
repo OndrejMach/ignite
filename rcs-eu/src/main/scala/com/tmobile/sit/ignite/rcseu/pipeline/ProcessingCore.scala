@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcseu.data.{OutputData, PersistentData, PreprocessedData}
+import com.tmobile.sit.ignite.rcseu.data.{InputData, OutputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.functions.{col, monotonically_increasing_id}
 import com.tmobile.sit.ignite.rcseu.Application.date
 import com.tmobile.sit.ignite.rcseu.Application.month
@@ -10,12 +10,12 @@ import com.tmobile.sit.ignite.rcseu.Application.natcoNetwork
 import com.tmobile.sit.ignite.rcseu.Application.isHistoric
 
 trait ProcessingCore extends Logger{
-  def process(preprocessedData: PreprocessedData, persistentData: PersistentData) : OutputData
+  def process(inputData: InputData, preprocessedData: PreprocessedData, persistentData: PersistentData) : OutputData
 }
 
 class Core extends ProcessingCore {
 
-  override def process(stageData: PreprocessedData, persistentData: PersistentData): OutputData = {
+  override def process(inputData: InputData,stageData: PreprocessedData, persistentData: PersistentData): OutputData = {
 
     //stageData.activity.show()
     //stageData.provision.show()
@@ -26,15 +26,15 @@ class Core extends ProcessingCore {
   //in Stage creating accumulators for activity data, provision data and register requests data
   val stage = new Stage()
 
-  val acc_activity = stage.preprocessActivity(stageData.activity,persistentData.accumulated_activity)
+  val acc_activity = stageData.activity
   acc_activity.cache()
   logger.info("Activity accumulator count: " + acc_activity.count())
 
-  val acc_provision = stage.preprocessProvision(stageData.provision,persistentData.accumulated_provision)
+  val acc_provision = stageData.provision
   acc_provision.cache()
   logger.info("Provision accumulator count: " + acc_provision.count())
 
-  val acc_register_requests = stage.preprocessRegisterRequests(stageData.registerRequests,persistentData.accumulated_register_requests)
+  val acc_register_requests = stageData.registerRequests
   acc_register_requests.cache()
   logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
@@ -78,15 +78,15 @@ class Core extends ProcessingCore {
       //in Stage creating accumulators for activity data, provision data and register requests data
       val stage = new Stage()
 
-      val acc_activity = stage.preprocessActivity(stageData.activity, persistentData.accumulated_activity)
+      val acc_activity = stageData.activity
       acc_activity.cache()
       logger.info("Activity accumulator count: " + acc_activity.count())
 
-      val acc_provision = stage.preprocessProvision(stageData.provision, persistentData.accumulated_provision)
+      val acc_provision = stageData.provision
       acc_provision.cache()
       logger.info("Provision accumulator count: " + acc_provision.count())
 
-      val acc_register_requests = stage.preprocessRegisterRequests(stageData.registerRequests, persistentData.accumulated_register_requests)
+      val acc_register_requests = stageData.registerRequests
       acc_register_requests.cache()
       logger.info("Register requests accumulator count: " + acc_register_requests.count())
 

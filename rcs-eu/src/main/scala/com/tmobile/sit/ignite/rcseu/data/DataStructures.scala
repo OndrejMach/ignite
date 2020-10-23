@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseu.data
 import com.tmobile.sit.common.readers.Reader
 import org.apache.spark.sql.DataFrame
 
-case class InputData(activity: Reader, provision: Reader, register_requests: Reader)
+case class InputData(activity: DataFrame, provision: DataFrame, register_requests: DataFrame)
 
 case class PreprocessedData( activity:DataFrame,provision: DataFrame, registerRequests: DataFrame)
 

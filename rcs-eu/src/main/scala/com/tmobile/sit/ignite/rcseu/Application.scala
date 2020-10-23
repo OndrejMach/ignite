@@ -62,9 +62,9 @@ object Application extends App with Logger {
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
   val inputReaders = InputData(
-    activity = new CSVReader(conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz", header = true, delimiter = "\t"),
-    provision = new CSVReader(conf.settings.inputPath.get + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t"),
-    register_requests = new CSVReader(conf.settings.inputPath.get + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t")
+    activity = new CSVReader(conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read(),
+    provision = new CSVReader(conf.settings.inputPath.get + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read(),
+    register_requests = new CSVReader(conf.settings.inputPath.get + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read()
   )
 
   val persistentData = PersistentData(

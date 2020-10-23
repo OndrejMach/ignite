@@ -8,9 +8,9 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stageData: 
   def run(): Unit = {
 
     // Read input files
-    val inputActivity = inputData.activity.read()
-    val inputProvision = inputData.provision.read()
-    val inputRegisterRequests = inputData.register_requests.read()
+    val inputActivity = inputData.activity
+    val inputProvision = inputData.provision
+    val inputRegisterRequests = inputData.register_requests
 
     // Preprocess input files
     val stageActivityAcc = stageData.preprocessActivity(inputActivity,persistentData.accumulated_activity)
@@ -21,7 +21,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stageData: 
     val preprocessedData = PreprocessedData(stageActivityAcc,stageProvisionAcc,stageRegisterRequestsAcc)
 
     // Calculate output data from core processing
-    val result = core.process(preprocessedData, persistentData)
+    val result = core.process(inputData,preprocessedData, persistentData)
 
     // Write result data set
     writer.write(result)
