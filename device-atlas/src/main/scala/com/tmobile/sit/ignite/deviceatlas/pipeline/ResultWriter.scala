@@ -1,7 +1,5 @@
 package com.tmobile.sit.ignite.deviceatlas.pipeline
 
-import java.sql.Date
-
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.deviceatlas.config.Settings
