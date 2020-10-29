@@ -2,6 +2,8 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcseu.Application.natco
+import com.tmobile.sit.ignite.rcseu.Application.natcoID
+
 import org.apache.spark.sql.{DataFrame}
 import org.apache.spark.sql.functions._
 
@@ -18,7 +20,7 @@ class Facts extends FactsProcessing {
   def getProvisionedDaily(provision: DataFrame,period_for_process:String): DataFrame = {
     val provisionedDaily = provision
       .withColumn("ConKeyP1",lit(period_for_process))
-      .withColumn("NatCo", lit(natco))
+      .withColumn("NatCo", lit(natcoID))
       .withColumn("ConKeyP1", concat_ws("|",col("ConKeyP1"),col("NatCo")))
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count","Provisioned_daily")
@@ -33,7 +35,7 @@ class Facts extends FactsProcessing {
 
     val dfRMT1=register_requests
       .withColumn("ConKeyR1",lit(period_for_process))
-      .withColumn("NatCo", lit(natco))
+      .withColumn("NatCo", lit(natcoID))
       .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("NatCo")))
       .groupBy("msisdn")
       .agg(max("user_agent").alias("UserAgent"),max("ConKeyR1").alias("ConKeyR1"))
@@ -41,7 +43,7 @@ class Facts extends FactsProcessing {
       //.withColumn("ConKeyR1",concat("ConKeyR1", lit("|"), "user_agent").alias("ConKeyR1"))
       .join(fullUserAgents, "UserAgent")
       .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("_UserAgentID")))
-      .select("_UserAgentID","ConKeyR1","msisdn")
+      .select("_UserAgentID","UserAgent","ConKeyR1","msisdn")
 
 
     val dfRMT2=dfRMT1
@@ -264,7 +266,7 @@ class Facts extends FactsProcessing {
 
     val keyTable= activity
       .withColumn("ConKeyA1",lit(period_for_process))
-      .withColumn("NatCo", lit(natco))
+      .withColumn("NatCo", lit(natcoID))
       .withColumn("ConKeyA1", concat_ws("|",col("ConKeyA1"),col("NatCo")))
       .select("ConKeyA1","user_agent").distinct()
 

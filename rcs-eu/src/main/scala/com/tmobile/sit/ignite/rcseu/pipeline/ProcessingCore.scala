@@ -8,6 +8,8 @@ import com.tmobile.sit.ignite.rcseu.Application.month
 import com.tmobile.sit.ignite.rcseu.Application.year
 import com.tmobile.sit.ignite.rcseu.Application.natcoNetwork
 import com.tmobile.sit.ignite.rcseu.Application.isHistoric
+import com.tmobile.sit.ignite.rcseu.Application.dayforkey
+import com.tmobile.sit.ignite.rcseu.Application.monthforkey
 
 trait ProcessingCore extends Logger{
   def process(inputData: InputData, preprocessedData: PreprocessedData, persistentData: PersistentData) : OutputData
@@ -109,52 +111,67 @@ class Core extends ProcessingCore {
       val fact = new Facts()
 
       val filtered_daily_provision = persistentData.accumulated_provision.filter(col("FileDate").contains(date))
-      val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, date)
+      val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, dayforkey)
       logger.info("Provisioned daily count: " + provisionedDaily.count())
 
       val filtered_monthly_provision = persistentData.accumulated_provision.filter(col("FileDate").contains(month))
-      val provisionedMonthly = fact.getProvisionedDaily(filtered_monthly_provision, month)
+      val provisionedMonthly1 = fact.getProvisionedDaily(filtered_monthly_provision, monthforkey)
+      val provisionedMonthly= provisionedMonthly1.withColumnRenamed("ConKeyP1","ConKeyP2")
+          .withColumnRenamed("Provisioned_daily","Provisioned_monthly")
       logger.info("Provisioned monthly count: " + provisionedMonthly.count())
 
       val filtered_yearly_provision = persistentData.accumulated_provision.filter(col("FileDate").contains(year))
-      val provisionedYearly = fact.getProvisionedDaily(filtered_yearly_provision, year)
+      val provisionedYearly1 = fact.getProvisionedDaily(filtered_yearly_provision, year)
+      val provisionedYearly= provisionedYearly1.withColumnRenamed("ConKeyP1","ConKeyP3")
+        .withColumnRenamed("Provisioned_daily","Provisioned_yearly")
       logger.info("Provisioned yearly count: " + provisionedYearly.count())
 
       val filtered_total_provision = persistentData.accumulated_provision.filter(col("FileDate").contains("20"))
-      val provisionedTotal = fact.getProvisionedDaily(filtered_total_provision, "20")
+      val provisionedTotal1 = fact.getProvisionedDaily(filtered_total_provision, "20")
+      val provisionedTotal= provisionedTotal1.withColumnRenamed("ConKeyP1","ConKeyP4")
+        .withColumnRenamed("Provisioned_daily","Provisioned_total")
       logger.info("Provisioned total count: " + provisionedTotal.count())
       //----------------------------------------------------------------------------
 
       val filtered_daily_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(date))
-      val registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, date)
+      val registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, dayforkey)
       logger.info("Registered daily count: " + registeredDaily.count())
 
       val filtered_monthly_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(month))
-      val registeredMonthly = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, month)
+      val registeredMonthly1 = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, monthforkey)
+      val registeredMonthly= registeredMonthly1.withColumnRenamed("ConKeyR1","ConKeyR2")
+        .withColumnRenamed("Registered_daily","Registered_monthly")
       logger.info("Registered monthly count: " + registeredMonthly.count())
 
       val filtered_yearly_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(year))
-      val registeredYearly = fact.getRegisteredDaily(filtered_yearly_register, fullUserAgents, year)
+      val registeredYearly1 = fact.getRegisteredDaily(filtered_yearly_register, fullUserAgents, year)
+      val registeredYearly= registeredYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
+        .withColumnRenamed("Registered_daily","Registered_yearly")
       logger.info("Registered yearly count: " + registeredYearly.count())
 
       val filtered_total_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains("20"))
-      val registeredTotal = fact.getRegisteredDaily(filtered_total_register, fullUserAgents, "20")
+      val registeredTotal1 = fact.getRegisteredDaily(filtered_total_register, fullUserAgents, "20")
+      val registeredTotal= registeredTotal1.withColumnRenamed("ConKeyR1","ConKeyR4")
+        .withColumnRenamed("Registered_daily","Registered_total")
       logger.info("Registered total count: " + registeredTotal.count())
       //----------------------------------------------------------------------------
       val filtered_daily_active = persistentData.accumulated_activity.filter(col("creation_date").contains(date))
-      val activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, date, natcoNetwork)
+      val activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, dayforkey, natcoNetwork)
       logger.info("Active daily count: " + activeDaily.count())
 
       val filtered_monthly_active = persistentData.accumulated_activity.filter(col("creation_date").contains(month))
-      val activeMonthly = fact.getActiveDaily(filtered_monthly_active, fullUserAgents, month, natcoNetwork)
+      val activeMonthly1 = fact.getActiveDaily(filtered_monthly_active, fullUserAgents, monthforkey, natcoNetwork)
+      val activeMonthly= activeMonthly1.withColumnRenamed("ConKeyA1","ConKeyA2")
       logger.info("Active monthly count: " + activeMonthly.count())
 
       val filtered_yearly_active = persistentData.accumulated_activity.filter(col("creation_date").contains(year))
-      val activeYearly = fact.getActiveDaily(filtered_yearly_active, fullUserAgents, year, natcoNetwork)
+      val activeYearly1 = fact.getActiveDaily(filtered_yearly_active, fullUserAgents, year, natcoNetwork)
+      val activeYearly= activeYearly1.withColumnRenamed("ConKeyR1","ConKeyR4")
       logger.info("Active yearly count: " + activeYearly.count())
 
       val filtered_total_active = persistentData.accumulated_activity.filter(col("creation_date").contains("20"))
-      val activeTotal = fact.getActiveDaily(filtered_total_active, fullUserAgents, "20", natcoNetwork)
+      val activeTotal1 = fact.getActiveDaily(filtered_total_active, fullUserAgents, "20", natcoNetwork)
+      val activeTotal= activeTotal1.withColumnRenamed("ConKeyR1","ConKeyR4")
       logger.info("Active total count: " + activeTotal.count())
       //----------------------------------------------------------------------------
 
