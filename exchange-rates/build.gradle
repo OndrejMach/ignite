@@ -1,0 +1,17 @@
+group 'ignite'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'scala'
+
+
+sourceCompatibility = 1.8
+
+dependencies {
+    compile project(":ignite-common")
+    implementation 'com.tmobile.sit:spark_common:1.18'
+
+    compile "net.sf.ucanaccess:ucanaccess:5.0.0"
+    compile group: 'com.healthmarketscience.jackcess', name: 'jackcess', version: '3.5.0'
+    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.4'
+
+}

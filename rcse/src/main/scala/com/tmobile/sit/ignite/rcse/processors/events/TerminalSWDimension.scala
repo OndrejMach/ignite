@@ -40,6 +40,9 @@ class TerminalSWDimension(enrichedEvents: DataFrame, oldTerminalSW: DataFrame, l
       .select(oldTerminalSW.columns.head, oldTerminalSW.columns.tail: _*)
 
     logger.info("Adding new SW version items to the terminalSW data")
-    oldTerminalSW.union(newItems)
+    val cols  = oldTerminalSW.columns.filter(_ != "rcse_terminal_sw_id").map( i => first(i).alias(i))
+
+      oldTerminalSW
+      .union(newItems)
   }
 }

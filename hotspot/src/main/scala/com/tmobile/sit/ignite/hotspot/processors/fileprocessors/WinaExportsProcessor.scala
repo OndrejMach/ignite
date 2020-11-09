@@ -23,7 +23,7 @@ class WinaExportsProcessor(sessionDData: DataFrame)(implicit sparkSession: Spark
 
   private def getSessionDayDiff(sessionDate: Column) = {
    logger.info("Preparing time window info")
-    val today = Date.valueOf(LocalDate.of(2020, 5, 17))
+    val today = Date.valueOf(LocalDate.now())//Date.valueOf(LocalDate.of(2020, 5, 17))
 
     when(sessionDate === lit(1), datediff(lit(today).cast(DateType), date_add($"wlan_session_date", -5)))
       .otherwise(when(sessionDate === lit(2), datediff(lit(today).cast(DateType), date_add($"wlan_session_date", -6)))
@@ -65,7 +65,6 @@ class WinaExportsProcessor(sessionDData: DataFrame)(implicit sparkSession: Spark
       )
       .filter($"is_3_months" > 0 || $"is_month" > 0 || $"is_week" > 0)
       .drop("is_3_months", "is_month", "is_week")
-    // .na.fill(0,Seq("volume_last_week","volume_last_month","volume_last_3_months","sessions_last_week","sessions_last_month","sessions_last_3_months"))
   }
 
   private val data = {
@@ -80,12 +79,17 @@ class WinaExportsProcessor(sessionDData: DataFrame)(implicit sparkSession: Spark
 
   val getTMDData = {
     logger.info("Preparing data for TMD report")
-    aggregateWina(data.filter($"wlan_provider_code".equalTo("TMD") || ($"wlan_provider_code".equalTo("TWLAN_DE"))))
+    val ret = aggregateWina(data.filter($"wlan_provider_code".equalTo("TMD") || ($"wlan_provider_code".equalTo("TWLAN_DE"))))
+    logger.info(s"Wina reports result size: ${ret.count()}")
+    ret
   }
 
   val getTCOMData = {
     logger.info("Preparing data for the rest")
-    aggregateWina(data.filter($"wlan_provider_code".equalTo("TCOM")))
+    val ret = aggregateWina(data.filter($"wlan_provider_code".equalTo("TCOM")))
+
+    logger.info(s"Wina reports result size: ${ret.count()}")
+    ret
   }
 
 }

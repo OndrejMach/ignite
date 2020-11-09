@@ -78,42 +78,5 @@ object TimeCalculations {
       }
     }
     ret
-
-
-    /*
-    else {
-  *out->session_duration 	= (end_quarter - *in->session_start_ts) / 60; // in minutes
-  *out->session_volume 		= volume_per_sec * (end_quarter - *in->session_start_ts) ;
-  *out->start_flag 		= 1;
-  *out->end_flag 		= 0;
-
-  // output only start record of current ODATE
-  if (end_quarter - 900 >= odate_start && end_quarter <= odate_end) add_record();
-
-  // normalize
-  while (end_quarter < *in->session_event_ts) {
-    *out->quarter_of_an_hour_id = (*out->quarter_of_an_hour_id + 15) % 1440; //modulo because of midnight
-    end_quarter += 900;
-    // case event_ts is within this quarter
-    if (end_quarter >= *in->session_event_ts) {
-      *out->session_duration 	= (*in->session_event_ts + 900 - end_quarter) / 60; // in minutes
-      *out->session_volume 	= volume_per_sec * (*in->session_event_ts + 900 - end_quarter);
-      *out->start_flag 		= 0;
-      *out->end_flag 		= 1;
-      // output only end record of current ODATE
-      if (end_quarter - 900 >= odate_start && end_quarter <= odate_end) add_record();
-      break;
-    }
-    // case event_ts continues after this quarter
-    else {
-      *out->session_duration 	= 15; // in minutes
-      *out->session_volume 	= volume_per_sec * 900;
-      *out->start_flag 		= 0;
-      *out->end_flag 		= 0;
-      // output only middle record of current ODATE
-      if (end_quarter - 900 >= odate_start && end_quarter <= odate_end) add_record();
-    }
-  }
-*/
   }
 }

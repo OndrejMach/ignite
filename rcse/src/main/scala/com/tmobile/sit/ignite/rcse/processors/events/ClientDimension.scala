@@ -45,8 +45,10 @@ class ClientDimension(eventsEnriched: DataFrame, clientsOld: DataFrame, load_dat
         .select(clientsOld.columns.head, clientsOld.columns.tail :_*)
 
     logger.info("Unioning old clients with the new ones")
+    val cols = clientsOld.columns.filter(_ != "rcse_client_id").map(i => first(i).alias(i))
     clientsOld
       .drop("entry_id", "load_date")
       .union(dimensionA)
+
   }
 }

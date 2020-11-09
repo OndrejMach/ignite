@@ -29,7 +29,6 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
     citiesData
       .allCities
       .select("city_id", "city_code")
-      // .withColumn("city_code", when($"city_code".equalTo("undefined"), lit("UNDEFINED")).otherwise($"city_code"))
       .sort("city_code")
       .groupBy("city_code")
       .agg(max("city_id").alias("city_id"))
@@ -41,8 +40,21 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
     logger.info("Getting transactio data from WlanHostpot, orderDB and exchangeRates joined dataframe")
     val vouchers = voucherData.allVouchers
       .filter(($"valid_from" < lit(processingDatePlus1).cast(TimestampType)) && ($"valid_to" >= lit(processingDatePlus1).cast(TimestampType)))
+        .groupBy(FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER.tail : _*)
+        .agg(last("wlan_voucher_id").alias("wlan_voucher_id"))
 
-    wlanHostspotOrderDBExchangeRates
+    vouchers.printSchema()
+
+    vouchers.select(FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER.tail : _*).show(false)
+
+    wlanHostspotOrderDBExchangeRates.printSchema()
+
+    wlanHostspotOrderDBExchangeRates.select(FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER.tail : _*).show(false)
+
+    logger.info("sdfsdfsdfsdf: "+wlanHostspotOrderDBExchangeRates.count())
+
+
+    val ret = wlanHostspotOrderDBExchangeRates
       .join(
         vouchers.select("wlan_voucher_id", FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER: _*),
         FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER,
@@ -50,6 +62,10 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
       .withColumn("reduced_amount", when($"reduced_amount".isNotNull, $"reduced_amount").otherwise($"amount"))
       .withColumn("discount_rel", concat(((($"amount" - $"reduced_amount") * 100) / round($"amount", 2)).cast(StringType), lit("%")))
       .na.fill("No Discount", Seq("campaign_name"))
+
+    ret.filter("wlan_voucher_id is null").show(false)
+
+    ret
   }
 
 
@@ -66,7 +82,7 @@ class TransactionsData(wlanHostspotOrderDBExchangeRates: DataFrame, voucherData:
         first("conversion").alias("conversion"),
         count("*").alias("num_of_transactions"),
         sum("number_miles").alias("num_flight_miles"),
-        sum("amount").alias("sum_amount"),
+          sum("amount").alias("sum_amount"),
         sum("reduced_amount").alias("sum_red_amount"),
         max("ta_request_datetime").alias("request_hour")
       )//.cache()

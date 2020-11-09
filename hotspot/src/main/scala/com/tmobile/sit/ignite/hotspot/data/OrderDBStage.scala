@@ -45,8 +45,6 @@ case class OrderDBStage(
                          year: Option[Int],
                          month: Option[Int],
                          day: Option[Int]
-                        //entry_id: Option[Long],
-                         //load_date: Option[Timestamp]
                        )
 object OrderDBStage {
 
@@ -127,7 +125,7 @@ object OrderDBStage {
       payment_method = entry.payment_method,
       voucher_type = entry.voucher_type,
       natco = entry.natco,
-      username = if (entry.username.isDefined) Some(entry.username.get.trim) else Some("#"),
+      username = if (entry.username.isDefined && !entry.username.get.isEmpty) Some(entry.username.get.trim) else Some("#"),
       wlan_realm_code = if (entry.username.isDefined) Some(entry.username.get.split("@")(1)) else Some("#"),
       ma_name = if (entry.ma_name.isDefined) Some(entry.ma_name.get.trim) else Some("#"),
       voucher_duration = entry.voucher_duration,
@@ -137,8 +135,6 @@ object OrderDBStage {
       year = Some(requestDate.toLocalDate.getYear),
       month = Some(requestDate.toLocalDate.getMonthValue),
       day = Some(requestDate.toLocalDate.getDayOfMonth)
-     // entry_id = Some(0),
-     // load_date = Some(Timestamp.valueOf(LocalDateTime.now()))
     )
   }
 }

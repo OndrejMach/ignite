@@ -71,16 +71,14 @@ class StageData(input: InputData)(implicit sparkSession: SparkSession) {
   val oooi: Dataset[StageTypes.Oooi] = {
     import sparkSession.implicits._
     input.oooi
-      //.withColumn("entry_id", lit(runId))
-      // .withColumn( "load_date", lit(loadDate))
+
       .as[StageTypes.Oooi]
   }
 
   val radius: Dataset[StageTypes.Radius] = {
     import sparkSession.implicits._
     input.radius
-      // .withColumn("entry_id", lit(runId))
-      // .withColumn("load_date", lit(loadDate))
+
       .as[StageTypes.Radius]
   }
 

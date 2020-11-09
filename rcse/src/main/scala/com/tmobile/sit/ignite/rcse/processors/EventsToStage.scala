@@ -5,7 +5,7 @@ import java.sql.{Date, Timestamp}
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.events.{EventsOutput, EventsProcessor}
-import com.tmobile.sit.ignite.rcse.processors.inputs.{EventsInputData, LookupsData}
+import com.tmobile.sit.ignite.rcse.processors.inputs.{EventsInputData, LookupsDataReader}
 import org.apache.spark.sql.SparkSession
 
 /*
@@ -30,7 +30,7 @@ class EventsToStage( load_date: Timestamp)(implicit sparkSession: SparkSession, 
 
     val inputData = new EventsInputData()
 
-    val lookups = new LookupsData()
+    val lookups = new LookupsDataReader()
 
     new EventsProcessor(inputData = inputData, lookups = lookups,load_date = Date.valueOf(load_date.toLocalDateTime.toLocalDate )).getDimensions
 

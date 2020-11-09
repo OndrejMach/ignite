@@ -25,6 +25,8 @@ class AggregateVchrRdsExechangeRates(interimData: AggregVchrRadiusInterimData, n
       .joinedOrderDBVoucherAndFlightLeg
       .filter(col("voucher_type").isNotNull) // get only voucher users
 
+    filtered.show(false)
+
     normalisedExchangeRates
       .joinWithExchangeRates(filtered)
       .withColumnRenamed("payid", "wlan_pay_id")

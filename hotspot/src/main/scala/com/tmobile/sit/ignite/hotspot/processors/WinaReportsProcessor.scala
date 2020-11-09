@@ -1,5 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
+import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.hotspot.config.Settings
 import com.tmobile.sit.ignite.hotspot.data.WinaReportsInputData
 import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.WinaExportsProcessor
@@ -17,9 +18,9 @@ class WinaReportsProcessor(implicit sparkSession: SparkSession, settings: Settin
     logger.info("Preparing calculation of Wina Reports")
     val winaProcessor = new WinaExportsProcessor(data.data)
 
-    logger.info("Writing TCOM data")
-    winaProcessor.getTCOMData.repartition(1).write.mode(SaveMode.Overwrite).parquet(settings.outputConfig.wina_report.get)
-    logger.info("Writing TMD data")
-    winaProcessor.getTMDData.repartition(1).write.mode(SaveMode.Overwrite).parquet(settings.outputConfig.wina_report_tmd.get)
+    logger.info(s"Writing TCOM data to ${settings.outputConfig.wina_report.get}")
+    CSVWriter(data = winaProcessor.getTCOMData.repartition(1), path = settings.outputConfig.wina_report.get, delimiter = ";").writeData()
+    logger.info(s"Writing TMD data to ${settings.outputConfig.wina_report_tmd.get}")
+    CSVWriter(data = winaProcessor.getTMDData.repartition(1), path = settings.outputConfig.wina_report_tmd.get, delimiter = ";").writeData()
   }
 }

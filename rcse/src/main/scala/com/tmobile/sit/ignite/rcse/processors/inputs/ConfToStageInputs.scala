@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcse.processors.inputs
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * Inputs fot the Conf calculation
@@ -11,12 +11,14 @@ import org.apache.spark.sql.SparkSession
 
 class ConfToStageInputs(implicit sparkSession: SparkSession,settings: Settings) extends InputData(settings.app.processingDate) {
   val events = {
-    logger.info(s"Reading data from ${settings.stage.dmEventsFile}${todaysPartition}")
-    sparkSession.read.parquet(settings.stage.dmEventsFile + todaysPartition)
+    val ret = sparkSession.read.parquet(s"${settings.stage.dmEventsFile}${todaysPartition}").repartition(10)
+    logger.info(s"Reading data from ${settings.stage.dmEventsFile}${todaysPartition}, count: ${ret.count()}")
+    ret
   }
 
   val confData = {
-    logger.info(s"Reading data from ${settings.stage.confFile}${yesterdaysPartition}")
-    sparkSession.read.parquet(s"${settings.stage.confFile}${yesterdaysPartition}")
+    val ret = sparkSession.read.parquet(s"${settings.stage.confFile}${yesterdaysPartition}").repartition(10)
+    logger.info(s"Reading data from ${settings.stage.confFile}${yesterdaysPartition}, count: ${ret.count()}")
+    ret
   }
 }

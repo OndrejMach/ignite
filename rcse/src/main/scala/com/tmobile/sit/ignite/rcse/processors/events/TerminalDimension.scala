@@ -4,19 +4,20 @@ import java.sql.Date
 
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{lit, when, max, monotonically_increasing_id}
+import org.apache.spark.sql.functions.{lit, when, max, monotonically_increasing_id, first}
 import org.apache.spark.sql.types.{IntegerType, LongType}
 
 /**
  * Logic for updating the terminal dimension. In case a new terminal appears in the input data it is added to the termianl file.
+ *
  * @param enrichedEvents - preprocessed input events
- * @param oldTerminal - actual terminal data
- * @param tacData - tac data for potential enrichment
- * @param load_date - date is added as a modification data
+ * @param oldTerminal    - actual terminal data
+ * @param tacData        - tac data for potential enrichment
+ * @param load_date      - date is added as a modification data
  * @param sparkSession
  */
 
-class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacData: DataFrame, load_date: Date)(implicit sparkSession: SparkSession) extends Logger{
+class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacData: DataFrame, load_date: Date)(implicit sparkSession: SparkSession) extends Logger {
 
   val newTerminal = {
     import sparkSession.implicits._
@@ -27,7 +28,7 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
       enrichedEvents
         .filter($"rcse_terminal_id".isNotNull)
         .join(
-          oldTerminal.select($"tac_code".as("tac_code_lkp"), $"terminal_id".as("terminal_id_lkp"), $"rcse_terminal_id"), Seq("rcse_terminal_id"), "left_outer").cache()
+          oldTerminal.select($"tac_code".as("tac_code_lkp"), $"terminal_id".as("terminal_id_lkp"), $"rcse_terminal_id"), Seq("rcse_terminal_id"), "left_outer")
         .filter($"tac_code_lkp".isNull && $"terminal_id_lkp".isNull && $"tac_code".isNotNull)
         .select(
           $"rcse_terminal_id",
@@ -52,8 +53,15 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
         .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
         .withColumn("rcse_terminal_model_sdesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
         .withColumn("rcse_terminal_model_ldesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
+        .groupBy("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc", "terminal_id", "tac_code")
+        .agg(
+          first("rcse_terminal_id").as("rcse_terminal_id"),
+          first("rcse_terminal_vendor_ldesc").as("rcse_terminal_vendor_ldesc"),
+          first("rcse_terminal_model_ldesc").as("rcse_terminal_model_ldesc")
+        )
+        .withColumn("rcse_terminal_id", (monotonically_increasing_id() + maxID).cast(IntegerType))
         .select(
-          lit(-1).cast(IntegerType).as("rcse_terminal_id"),
+          $"rcse_terminal_id",
           $"tac_code",
           $"terminal_id",
           $"rcse_terminal_vendor_sdesc",
@@ -62,7 +70,6 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
           $"rcse_terminal_model_ldesc",
           lit(load_date).as("modification_date")
         )
-      .withColumn("rcse_terminal_id", (monotonically_increasing_id() + maxID).cast(IntegerType))
 
 
     val cols = dimensionBOld.columns.map(i => i + "_old")
@@ -88,6 +95,16 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
         "rcse_terminal_model_sdesc",
         "rcse_terminal_model_ldesc",
         "modification_date"
+      )
+      .groupBy("rcse_terminal_id")
+      .agg(
+        first("tac_code").alias("tac_code"),
+        first("terminal_id").alias("terminal_id"),
+        first("rcse_terminal_vendor_sdesc").alias("rcse_terminal_vendor_sdesc"),
+        first("rcse_terminal_vendor_ldesc").alias("rcse_terminal_vendor_ldesc"),
+        first("rcse_terminal_model_sdesc").alias("rcse_terminal_model_sdesc"),
+        first("rcse_terminal_model_ldesc").alias("rcse_terminal_model_ldesc"),
+        first("modification_date").alias("modification_date")
       )
   }
 }

@@ -43,7 +43,13 @@ class OutputsWriter(processingDate: Date, data: RCSEOutputs)(implicit sparkSessi
   def writeData(path: String, data: DataFrame, writeHeader: Boolean = true, timestampFormat: String="yyyy-MM-dd HH:mm:ss", dateFormat: String = "yyyy-MM-dd")(implicit sparkSession: SparkSession) = {
     logger.info(s"Writing output file ${path}")
     val firstColumn = data.columns(0)
-    val writer = CSVWriter(data.withColumnRenamed(firstColumn,UTF8CHAR+firstColumn), path, delimiter = "|", timestampFormat = timestampFormat, writeHeader = writeHeader, dateFormat = dateFormat)
+    val writer = CSVWriter(
+      data= data.withColumnRenamed(firstColumn,UTF8CHAR+firstColumn),
+      path = path,
+      delimiter = "|",
+      timestampFormat = timestampFormat,
+      writeHeader = writeHeader,
+      dateFormat = dateFormat)
     writer.writeData()
   }
   def writeOutputs(): Unit = {

@@ -3,9 +3,10 @@ package com.tmobile.sit.ignite.rcse.processors.aggregateuau
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcse.processors.inputs.{AgregateUAUInputs, LookupsData}
+import com.tmobile.sit.ignite.rcse.processors.inputs.{AgregateUAUInputs, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, concat_ws, count, first, lit}
+import org.apache.spark.storage.StorageLevel
 
 /**
  * Aggregates calculated from the active user file. it creates aggregates for 17 different aggregation keys and stores them in the output data.
@@ -45,6 +46,23 @@ class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time
   private val activeUsersPreprocessed = {
     logger.info("GPreprocessing active users")
 
+    val clientCols = lookups.client.columns.filter(_ !="rcse_client_id").map(i => first(i).alias(i))
+
+    val client = lookups.client
+        .groupBy("rcse_client_id")
+        .agg(
+          clientCols.head,
+          clientCols.tail :_*
+        )
+    val terminalCols = lookups.terminal.columns.filter(_!="rcse_terminal_id").map(i=>first(i).alias(i) )
+
+    val terminal = lookups.terminal
+        .groupBy("rcse_terminal_id")
+        .agg(
+          terminalCols.head,
+          terminalCols.tail :_*
+        )
+
     inputs.activeUsersData
       .sort("msisdn")
       .groupBy("msisdn")
@@ -59,9 +77,9 @@ class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time
       .withColumnRenamed("rcse_curr_client_id", "rcse_client_id")
       .withColumnRenamed("rcse_curr_terminal_id", "rcse_terminal_id")
       .withColumnRenamed("rcse_curr_terminal_sw_id", "rcse_terminal_sw_id")
-      .join(lookups.client, Seq("rcse_client_id"), "left_outer")
-      .join(lookups.terminal, Seq("rcse_terminal_id"), "left_outer")
-      .cache()
+      .join(client, Seq("rcse_client_id"), "left_outer")
+      .join(terminal, Seq("rcse_terminal_id"), "left_outer")
+      .persist(StorageLevel.MEMORY_ONLY)
   }
 
 

@@ -3,11 +3,10 @@ package com.tmobile.sit.ignite.rcse.processors.initconfaggregates
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcse.processors.inputs.{InitConfInputs, LookupsData}
+import com.tmobile.sit.ignite.rcse.processors.inputs.{InitConfInputs, LookupsData, LookupsDataReader}
 import com.tmobile.sit.ignite.rcse.structures.InitConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, first, lit, monotonically_increasing_id, sum, when}
-
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
 /**

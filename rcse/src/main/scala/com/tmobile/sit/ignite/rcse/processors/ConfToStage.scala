@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcse.processors
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.conf.ConfProcessor
-import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, LookupsData}
+import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
@@ -15,7 +15,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class ConfToStage(implicit sparkSession: SparkSession,settings: Settings) extends Logger {
 
   def processData(): DataFrame = {
-    val lookups = new LookupsData()
+    val lookups = new LookupsDataReader()
     val inputs = new ConfToStageInputs()
 
     new ConfProcessor(lookups = lookups, inputs = inputs, max_Date = settings.app.maxDate, processing_date = settings.app.processingDate).result

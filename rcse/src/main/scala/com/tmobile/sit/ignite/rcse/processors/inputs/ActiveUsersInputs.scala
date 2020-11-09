@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcse.processors.inputs
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * Input data for the Active user calculation

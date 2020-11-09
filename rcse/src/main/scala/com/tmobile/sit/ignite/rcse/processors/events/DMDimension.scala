@@ -35,10 +35,12 @@ class DMDimension(eventInputsEnriched: DataFrame,
     val outputPrep =
       dimensionD
         .withColumn("date_id", $"date_id".cast(DateType))
-        //.withColumn("msisdn", when($"msisdn".isNotNull, encoder3des($"msisdn")).otherwise(encoder3des(lit("#"))))
+
         .join(msisdn3DesLookup, $"msisdn" === $"number", "left_outer")
         .withColumn("msisdn", $"des")
+      .na.fill("AB8A8EF1060EF8FE", Seq("msisdn"))
         .drop("des", "number")
+
         .withColumnRenamed("rcse_client_id", "rcse_client_id_old")
         .clientLookup(newClient)
         .withColumn("rcse_client_id", when($"rcse_client_id_old".isNull, $"rcse_client_id").otherwise($"rcse_client_id_old"))
