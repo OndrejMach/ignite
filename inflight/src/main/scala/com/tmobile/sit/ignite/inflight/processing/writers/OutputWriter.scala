@@ -18,7 +18,17 @@ abstract class InflightWriterUTF8Char(timestampFormat: String) extends OutputWri
   def writeData(path: String, data: DataFrame, writeHeader: Boolean = true)(implicit sparkSession: SparkSession) = {
     logger.info(s"Writing output file ${path}")
     val firstColumn = data.columns(0)
-    val writer = CSVWriter(data.withColumnRenamed(firstColumn,UTF8CHAR+firstColumn), path, delimiter = "|", timestampFormat = timestampFormat, writeHeader = writeHeader)
+    val writer = CSVWriter(
+      data = data.withColumnRenamed(firstColumn,UTF8CHAR+firstColumn),
+      path = path,
+      delimiter = "|",
+      timestampFormat = timestampFormat,
+      quote = "",
+      quoteMode = "NONE",
+      nullValue = null,
+      emptyValue = null,
+      writeHeader = writeHeader)
+
     writer.writeData()
   }
 }

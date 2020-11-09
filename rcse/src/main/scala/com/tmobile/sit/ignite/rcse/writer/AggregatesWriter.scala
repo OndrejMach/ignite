@@ -24,13 +24,15 @@ case class AggregatesData(initConf: DataFrame, initUser: DataFrame, uauAggregate
 class AggregatesWriter(processingDate: Date, data: AggregatesData)(implicit sparkSession: SparkSession, settings: Settings ) extends RCSEWriter(processingDate = processingDate) {
   def writeData() = {
     logger.info("Writing init user aggregates")
-    writeParquet(data.initUser, settings.stage.initUser, true)
+    data.initUser.show(false)
+
+    writeParquet(data.initUser, settings.stage.initUser)
 
     logger.info("Writing init conf aggregates")
-    writeParquet(data.initConf, settings.stage.initConf, true)
+    writeParquet(data.initConf, settings.stage.initConf)
 
     logger.info("Writing UAU aggregates")
-    writeParquet(data.uauAggregates, settings.stage.uauFile, true)
+    writeParquet(data.uauAggregates, settings.stage.uauFile)
 
   }
 

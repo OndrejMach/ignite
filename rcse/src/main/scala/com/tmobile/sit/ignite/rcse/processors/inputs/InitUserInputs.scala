@@ -12,12 +12,17 @@ import org.apache.spark.sql.SparkSession
 class InitUserInputs(implicit sparkSession: SparkSession,settings: Settings) extends InputData(settings.app.processingDate) {
   val confData = {
     logger.info(s"Reading data from ${settings.stage.confFile}${todaysPartition}")
-    sparkSession.read.parquet(s"${settings.stage.confFile}${todaysPartition}")
+    val conf = sparkSession.read.parquet(s"${settings.stage.confFile}${todaysPartition}")
+    conf.show(false)
+    conf
 
   }
 
   val initData = {
     logger.info(s"Reading data from ${settings.stage.initUser + yesterdaysPartition}")
-    sparkSession.read.parquet(settings.stage.initUser + yesterdaysPartition )
+    val data = sparkSession.read.parquet(settings.stage.initUser + yesterdaysPartition )
+    logger.info(s"InitConf count: ${data.count()}")
+    data.show(false)
+    data
   }
 }

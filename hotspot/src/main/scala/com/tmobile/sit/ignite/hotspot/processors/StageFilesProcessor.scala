@@ -59,10 +59,10 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
 
     logger.info(s"Processing transaction data")
     val transactionData = new FailedTransactionsProcessor(
-      orderDBData = stageData.orderDB,
-      wlanHotspot = hotspotNew,
-      oldCitiesData = stageData.cityData,
-      oldVoucherData = stageData.voucherData,
+      orderDBData = stageData.orderDB.cache(),
+      wlanHotspot = hotspotNew.cache(),
+      oldCitiesData = stageData.cityData.cache(),
+      oldVoucherData = stageData.voucherData.cache(),
       normalisedExchangeRates = new NormalisedExchangeRates(stageData.exchRatesFinal.as[CommonTypes.ExchangeRates],
         MIN_REQUEST_DATE))
       .processData()
@@ -77,7 +77,6 @@ class StageFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       citiesData = stageData.cityData,
       hotspotData = hotspotNew)
       .getData
-
 
     logger.info("Consolidating stage data")
     val resultData = StageData(

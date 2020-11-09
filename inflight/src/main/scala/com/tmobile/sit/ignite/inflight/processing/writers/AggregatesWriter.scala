@@ -22,7 +22,6 @@ class AggregatesWriter(radiusCredit: DataFrame, vchrRadiusData: VoucherRadiusOut
     val oldData = CSVReader(path = stageConfig.path.get + stageConfig.tFileMask.get, header = false, delimiter = "|").read()
     logger.info(s"Writing resulting T file")
     writeData(outputConf.path.get + outputConf.voucherRadiusFile.get,
-      //TODO this needs to be removed after deployment
       oldData
         .filter(col("_c5").isin(airlines: _*)).distinct()
         .drop("_c14")
@@ -30,7 +29,6 @@ class AggregatesWriter(radiusCredit: DataFrame, vchrRadiusData: VoucherRadiusOut
         .toDF(OutputStructure.TTableOutputs :_*)
     )
 
-    //------
   }
 
 
@@ -39,9 +37,9 @@ class AggregatesWriter(radiusCredit: DataFrame, vchrRadiusData: VoucherRadiusOut
 
     import TransformDataFrameColumns.TransformColumnNames
 
-    writeData(outputConf.path.get + outputConf.radiusCreditDailyFile.get, radiusCredit.select(OutputStructure.radiusCreditDailyColumns.head, OutputStructure.radiusCreditDailyColumns.tail: _*).columnsToUpperCase())
-    writeData(outputConf.path.get + outputConf.vchrRadiusDailyFile.get, vchrRadiusData.voucherRadiusDaily.select(OutputStructure.voucherRadiusDailyColumns.head, OutputStructure.voucherRadiusDailyColumns.tail: _*).columnsToUpperCase())
-    writeData(stageConfig.path.get + stageConfig.tFileStage.get, vchrRadiusData.voucherRadiusFull.select(OutputStructure.voucherRadiusFullColumns.head, OutputStructure.voucherRadiusFullColumns.tail: _*).columnsToUpperCase(), writeHeader = false)
+    writeData(outputConf.path.get + outputConf.radiusCreditDailyFile.get, radiusCredit.select(OutputStructure.radiusCreditDailyColumns.head, OutputStructure.radiusCreditDailyColumns.tail: _*).columnsToUpperCase().distinct())
+    writeData(outputConf.path.get + outputConf.vchrRadiusDailyFile.get, vchrRadiusData.voucherRadiusDaily.select(OutputStructure.voucherRadiusDailyColumns.head, OutputStructure.voucherRadiusDailyColumns.tail: _*).columnsToUpperCase().distinct())
+    writeData(stageConfig.path.get + stageConfig.tFileStage.get, vchrRadiusData.voucherRadiusFull.select(OutputStructure.voucherRadiusFullColumns.head, OutputStructure.voucherRadiusFullColumns.tail: _*).columnsToUpperCase().distinct(), writeHeader = false)
     writeTFileFull()
 
   }

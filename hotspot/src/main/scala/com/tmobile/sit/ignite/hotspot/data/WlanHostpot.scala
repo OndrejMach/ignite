@@ -114,76 +114,9 @@ object WlanHotspotTypes {
                           bandwidth: Option[String],
                           valid_from: Option[Timestamp],
                           valid_to: Option[Timestamp]
-                          //entry_id: Option[Long],
-                          //load_date: Option[Timestamp]
                         )
-/*
-  object WlanHostpot{
-
-    def apply(stage: WlanHotspotStage): WlanHostpot = {
-      def getValue(s: Option[String]) : Option[String] = if (s.isDefined && !s.get.isEmpty) s else Some("UNDEFINED")
-      
-      new WlanHostpot(
-        wlan_hotspot_id= stage.hotspot_id,
-        wlan_hotspot_ident_code= stage.hotspot_ident_code,
-        wlan_hotspot_desc=Some("Hotspot not assigned"),
-        wlan_hotspot_timezone= stage.hotspot_timezone,
-        wlan_ip_range_start_dec=None,
-        wlan_ip_range_end_dec=None,
-        wlan_ip_range_start=None,
-        wlan_ip_range_end=None,
-        wlan_hotspot_status=None,
-        wlan_venue_type_code= getValue(stage.hotspot_venue_type_code),
-        wlan_venue_code=getValue(stage.hotspot_venue_code),
-        wlan_provider_code=stage.hotspot_provider_code,
-        wlan_hotspot_area_code=None,
-        ssid=None,
-        country_code=stage.hotspot_country_code,
-        city_code=getValue(stage.hotspot_city_code),
-        postcode=None,
-        street=None,
-        house_no=None,
-        access_control=None,
-        long_deg=None,
-        long_min=None,
-        long_sec=None,
-        lat_deg=None,
-        lat_min=None,
-        lat_sec=None,
-        open_monday=None,
-        open_tuesday=None,
-        open_wednesday=None,
-        open_thursday=None,
-        open_friday=None,
-        open_saturday=None,
-        open_sunday=None,
-        open_comment=None,
-        parking_available=None,
-        loc_description=None,
-        loc_spec_offer=None,
-        loc_url=None,
-        loc_cont_tel=None,
-        loc_cont_fax=None,
-        loc_cont_email=None,
-        ap_amount=None,
-        coord_system=None,
-        commercial_status=None,
-        parent_ident_code=None,
-        bandwidth=None,
-        valid_from= stage.valid_from,
-        valid_to=stage.valid_to,
-        entry_id=Some(0),
-        load_date=Some(Timestamp.valueOf(LocalDateTime.now()))
-      )
-    }
-
-
-  }
-
- */
 
   case class WlanHotspotStage(
-                               //hotspot_id: Option[Long],
                                hotspot_ident_code: Option[String],
                                hotspot_timezone: Option[String],
                                hotspot_venue_type_code: Option[String],

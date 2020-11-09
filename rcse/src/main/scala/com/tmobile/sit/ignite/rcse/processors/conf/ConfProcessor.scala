@@ -3,9 +3,9 @@ package com.tmobile.sit.ignite.rcse.processors.conf
 import java.sql.Date
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, LookupsData}
+import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, first, lit, when}
+import org.apache.spark.sql.functions.{col, first, lit, when, broadcast, max}
 
 /**
  * Conf file processing. It takes incoming DM events and creates a new conf file. The intention is to create a new file for every new day.
@@ -26,24 +26,58 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
     "rcse_curr_client_id", "rcse_curr_terminal_id",
     "rcse_curr_terminal_sw_id", "modification_date")
 
-  private lazy val preprocessedTac = {
+  private  val preprocessedTac = {
     logger.info("Preparing TAC data")
-    lookups.tac
+    logger.info(s"TAC RAW: ${lookups.tac.count()}")
+
+    val terminalLookupTAC = lookups
+      .terminal
+      .filter($"tac_code".isNotNull)
+      .select("tac_code", "rcse_terminal_id")
+      .groupBy("tac_code")
+      .agg(
+        max("rcse_terminal_id").alias("rcse_terminal_id")
+      )
+      .groupBy("rcse_terminal_id")
+      .agg(
+        max("tac_code").alias("tac_code")
+      )
+
+    val terminalLookupID = lookups
+      .terminal
+      .select($"rcse_terminal_id", $"terminal_id".as("terminal_id_terminal"))
+      .groupBy("terminal_id_terminal")
+      .agg(
+        max("rcse_terminal_id").alias("rcse_terminal_id")
+      )
+
+    val ret1 = lookups.tac
       .filter($"valid_to" >= lit(max_Date) && $"id".isNotNull)
-      .join(lookups.terminal.select("tac_code", "rcse_terminal_id"), Seq("tac_code"), "left_outer")
-      .withColumn("rcse_terminal_id_tac", $"rcse_terminal_id")
+      .join(terminalLookupTAC, Seq("tac_code"), "left_outer")
+      .withColumnRenamed("rcse_terminal_id","rcse_terminal_id_tac" )
       .drop("rcse_terminal_id")
-      .join(lookups.terminal.select($"rcse_terminal_id", $"terminal_id".as("terminal_id_terminal")), $"terminal_id_terminal" === $"id", "left_outer")
+
+    val ret = ret1.join(terminalLookupID, $"terminal_id_terminal" === $"id", "left_outer")
       .withColumn("rcse_terminal_id_term", $"rcse_terminal_id")
       .drop("rcse_terminal_id", "terminal_id_terminal")
       .select($"tac_code", $"id".as("terminal_id"), $"rcse_terminal_id_tac", $"rcse_terminal_id_term".as("rcse_terminal_id_term"))
+      .repartition(10)
+
+    logger.info(s"TAC preproc: ${ret.count()}")
+
+    //ret.summary().show(false)
+
+    ret
   }
 
-  private lazy val preprocessedEvents = {
+  private  val preprocessedEvents = {
     logger.info("Preprocessing Events data")
-    inputs.events
+    logger.info(s"Events count RAW: ${inputs.events.count()}")
+
+    val ret = inputs.events
+      .drop("tac_code")
       .filter($"rcse_subscribed_status_id" === lit(1) && $"rcse_active_status_id" === lit(1))
-      .join(preprocessedTac, $"rcse_terminal_id_tac" === $"rcse_terminal_id", "left_outer")
+      .join(broadcast(preprocessedTac), $"rcse_terminal_id_tac" === $"rcse_terminal_id", "left_outer")
       .withColumn("rcse_curr_terminal_id", when($"rcse_terminal_id_term".isNotNull, $"rcse_terminal_id_term").otherwise($"rcse_terminal_id"))
       .withColumn("rcse_curr_terminal_sw_id", $"rcse_terminal_sw_id")
       .withColumn("modification_date", $"date_id")
@@ -51,6 +85,7 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       .withColumn("rcse_init_terminal_id", $"rcse_terminal_id")
       .withColumn("rcse_init_terminal_sw_id", $"rcse_terminal_sw_id")
       .withColumn("rcse_curr_client_id", $"rcse_client_id")
+      .na.fill("AB8A8EF1060EF8FE", Seq("msisdn"))
       .select(
         "date_id", "natco_code",
         "msisdn", "rcse_tc_status_id",
@@ -59,22 +94,35 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
         "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id",
         "modification_date"
       )
+      .persist()
+
+    logger.info(s"events preprocessed: ${ret.count()}")
+
+    ret
   }
 
-  private lazy val conf2 = {
+  private  val conf2 = {
     logger.info("Getting conf data with TAC")
-    inputs
+    logger.info(s"OLD conf: ${inputs.confData.count()}")
+
+    val terminalLookup = preprocessedTac.withColumn("e", lit(1)).select("rcse_terminal_id_tac", "rcse_terminal_id_term", "e")
+
+    val ret1 = inputs
       .confData
       .join(
-        preprocessedTac.withColumn("e", lit(1)).select("rcse_terminal_id_tac", "rcse_terminal_id_term", "e"),
+        broadcast(terminalLookup),
         $"rcse_curr_terminal_id" === $"rcse_terminal_id_tac", "left_outer")
       .withColumn("term", $"rcse_terminal_id_term")
       .filter($"term".isNotNull && $"e" === lit(1) &&
         (($"rcse_curr_terminal_id".isNotNull && $"term" =!= $"rcse_curr_terminal_id") ||
           $"rcse_curr_terminal_id".isNull))
+
+    logger.info(s"Interim count ${ret1.count()}")
+
+      val ret = ret1
       .withColumn("rcse_curr_terminal_id", $"term")
       .withColumn("modification_date", lit(processing_date))
-      .sort("msisdn")
+      //.sort("msisdn")
       .groupBy("msisdn")
       .agg(
         first(outColumns.head).alias(outColumns.head),
@@ -83,13 +131,20 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       .select(
         outColumns.head, outColumns.tail: _*
       )
+      .persist()
+
+    logger.info(s"conf enriched: ${ret.count()}")
+
+    ret
   }
 
-  private lazy val joinedEventsConfData = {
+  private  val joinedEventsConfData = {
     logger.info("Addig Events")
 
+    inputs.confData.filter("msisdn is null").show(false)
+
     val confColumns = inputs.confData.columns.map(_ + "_conf")
-    preprocessedEvents
+    val retu = preprocessedEvents
       .join(
         inputs.confData
           .toDF(confColumns: _*)
@@ -97,23 +152,37 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
         $"msisdn" === $"msisdn_conf",
         "left"
       )
+      .persist()
+
+    logger.info(s"Joined events and conf: ${retu.count()}")
+
+    retu
   }
 
-  private lazy val umatched = {
+  private  val umatched = {
     logger.info("Filtering unmatched rows")
-    joinedEventsConfData
+    val filt  = joinedEventsConfData
       .filter($"e".isNull)
-      .select(
-        outColumns.map(i => col(i + "_conf").as(i)): _*
+
+
+    filt.select("msisdn").distinct().show()
+
+    logger.info(s"UnMatched filtered: ${filt.count()}")
+
+     val ret= filt.select(outColumns.head, outColumns.tail : _*
+        //outColumns.map(i => col(i + "_conf").as(i)): _*
       )
       .filter($"msisdn".isNotNull)
-      .persist()
+
+    logger.info(s"UnMatched count: ${ret.count()}")
+
+    ret
   }
 
 
-  private lazy val joined = {
+  private  val joined = {
     logger.info("Getting matched data")
-    joinedEventsConfData
+    val ret  = joinedEventsConfData
       .filter($"e".isNotNull)
       .withColumn("modification_date", $"date_id")
       .withColumn("date_id", $"date_id_conf")
@@ -124,17 +193,29 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       .select(
         outColumns.head, outColumns.tail: _*
       )
+      .persist()
+    logger.info(s"Getting events and conf data matched: ${ret.count()}")
+    ret
   }
 
-  private lazy val updJoin = {
+  private  val updJoin = {
     val tmpUpdate = joined
       .union(conf2)
+      .groupBy("msisdn")
+      .agg(
+        first(outColumns.head).alias(outColumns.head),
+        outColumns.tail.filter(_ != "msisdn").map(i => first(i).alias(i)): _*
+      )
+        .persist()
+
+    logger.info(s"tmpUpdate: ${tmpUpdate.count()}")
 
     logger.info("Calculating final output for matched data")
 
     val allCols = tmpUpdate.columns.map(_ + "_conf_update")
-    inputs.confData
-      .join(tmpUpdate.toDF(allCols: _*), $"msisdn" === $"msisdn_conf_update", "left")
+
+    val ret = inputs.confData
+      .join(tmpUpdate.toDF(allCols: _*), $"msisdn" === $"msisdn_conf_update", "left_outer")
       .filter($"msisdn".isNotNull)
 
       .withColumn("date_id", when($"date_id_conf_update".isNotNull, $"date_id_conf_update").otherwise($"date_id"))
@@ -166,11 +247,15 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       .select(
         outColumns.head, outColumns.tail: _*
       )
+
+    logger.info(s"Final without unmatched ${ret.count()}")
+    ret
+
   }
 
 
   val result = {
-    logger.info("Unioning matched and unmatched to get final result")
+    logger.info(s"Unioning matched and unmatched to get final result, unmatched: ${umatched.count()}")
     updJoin.union(umatched)
   }
 

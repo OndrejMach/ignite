@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.hotspot.data
+package com.tmobile.sit.ignite.exchangerates.processing
 
 import java.sql.Date
 import java.time.LocalDate
@@ -22,7 +22,7 @@ case class ExchangeRates(row_id: Option[String],
                         )
 
 object ExchangeRates extends Logger {
- def fromString(line: String): ExchangeRates = {
+  def fromString(line: String): ExchangeRates = {
     val arr = line.split("\\|")
     logger.debug(s"Retrieved exchange rates line ${line} split to ${arr}")
     ExchangeRates(row_id = Some(arr(0)),

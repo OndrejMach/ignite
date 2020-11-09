@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcse.processors
 
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsData
+import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsDataReader
 import com.tmobile.sit.ignite.rcse.writer.RCSEOutputs
 import org.apache.spark.sql.SparkSession
 
@@ -23,7 +23,7 @@ object TransformDataFrameColumns {
  */
 class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) {
   def getData:RCSEOutputs = {
-    val lookups = new LookupsData()
+    val lookups = new LookupsDataReader()
 
     import TransformDataFrameColumns.TransformColumnNames
 

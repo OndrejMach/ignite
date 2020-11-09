@@ -25,11 +25,11 @@ case class StageConfig(stage_folder: Option[String],
                        wlan_cdr_file: Option[String],
                        map_voucher_filename: Option[String],
                        orderDB_filename: Option[String],
-                       exchange_rates_filename: Option[String],
                        city_data: Option[String],
                        wlan_voucher: Option[String],
                        login_errors: Option[String],
                        session_d: Option[String],
+                       exchange_rates_filename: Option[String],
                        failed_transactions: Option[String],
                        orderDB_H: Option[String],
                        session_q: Option[String],
@@ -55,7 +55,6 @@ case class InputConfig(
                         input_folder: Option[String],
                         MPS_filename: Option[String],
                         CDR_filename: Option[String],
-                        exchange_rates_filename: Option[String],
                         failed_login_filename: Option[String]
                       ) extends FilesConfig
 

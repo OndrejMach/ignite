@@ -21,7 +21,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) extends PhaseProcessor {
   private val UTF8CHAR = "\ufeff"
 
-  private def writeOutput(data: DataFrame, filename: String, delimiter: String = "|") = {
+  private def writeOutput(data: DataFrame, filename: String, delimiter: String = "|", quote: String = "\"") = {
     logger.info(s"Writing output file: ${filename}")
     val firstColumn = data.columns(0)
 
@@ -34,7 +34,10 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
       delimiter = delimiter,
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
       dateFormat = "yyyy-MM-dd",
-      path = filename
+      path = filename,
+      quote = quote,
+      quoteMode = "NONE",
+      nullValue = null
     ).writeData()
 
   }
@@ -98,20 +101,22 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
     )
 
     val hotspot = sparkSession.read.parquet(settings.stageConfig.wlan_hotspot_filename.get)
+
+    //hotspot.filter("wlan_hotspot_id=1286234").show(false)
     logger.info("Writing output file for hotspot_ta_d")
     writeOutput(
-      data = hotspot,
+      data = hotspot.sort("wlan_hotspot_ident_code","valid_to" ),
       filename = settings.outputConfig.hotspot_ta_d.get,
-      delimiter = "~"
+      delimiter = "~", quote = ""
     )
 
     logger.info("Writing output file for hotspot_vi_d")
     writeOutput(
-      data = hotspot
+      data = hotspot.sort("wlan_hotspot_ident_code","valid_to" )
         .filter(col("valid_to") >= lit(com.tmobile.sit.ignite.hotspot.data.FUTURE).cast(TimestampType))
         .select(OutputStructures.HOTSPOT_VI_D.head, OutputStructures.HOTSPOT_VI_D.tail: _*),
       filename = settings.outputConfig.hotspot_vi_d.get,
-      delimiter = "~"
+      delimiter = "~", quote = ""
     )
 
     logger.info("Writing output file for voucher")
@@ -121,9 +126,9 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
         .read()
         .withColumn("duration_hours",
           when(col("duration").isNotNull,
-            col("duration").substr(0, 2).cast(IntegerType) * 24 +
-              col("duration").substr(3, 2).cast(IntegerType) +
-              round(col("duration").substr(6, 2).cast(DoubleType) / 60.0, 2)
+            substring(col("duration"),1, 2).cast(IntegerType) * 24 +
+              substring(col("duration"),4, 2).cast(IntegerType) +
+              round(substring(col("duration"),7, 2).cast(DoubleType) / 60.0, 2)
           ).otherwise(lit(null).cast(DoubleType)))
         .select(OutputStructures.VOUCHER.head, OutputStructures.VOUCHER.tail: _*)
       ,

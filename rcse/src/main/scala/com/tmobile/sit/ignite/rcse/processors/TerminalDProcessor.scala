@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcse.processors
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
-import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsData
+import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsDataReader
 import com.tmobile.sit.ignite.rcse.processors.terminald.UpdateDTerminal
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -14,7 +14,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class TerminalDProcessor(implicit sparkSession: SparkSession,settings: Settings ) extends Logger {
    def processData(): DataFrame = {
-    val lookups = new LookupsData()
+    val lookups = new LookupsDataReader()
 
     new UpdateDTerminal(lookups.terminal, lookups.tac, settings.app.maxDate).getData()
 

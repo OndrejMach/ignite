@@ -14,7 +14,9 @@ import com.tmobile.sit.ignite.rcse.stages._
 object Application extends App with Logger{
 
   implicit val settings = new Setup().settings
-  implicit val sparkSession = getSparkSession(settings.app.master)
+  implicit val sparkSession = getSparkSession(settings.app.master, settings.app.dynamicAllocation)
+
+  sparkSession.sql("set spark.sql.shuffle.partitions=10")
 
   settings.printAllFields()
 
@@ -27,9 +29,11 @@ object Application extends App with Logger{
   logger.info(s"Running RCSE processing in the ${regime} regime")
   val executor = regime match {
     case "terminalD" => new TerminalD()
-    case "stage" => new Stage()
+    case "events" => new Events()
     case "output" => new Outputs()
     case "aggregates" => new Aggregates()
+    case "conf" => new Conf()
+    case "activeUsers" => new ActiveUsers()
     case _ => new Helper()
   }
 

@@ -1,11 +1,10 @@
-package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
+package com.tmobile.sit.ignite.exchangerates.processing
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.hotspot.data.ExchangeRates
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
@@ -39,6 +38,7 @@ class ExchangeRatesParser(exchangeRatesRawData: DataFrame)(implicit sparkSession
     exchangeRatesRawData
       .filter((!col("value").startsWith("H|")) && (col("value").startsWith("L|")))
       .as[String]
+      .distinct()
       .map(ExchangeRates.fromString(_))
   }
 }

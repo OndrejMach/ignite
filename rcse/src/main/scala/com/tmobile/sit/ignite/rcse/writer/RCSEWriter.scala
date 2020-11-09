@@ -11,19 +11,21 @@ import org.apache.spark.sql.functions.lit
  * @param processingDate - used for partitioning
  */
 
-abstract class RCSEWriter(processingDate: Date) extends Logger{
-  def writeParquet(data: DataFrame, path: String, partitioned: Boolean = false) = {
-    data.cache()
-    logger.info(s"Writing to path ${path}, rowcount: ${data.count()}")
-    val dataToWrite =
-      (if (partitioned) data.withColumn("date", lit(processingDate)) else data)
-        .coalesce(1)
-        .write
+abstract class RCSEWriter(processingDate: Date) extends Logger {
+  def writeParquet(data: DataFrame, path: String) = {
+    logger.info(s"Writing to path ${path}")
 
-    val writer =
-      if (partitioned) dataToWrite.partitionBy("date") else dataToWrite
 
-    writer
+    data.show(false)
+
+    val toWrite = data
+      .withColumn("date", lit(processingDate))
+
+    toWrite.show(false)
+
+    toWrite
+      .write
+      .partitionBy("date")
       .mode(SaveMode.Overwrite)
       .parquet(path)
   }

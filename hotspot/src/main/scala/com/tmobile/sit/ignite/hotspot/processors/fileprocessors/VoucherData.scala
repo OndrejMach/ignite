@@ -5,6 +5,7 @@ import com.tmobile.sit.ignite.hotspot.data.FailedTransactionsDataStructures
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.TimestampType
 
 /**
  * this class gets all known vouchers from the data
@@ -43,6 +44,7 @@ class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataF
     logger.info("Merging new vouchers with the old ones, assigning new voucher IDs")
     newVouchers
       .union(voucherData.select("wlan_voucher_id", FailedTransactionsDataStructures.COLUMNS_VOUCHER: _*))
+      .withColumn("valid_to", when(col("valid_to").isNull, lit(com.tmobile.sit.ignite.hotspot.data.FUTURE).cast(TimestampType)).otherwise(col("valid_to")))
   }
 
   val allVouchersForPrint = {

@@ -107,6 +107,6 @@ class UpdateDTerminal(terminalDData: DataFrame, tac: DataFrame, maxDate: Date )(
       .union(nullTerminalId.select(Terminal.terminalDoutputCols.head, Terminal.terminalDoutputCols.tail: _*))
       .union(tacNull.select(Terminal.terminalDoutputCols.head, Terminal.terminalDoutputCols.tail: _*))
       .union(terminalD.terminalNullTACCode.select(Terminal.terminalDoutputCols.head, Terminal.terminalDoutputCols.tail: _*))
-
+      .withColumn("rcse_terminal_id", $"rcse_terminal_id".cast(IntegerType))
   }
 }

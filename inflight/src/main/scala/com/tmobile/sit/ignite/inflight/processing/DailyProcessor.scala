@@ -81,6 +81,6 @@ class DailyProcessorImpl(settings: Settings, inputFiles: InputData, refData: Ref
 
     val dailyReports=getDailyExcelReports(radiusCreditDailyData, voucherRadiusData.voucherRadiusDaily)
 
-    InflightOutputs(fullOutputs = fullOutputData, radiusCredit = radiusCreditDailyData, voucherRadiusOutputs = voucherRadiusData, excelSessionReport = dailyReports._1, excelVoucherReport = dailyReports._2)
+    InflightOutputs(fullOutputs = fullOutputData, radiusCredit = radiusCreditDailyData.distinct(), voucherRadiusOutputs = voucherRadiusData, excelSessionReport = dailyReports._1, excelVoucherReport = dailyReports._2)
   }
 }

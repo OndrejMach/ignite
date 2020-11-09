@@ -30,9 +30,11 @@ object Application extends Logger{
   private def prepareMonthlyCalculation(implicit sparkSession: SparkSession,settings: Settings): Processor = {
     logger.info("Calculation of monthly reports started")
 
+
+    val month = settings.appParams.monthlyReportDate.get.toLocalDateTime
     logger.info(s"Report will be generated for month ${settings.appParams.monthlyReportDate.get}")
-    val dataSession = sparkSession.read.parquet(settings.referenceData.path.get + settings.referenceData.sessionFile.get)
-    val dataComplete = sparkSession.read.parquet(settings.referenceData.path.get + settings.referenceData.completeFile.get)
+    val dataSession = sparkSession.read.option("basePath",settings.referenceData.path.get + settings.referenceData.completeFile.get).parquet(settings.referenceData.path.get + settings.referenceData.sessionFile.get + s"/year=${month.getYear}/month=${month.getMonthValue}")
+    val dataComplete = sparkSession.read.option("basePath",settings.referenceData.path.get + settings.referenceData.completeFile.get).parquet(settings.referenceData.path.get + settings.referenceData.completeFile.get+ s"/year=${month.getYear}/month=${month.getMonthValue}")
     logger.info("Data read from stage")
     val writer = new ExcelReportsWriterImpl(reportType = new MonthlySessionReport(),
       date = settings.appParams.monthlyReportDate.get, path = settings.output.excelReportsPath.get)
@@ -51,8 +53,9 @@ object Application extends Logger{
     setup.settings.printAllFields()
 
     logger.info("Getting SparkSession")
-    implicit val sparkSession = getSparkSession()
     implicit val settings = setup.settings
+    implicit val sparkSession = getSparkSession(settings)
+
 
 
     val processor: Processor = args(0) match {

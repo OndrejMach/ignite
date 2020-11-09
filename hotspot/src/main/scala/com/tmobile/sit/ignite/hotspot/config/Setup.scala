@@ -38,7 +38,6 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
         input_folder = serviceConf.getString("config.input.input_folder"),
         MPS_filename = serviceConf.getString("config.input.MPS_filename"),
         CDR_filename = serviceConf.getString("config.input.CDR_filename"),
-        exchange_rates_filename = serviceConf.getString("config.input.exchange_rates_filename"),
         failed_login_filename = serviceConf.getString("config.input.failed_login_filename")//failed_login_filename
       ),
       stageConfig = StageConfig(
@@ -48,7 +47,6 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
         wlan_cdr_file = serviceConf.getString("config.stage.wlan_cdr_file"),
         map_voucher_filename = serviceConf.getString("config.stage.map_voucher_filename"),
         orderDB_filename = serviceConf.getString("config.stage.orderDB_filename"),
-        exchange_rates_filename = serviceConf.getString("config.stage.exchange_rates_filename"),
         city_data = serviceConf.getString("config.stage.city_data"),
         wlan_voucher = serviceConf.getString("config.stage.wlan_voucher"),
         login_errors = serviceConf.getString("config.stage.login_errors"),
@@ -58,6 +56,7 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
         session_q = serviceConf.getString("config.stage.session_q"),
         failed_logins = serviceConf.getString("config.stage.failed_logins"),
         country = serviceConf.getString("config.stage.country"),
+        exchange_rates_filename = serviceConf.getString("config.stage.exchange_rates_filename"),
         failed_logins_input = serviceConf.getString("config.stage.failed_logins_input")//login_errors
       ),
       outputConfig = OutputConfig(

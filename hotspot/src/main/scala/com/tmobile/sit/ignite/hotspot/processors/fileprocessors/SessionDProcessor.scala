@@ -22,6 +22,8 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
 
   private val cdrAggregates = {
     logger.info(s"Geting CDR data Aggregates - input size: ${cdrData.count()}")
+    //cdrData.filter("hotspot_id = '412309291572'").select("venue_type", "venue").distinct().collect().foreach(println(_))
+
     cdrData
       .withColumn("wlan_hotspot_ident_code", when($"hotspot_id".isNotNull, $"hotspot_id").otherwise(concat(lit("undefined_"), $"hotspot_owner_id")))
       .withColumn("stop_ticket", when($"terminate_cause_id".equalTo(lit(1001)), 1).otherwise(0))
@@ -64,15 +66,12 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
     logger.info("Filtering wlan hotspot data for history")
     val oldDataHotspot = wlanHotspotStageData.filter(($"valid_to".isNull) || ($"valid_to" < lit(processingDate).cast(TimestampType)))
 
-    logger.info(s"Today HOTSPOT data count: ${todayDataHotspot.count()}")
-    logger.info(s"Old HOTSPOT data count: ${oldDataHotspot.count()}")
+    logger.debug(s"Today HOTSPOT data count: ${todayDataHotspot.count()}")
+    logger.debug(s"Old HOTSPOT data count: ${oldDataHotspot.count()}")
 
-    //cdrAggregates.printSchema()
-
-    // val aggColumns = cdrAggregates.columns.map("agg_" + _)
 
     val uniqueCDRs: DataFrame = cdrAggregates
-      .sort("wlan_hotspot_ident_code")
+      .sort(desc("wlan_hotspot_ident_code"),desc("wlan_session_date"))
       .groupBy("wlan_hotspot_ident_code")
       .agg(
         first("wlan_session_date").alias("wlan_session_date"),
@@ -94,46 +93,77 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
 
       val toGo = uniqueCDRs.toDF(uniqueCDRs.columns.map("agg_" + _) :_*)
 
-    // val aggColumns =  uniqueCDRs.columns.map("agg_" + _)
 
     logger.info("Joining with CDR Aggregates")
-    val sessionDOut = todayDataHotspot
+    //sessionDOut
+    val joinToUpdate = todayDataHotspot
       .join(toGo, $"wlan_hotspot_ident_code" === $"agg_wlan_hotspot_ident_code", "left_outer")
-      .withColumn("wlan_venue_type_code", when(($"wlan_venue_type_code" =!= $"agg_venue_type") && $"agg_venue_type".isNotNull, $"agg_venue_type").otherwise($"wlan_venue_type_code"))
+
+    val matched = joinToUpdate.filter($"agg_wlan_hotspot_ident_code".isNotNull && ($"agg_venue_type" .isNotNull || $"agg_venue".isNotNull || $"agg_english_city_name".isNotNull))
+
+    val notMatched = joinToUpdate.except(matched)
+      .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
+
+    val toUpdate =
+      matched.filter($"wlan_venue_type_code" =!= $"agg_venue_type" || $"wlan_venue_code" =!= $"agg_venue" || $"city_code" =!= $"agg_english_city_name")
+
+    val oldUpdated =
+      toUpdate
+        .withColumn("valid_to",$"agg_wlan_session_date" )
+        .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
+
+    val newUpdated =
+      toUpdate
+        .withColumn("wlan_venue_type_code", when(($"wlan_venue_type_code" =!= $"agg_venue_type") && $"agg_venue_type".isNotNull, $"agg_venue_type").otherwise($"wlan_venue_type_code"))
       .withColumn("wlan_venue_code", when(($"wlan_venue_code" =!= $"agg_venue") && $"agg_venue".isNotNull, $"agg_venue").otherwise($"wlan_venue_code"))
       .withColumn("city_code", when(($"city_code" =!= $"agg_english_city_name") && $"agg_english_city_name".isNotNull, $"agg_english_city_name").otherwise($"city_code"))
-      .withColumn("valid_to", when($"agg_wlan_session_date".isNotNull, $"agg_wlan_session_date").otherwise(lit(FUTURE)))
+      .withColumn("country_code", when($"country_code".isNotNull,$"country_code").otherwise($"agg_country_code"))
+      .withColumn("valid_to", lit(FUTURE))
       .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
+
+    val notToUpdate = matched
+        .except(toUpdate)
+      .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
+
+    logger.info(s"notToUpdate: ${notToUpdate.count()}, oldUpdated: ${oldUpdated.count()}, newUpdated: ${newUpdated.count()}, notMatched: ${notMatched.count()}")
+
+
+
+    val sessionDOut =
+      notToUpdate.union(oldUpdated).union(newUpdated).union(notMatched)
 
     val onlyCDRs = toGo.join(todayDataHotspot, $"wlan_hotspot_ident_code" === $"agg_wlan_hotspot_ident_code", "left_outer")
 
-    //val both = onlyCDRs.filter($"wlan_hotspot_id".isNotNull)
+    val toProvision = onlyCDRs.filter($"wlan_hotspot_ident_code".isNull)
 
-    val toProvision = onlyCDRs.filter($"wlan_hotspot_id".isNull)
-
-    //toProvision.show(false)
-
-
-    logger.info(s"With HOTSPOT_ID data count: ${sessionDOut.count()}")
-    logger.info(s"With HOTSPOT_ID data count: ${toProvision.count()}")
+    logger.debug(s"With HOTSPOT_ID and for update data count: ${sessionDOut.count()}")
+    logger.debug(s"With HOTSPOT_ID new records data count: ${toProvision.count()}")
 
     logger.info("Preparing new wlanHostpot data from CDR aggregates")
     val provisioned = toProvision
       .withColumn("wlan_hotspot_id", monotonically_increasing_id())
       .withColumn("wlan_hotspot_id", $"wlan_hotspot_id" + lit(maxHotspotID))
       .withColumn("wlan_hotspot_desc", lit("Hotspot not assigned"))
-      .withColumn("country_code", upper($"country_code"))
+      .withColumn("country_code", when($"country_code".isNotNull,upper($"country_code")).otherwise(upper($"agg_country_code")))
       .withColumn("wlan_provider_code", $"agg_wlan_provider_code")
       .withColumn("valid_from", $"agg_wlan_session_date".cast(TimestampType))
       .withColumn("wlan_hotspot_ident_code", when($"wlan_hotspot_ident_code".isNull,$"agg_wlan_hotspot_ident_code" ).otherwise($"wlan_hotspot_ident_code"))
+      .withColumn("wlan_venue_type_code", when($"agg_venue_type".isNotNull, $"agg_venue_type").otherwise($"wlan_venue_type_code"))
+      .withColumn("wlan_venue_code", when($"agg_venue".isNotNull, $"agg_venue").otherwise($"wlan_venue_code"))
+      .withColumn("valid_to", lit(FUTURE))
       .na.fill("undefined", Seq("wlan_venue_type_code", "wlan_venue_code", "city_code"))
       .select(todayDataHotspot.columns.head, todayDataHotspot.columns.tail: _*)
+
+    logger.info(s"Columns for today: ${todayDataHotspot.columns.mkString(",")}")
 
     logger.info("Getting the new WLanHotspot Data")
 
     logger.info("PROVISIONED NULL HOTSPOTS: "+provisioned.filter("wlan_hotspot_ident_code is null").count())
     logger.info("sessionDOut NULL HOTSPOTS: "+sessionDOut.filter("wlan_hotspot_ident_code is null").count())
     logger.info("oldDataHotspot NULL HOTSPOTS: "+oldDataHotspot.filter("wlan_hotspot_ident_code is null").count())
+    logger.info("PROVISIONED NULL valid_to: "+provisioned.filter("valid_to is null").count())
+    logger.info("sessionDOut NULL valid_to: "+sessionDOut.filter("valid_to is null").count())
+    logger.info("oldDataHotspot NULL valid_to: "+oldDataHotspot.filter("valid_to is null").count())
 
     val ret = provisioned
       .union(sessionDOut)

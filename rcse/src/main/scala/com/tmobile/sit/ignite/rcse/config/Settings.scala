@@ -55,7 +55,8 @@ case class AppConfig(
                       processingDate: Date,
                       inputFilesPath: String,
                       maxDate: Date,
-                      master: String
+                      master: String,
+                      dynamicAllocation: String
                     ) extends RCSEConfig
 
 

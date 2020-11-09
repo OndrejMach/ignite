@@ -5,6 +5,7 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.structures.{CommonStructures, Events}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
 
 /**
  * Class contains input data for the Events calculation (updates client, terminal, terminalSW. regder, DM).
@@ -32,6 +33,7 @@ class EventsInputData(implicit sparkSession: SparkSession,settings: Settings) ex
       schema = Some(CommonStructures.des3Schema),
       delimiter = ",")
       .read()
+      .persist(StorageLevel.MEMORY_ONLY)
   }
 
   val msisdn3DesLookup = {
@@ -41,5 +43,8 @@ class EventsInputData(implicit sparkSession: SparkSession,settings: Settings) ex
       schema = Some(CommonStructures.des3Schema),
       delimiter = ",")
       .read()
+      .persist(StorageLevel.MEMORY_ONLY)
   }
+
+
 }

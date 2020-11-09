@@ -47,7 +47,8 @@ case class ApplicationParams(
                               sparkAppName: Option[String],
                               filteredAirlineCodes: Option[Seq[String]],
                               airlineCodesForReport: Option[Seq[String]],
-                              monthlyReportDate: Option[Timestamp]
+                              monthlyReportDate: Option[Timestamp],
+                              master: Option[String]
                             ) extends GenericSettings {
   def isAllDefined = {
     firstDate.isDefined && firstPlus1Date.isDefined && minRequestDate.isDefined &&

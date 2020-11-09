@@ -4,7 +4,7 @@ import java.sql.Date
 import java.time.LocalDate
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcse.processors.inputs.{InitUserInputs, LookupsData}
+import com.tmobile.sit.ignite.rcse.processors.inputs.{InitUserInputs, LookupsData, LookupsDataReader}
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
 import com.tmobile.sit.ignite.rcse.structures.InitUsers
 import org.apache.spark.sql.SparkSession
@@ -79,7 +79,6 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
         max("date_id_upper_bound").alias("date_id_upper_bound"),
         first("natco_code").alias("natco_code")
       )
-      //(date_id: Date,date_queue: List[Int], user_queue: List[Int], dateUpperBound: Date, cnt_users_all: Int )
       .withColumn("dateCounts", getDates(lit(processingDate).cast(DateType), $"date_queue", $"user_queue", $"date_id_upper_bound", $"cnt_users_all"))
       .withColumn("date_metrics", explode($"dateCounts"))
       .withColumn("date_id", $"date_metrics".getItem("date_id"))

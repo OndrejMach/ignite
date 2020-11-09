@@ -3,6 +3,7 @@ package com.tmobile.sit.ignite.hotspot.data
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.common.data.CommonStructures
+import com.tmobile.sit.ignite.common.readers.ExchangeRatesStageReader
 import com.tmobile.sit.ignite.hotspot.config.Settings
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, lit}
@@ -23,14 +24,14 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
     logger.info(s"Reading wlan hotspot file from ${settings.stageConfig.wlan_hotspot_filename.get}")
     sparkSession
     .read
-    .parquet(settings.stageConfig.wlan_hotspot_filename.get).cache() //"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_d_wlan_hotspot")
+    .parquet(settings.stageConfig.wlan_hotspot_filename.get).cache()
   }
 
   lazy val cdrData = {
     logger.info(s"Reading cdr file from ${settings.stageConfig.wlan_cdr_file.get} year='${processingDate.getYear}',month='${processingDate.getMonthValue}',day='${processingDate.getDayOfMonth}'")
     sparkSession
       .read
-      .parquet(settings.stageConfig.wlan_cdr_file.get) //"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_q_wlan_cdr")
+      .parquet(settings.stageConfig.wlan_cdr_file.get)
       .filter(s"year='${processingDate.getYear}' and  month='${processingDate.getMonthValue}' and day = '${processingDate.getDayOfMonth}'")
   }
 
@@ -38,7 +39,7 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
     logger.info(s"Reading orderDB file from ${settings.stageConfig.orderDB_filename.get}")
     sparkSession
       .read
-      .parquet(settings.stageConfig.orderDB_filename.get)//"/Users/ondrejmachacek/tmp/hotspot/stage/cptm_ta_f_wlan_orderdb")
+      .parquet(settings.stageConfig.orderDB_filename.get)
       .filter(s"(year='${processingDatePlus1.getYear}' or year='${processingDate.getYear}') and  " +
         s"(month='${processingDate.getMonthValue}' or month='${processingDatePlus1.getMonthValue}') and " +
         s"(day = '${processingDatePlus1.getDayOfMonth}' or day = '${processingDate.getDayOfMonth}')")
@@ -47,25 +48,21 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
   lazy val cityData =
     {
       logger.info(s"Reading City data file from ${settings.stageConfig.city_data.get}")
-      CSVReader(path = settings.stageConfig.city_data.get,//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/common/cptm_ta_d_city.csv",
+      CSVReader(path = settings.stageConfig.city_data.get,
         header = false, schema = Some(InterimDataStructures.CITY_STRUCT), delimiter = "|")
         .read()
     }
 
-  lazy val voucherData = {//sparkSession.read.parquet("/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_voucher.csv")
+  lazy val voucherData = {
     logger.info(s"Reading voucher data from ${settings.stageConfig.wlan_voucher.get}")
-    //sparkSession
-    //    .read
-    //    .parquet(settings.stageConfig.wlan_voucher.get)
+
     CSVReader(path = settings.stageConfig.wlan_voucher.get, header = false, schema = Some(InterimDataStructures.VOUCHER_STRUCT), delimiter = "|").read()
   }
 
 
   lazy val exchRatesFinal = {
     logger.info("Reading final Exchange rates")
-    CSVReader(path = settings.stageConfig.exchange_rates_filename.get, delimiter = "|",
-      timestampFormat = "yyyy-MM-dd HH:mm:ss", header = false,
-      schema = Some(CommonStructures.exchangeRatesStructure)).read()
+    ExchangeRatesStageReader(settings.stageConfig.exchange_rates_filename.get).read().drop("entry_id", "load_date")
   }
 
   lazy val cdr3Days = {
@@ -79,7 +76,7 @@ class StageFilesData(implicit sparkSession: SparkSession, settings: Settings) ex
   }
 
   val loginErrorCodes =
-    CSVReader(path = settings.stageConfig.login_errors.get,//"/Users/ondrejmachacek/Projects/TMobile/EWH/EWH/hotspot/data/stage/cptm_ta_d_wlan_login_error.csv",
+    CSVReader(path = settings.stageConfig.login_errors.get,
       header = false, schema = Some(ErrorCodes.loginErrorStruct),
       delimiter = "|", timestampFormat = "yyyy-MM-dd HH:mm:ss").read()
 

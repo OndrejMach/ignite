@@ -57,6 +57,8 @@ class FailedTransactionsProcessor( oldCitiesData: DataFrame,oldVoucherData: Data
     logger.info("Preparing vouchers data")
     val voucherData = new VoucherData(wlanOrderDBExchangeRatesdata = wlanHotspotOrderDBWithExchangeRates, oldVoucherData = oldVoucherData )
     logger.info("Extracting transactions data")
+    logger.debug("ORDERDB DATA: "+wlanHotspotOrderDB.count())
+    logger.debug("ORDERDB DATA AND EXCHANGE RATES: "+wlanHotspotOrderDBWithExchangeRates.count())
     val transactionsData = new TransactionsData(
       wlanHostspotOrderDBExchangeRates = wlanHotspotOrderDBWithExchangeRates,
       citiesData = citiesData,

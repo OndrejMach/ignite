@@ -14,19 +14,18 @@ package object hotspot extends Logger{
     logger.info("Initialising sparkSession")
     SparkSession.builder()
       .master(settings.appConfig.master.get)
-      //.config("spark.executor.instances", "4")
-      //.config("spark.executor.memory", "4g")
-      //.config("spark.executor.cores", "1")
-      //.config("spark.driver.memory", "10g")
-      //.config("spark.driver.maxResultSize", "10g")
+      .config("spark.executor.instances", "34")
+      .config("spark.executor.memory", "24g")
+      .config("spark.executor.cores", "6")
+      .config("spark.driver.memory", "20g")
+      .config("spark.driver.maxResultSize", "10g")
       .config("spark.executor.JavaOptions", "-XX:+UseG1GC")
       .config("spark.executor.extraJavaOptions", "-XX:InitiatingHeapOccupancyPercent=35")
-      .config("spark.dynamicAllocation.enabled", "true")
+      .config("spark.dynamicAllocation.enabled", "false")
+      .config("spark.network.timeout", "50000s")
       .config("spark.app.name", settings.appConfig.application_name.get)
       .config("spark.sql.sources.partitionOverwriteMode","dynamic")
       .getOrCreate()
-
-    //println(ret.sparkContext.uiWebUrl)
 
   }
 

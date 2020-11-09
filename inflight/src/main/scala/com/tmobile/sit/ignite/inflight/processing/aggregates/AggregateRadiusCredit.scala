@@ -16,7 +16,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeRates: NormalisedExchangeRates)(implicit sparkSession: SparkSession) extends Logger {
   private def aggregateRadiusVoucher(): DataFrame = {
-    //data.filterAggrRadius.show(false)
 
     logger.debug(s"Voucher count: ${data.mapVoucher.select("wlif_username").distinct().count()}")
     logger.debug(s"Aggregated radius: ${data.filterAggrRadius.select("wlif_username").distinct().count()}")
@@ -44,11 +43,11 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeR
     logger.debug(s"COUNT RADIUS AGGREGATED: ${data.filterAggrRadius.count()}")
     val radiusWithVoucher = aggregateRadiusVoucher()
     logger.debug(s"COUNT RADIUSWITHVOUCHER: ${radiusWithVoucher.count()}")
-    //radiusWithVoucher.show(false)
+
     //join with orderDB
     val withOrderDB = joinWithOrderDB(radiusWithVoucher)
     logger.debug(s"COUNT RADIUSWITHVOUCHER with ORDERDB: ${withOrderDB.count()}")
-    //withOrderDB.show(false)
+
     //joinWithExchangeRates
     val withExRts = joinWithExchangeRates(withOrderDB)
       .withColumnRenamed("count_sessions", "wlif_num_sessions")
@@ -56,7 +55,7 @@ class AggregateRadiusCredit(data: AggregateRadiusCreditData, normalisedExchangeR
 
     withExRts
       .withColumn("wlif_session_time", translate(col("wlif_session_time")))
-      .withColumn("wlif_session_volume", round(col("wlif_session_volume"), 2))
+      .withColumn("wlif_session_volume", round(col("wlif_session_volume"), 4))
       .withColumn("amount_incl_vat", round(col("amount_incl_vat"), 2))
       .withColumn("amount_excl_vat", round(col("amount_excl_vat"), 2))
   }
