@@ -85,6 +85,7 @@ object Application extends App with Logger {
     provision = new CSVReader(conf.settings.inputPath.get + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read(),
     register_requests = new CSVReader(conf.settings.inputPath.get + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read()
   )
+  logger.info("Activity file loaded: " + conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz")
 
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(conf.settings.outputPath.get + "User_Agents.csv", header = true, delimiter = ";").read(),

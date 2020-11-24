@@ -12,6 +12,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stageData: 
     val inputProvision = inputData.provision
     val inputRegisterRequests = inputData.register_requests
 
+
     // Preprocess input files
     val stageActivityAcc = stageData.preprocessActivity(inputActivity,persistentData.accumulated_activity)
     val stageProvisionAcc = stageData.preprocessProvision(inputProvision,persistentData.accumulated_provision)

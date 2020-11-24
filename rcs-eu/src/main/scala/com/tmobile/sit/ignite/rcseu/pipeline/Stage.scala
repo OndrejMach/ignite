@@ -26,7 +26,7 @@ class Stage extends StageProcessing {
     logger.info("Preprocessing Activity Accumulator")
     val dailyFile = activity
       .withColumn("FileDate", lit(date))
-      .withColumn("creation_date", split(col("creation_date"), "T").getItem(0))
+      .withColumn("creation_date", split(col("creation_date"), "\\ ").getItem(0))
       .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
     // TODO: remove this debug
     dailyFile
