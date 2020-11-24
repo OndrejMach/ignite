@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import breeze.linalg.split
+//import breeze.linalg.split
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
@@ -20,30 +20,42 @@ trait StageProcessing extends Logger{
 //Creating accumulators for activity data, provision data and register requests data
 class Stage extends StageProcessing {
   override def preprocessActivity(activity: DataFrame,accumulated_activity:DataFrame): DataFrame = {
-
     //taking today's file (the file with the date from program argument) and adding it to the accumulator
     //eventually replacing the data from the current day processing
     //dropping unused columns
-
     logger.info("Preprocessing Activity Accumulator")
     val dailyFile = activity
       .withColumn("FileDate", lit(date))
-        .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
-
-
-      logger.info(s"accumulated_activity ${accumulated_activity.filter(col("FileDate") =!= date).count()} daily file: ${dailyFile.count()}")
-      val result = accumulated_activity
-        .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
-        .filter(col("FileDate") =!= date)
-        //.withColumn("Date", col("Date").cast("date"))
-        .withColumn("FileDate", col("FileDate").cast("date"))
-        //.select("FileDate",  "Date", "NatCo", "user_id")
-        .union(dailyFile)
-        .orderBy("FileDate")
-      logger.info(s"result count: ${result.count()}")
-      result
-
-
+      .withColumn("creation_date", split(col("creation_date"), "T").getItem(0))
+      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+    // TODO: remove this debug
+    dailyFile
+      .groupBy("FileDate", "creation_date")
+      .agg(count("creation_date").as("creation_date_count"))
+      .orderBy(asc("FileDate"))
+      .show(5)
+    // TODO: remove this debug
+    accumulated_activity
+      .groupBy("FileDate", "creation_date")
+      .agg(count("creation_date").as("creation_date_count"))
+      .orderBy(asc("FileDate"))
+      .show(5)
+    logger.info(s"accumulated_activity ${accumulated_activity.filter(col("FileDate") =!= date).count()} daily file: ${dailyFile.count()}")
+    val result = accumulated_activity
+      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+      .filter(col("FileDate") =!= date)
+      .withColumn("creation_date", split(col("creation_date"), "\\ ").getItem(0))
+      //.withColumn("FileDate", col("FileDate").cast("date"))
+      .union(dailyFile)
+      .orderBy("FileDate")
+    logger.info(s"result count: ${result.count()}")
+    // TODO: remove this debug
+    result
+      .groupBy("FileDate", "creation_date")
+      .agg(count("creation_date").as("creation_date_count"))
+      .orderBy(asc("FileDate"))
+      .show(5)
+    result
   }
 
 
