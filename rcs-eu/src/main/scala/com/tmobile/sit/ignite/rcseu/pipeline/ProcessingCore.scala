@@ -45,12 +45,14 @@ class Core extends ProcessingCore {
   //TODO: change monotonically_increasing_id
  val dim = new Dimension()
 
-  val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
 
-  val fullUserAgents0 = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents).dropDuplicates("UserAgent")
-  val fullUserAgents =fullUserAgents0.withColumn("_UserAgentID", monotonically_increasing_id)
+
+      val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
+      val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
   fullUserAgents.cache()
   logger.info("Full user agents count: " + fullUserAgents.count())
+
+
       val provisionedDaily = null
       val provisionedMonthly = null
       val provisionedYearly = null
@@ -95,9 +97,7 @@ class Core extends ProcessingCore {
       val dim = new Dimension()
 
       val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
-
-      val fullUserAgents0 = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents).dropDuplicates("UserAgent")
-      val fullUserAgents = fullUserAgents0.withColumn("_UserAgentID", monotonically_increasing_id)
+      val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
       fullUserAgents.cache()
       logger.info("Full user agents count: " + fullUserAgents.count())
 
@@ -182,7 +182,7 @@ class Core extends ProcessingCore {
 
       //calling ServiceFactsDaily function from FactsProcessing
       //generating one file each day (only daily processing needed)
-      val serviceDaily = fact.getServiceFactsDaily(stageData.activity)
+      val serviceDaily = fact.getServiceFactsDaily(persistentData.accumulated_activity)
       logger.info("Service facts daily count: " + serviceDaily.count())
 
 

@@ -29,9 +29,9 @@ class Stage extends StageProcessing {
     //Fixing creation date by substracting one hour from the timestamp
     val dailyFile = activity
       .withColumn("FileDate", lit(date))
-      .withColumn("creation_date_fixed", col("creation_date") - expr("INTERVAL 1 HOURS"))
-      .withColumn("creation_date", substring(col("creation_date_fixed"), 0, 10))
-      .drop("creation_date_fixed","bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+      .withColumn("creation_date", col("creation_date") - expr("INTERVAL 1 HOURS"))
+      //.withColumn("creation_date", substring(col("creation_date_fixed"), 0, 10))
+      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
     // TODO: remove this debug
     /*

@@ -3,6 +3,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
 
 trait DimensionProcessing extends Logger{
   def getNewUserAgents(activityData: DataFrame, registerRequestsData: DataFrame): DataFrame
@@ -11,12 +12,24 @@ trait DimensionProcessing extends Logger{
 class Dimension extends DimensionProcessing {
   // adding new user agents from today's activity and register requests data
 
-  def processUserAgentsSCD(oldUserAgents: DataFrame, newUserAgents: DataFrame): DataFrame = {
-    oldUserAgents
-        .drop("_UserAgentID")
-      .union(newUserAgents)
-      .distinct()
 
+
+  def processUserAgentsSCD(oldUserAgents: DataFrame, newUserAgents: DataFrame): DataFrame = {
+
+    val max_id: Integer = oldUserAgents.select("_UserAgentID").orderBy(desc("_UserAgentID")).first().getInt(0)
+
+    val fullUserAgents1 = newUserAgents.as("n")
+      .join(oldUserAgents.as("o"), lower(col("n.UserAgent")) === lower(col("o.UserAgent")), "leftanti")
+      .withColumn("row_nr", row_number.over(Window.orderBy("UserAgent")))
+      .withColumn("_UserAgentID", expr(s"$max_id + row_nr"))
+      .drop("row_nr")
+
+    val fullUserAgents =
+      fullUserAgents1
+        .union(oldUserAgents)
+
+
+    fullUserAgents
   }
 
   override def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {

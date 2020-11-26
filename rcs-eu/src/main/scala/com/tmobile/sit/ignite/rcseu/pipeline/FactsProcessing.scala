@@ -4,6 +4,9 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcseu.Application.natco
 import com.tmobile.sit.ignite.rcseu.Application.natcoID
 import com.tmobile.sit.ignite.rcseu.Application.date
+import com.tmobile.sit.ignite.rcseu.Application.dayforkey
+import com.tmobile.sit.ignite.rcseu.Application.monthforkey
+
 
 
 import org.apache.spark.sql.{DataFrame}
@@ -501,9 +504,15 @@ class Facts extends FactsProcessing {
       .union(sf10)
       .union(sf11)
 
-    finalsf
+    val finalsf1=finalsf
+        .withColumn("date",lit(dayforkey))
+        .withColumn("month",lit(monthforkey))
+        .withColumn("tkey",lit("t"))
+        .withColumn("natco",lit(natcoID))
+      .withColumn("DateKeyNatco", concat_ws("|",col("date"),col("month"),col("tkey"),col("natco")))
+        .drop("date","month","tkey","natco")
 
-
+    finalsf1
   }
 
 

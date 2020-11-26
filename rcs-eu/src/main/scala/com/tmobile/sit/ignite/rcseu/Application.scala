@@ -24,17 +24,17 @@ object Application extends App with Logger {
   val (year, monthNum, dayNum) = (splitted(0), splitted(1),splitted(2))
   val month = year + "-" + monthNum
 
-  val monthforkey = year + "/" +monthNum
+  val monthforkey = year + "\\" +monthNum
   val dayforkey =  dayNum +"-"+ monthNum +"-"+ year
 
   val dateforoutput = year+monthNum+dayNum
   val monthforoutput = year+monthNum
 
   val mtID="1"
-  val stID="-"
-  val cgID="-"
-  val crID="-"
-  val mkID="-"
+  val stID="3"
+  val cgID="2"
+  val crID="4"
+  val mkID="7"
 
   val natcoID = if (natco == "mt") mtID
   else if (natco == "st") stID
@@ -88,7 +88,7 @@ object Application extends App with Logger {
   logger.info("Activity file loaded: " + conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz")
 
   val persistentData = PersistentData(
-    oldUserAgents = new CSVReader(conf.settings.outputPath.get + "User_Agents.csv", header = true, delimiter = ";").read(),
+    oldUserAgents = new CSVReader(conf.settings.outputPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
     accumulated_activity =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_activity.parquet"),
     accumulated_provision =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_provision.parquet"),
     accumulated_register_requests =  sparkSession.read.parquet(conf.settings.lookupPath.get + "acc_register_requests.parquet")
