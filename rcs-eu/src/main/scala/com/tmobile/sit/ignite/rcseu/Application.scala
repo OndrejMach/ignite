@@ -4,7 +4,7 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.config.Setup
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData, ResultPaths}
-import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter}
+import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter, Helper}
 import com.tmobile.sit.ignite.rcseu.pipeline.Stage
 
 
@@ -66,7 +66,6 @@ object Application extends App with Logger {
     "rcs-eu.linux.conf"
   }
 
-
   logger.info("Configuration setup for " + configFile)
   val conf = new Setup(configFile)
 
@@ -80,10 +79,15 @@ object Application extends App with Logger {
 
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
+  val h = new Helper()
+  val activityFilePath = h.resolvePath(conf.settings, isHistoric)
+  val registerFilePath = h.resolvePath(conf.settings, isHistoric)
+  val provisionFilePath = h.resolvePath(conf.settings, isHistoric)
+
   val inputReaders = InputData(
-    activity = new CSVReader(conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz", schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read(),
-    provision = new CSVReader(conf.settings.inputPath.get + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read(),
-    register_requests = new CSVReader(conf.settings.inputPath.get + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read()
+    activity = new CSVReader(activityFilePath + s"activity_${date}_${natco}.csv.gz", schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read(),
+    provision = new CSVReader(registerFilePath + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read(),
+    register_requests = new CSVReader(provisionFilePath + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read()
   )
   logger.info("Activity file loaded: " + conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz")
 
