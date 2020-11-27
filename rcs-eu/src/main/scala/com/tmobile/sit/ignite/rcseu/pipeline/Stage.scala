@@ -5,7 +5,6 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcseu.Application.date
 import org.apache.spark.sql.functions.{col, lit, split}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.StringType
 
 
 trait StageProcessing extends Logger{
