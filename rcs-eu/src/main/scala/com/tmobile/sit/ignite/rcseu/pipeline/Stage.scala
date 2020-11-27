@@ -29,31 +29,33 @@ class Stage extends StageProcessing {
     //Fixing creation date by substracting one hour from the timestamp
     val dailyFile = activity
       .withColumn("FileDate", lit(date))
-      .withColumn("creation_date", col("creation_date") - expr("INTERVAL 1 HOURS"))
+      //.withColumn("creation_date", col("creation_date") - expr("INTERVAL 1 HOURS"))
       //.withColumn("creation_date", substring(col("creation_date_fixed"), 0, 10))
       .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
     // TODO: remove this debug
-    /*
+
     logger.info("Daily file schema")
     dailyFile.printSchema()
+
     logger.info("Daily file data")
     dailyFile
+      .withColumn("creation_date", substring(col("creation_date"), 0, 10))
       .groupBy("FileDate", "creation_date")
       .agg(count("creation_date").as("creation_date_count"))
       .orderBy(asc("FileDate"))
       .show(5)
-    */
+
 
     // TODO: remove this debug
-    /*
+
     logger.info("Old accumulator data")
     accumulated_activity
-      .groupBy("FileDate", "creation_date")
+      .groupBy("FileDate")
       .agg(count("creation_date").as("creation_date_count"))
       .orderBy(asc("FileDate"))
       .show(5)
-     */
+
 
     logger.info(s"accumulated_activity ${accumulated_activity.filter(col("FileDate") =!= date).count()} daily file: ${dailyFile.count()}")
 
@@ -62,7 +64,7 @@ class Stage extends StageProcessing {
     val result = accumulated_activity
       .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
       .filter(col("FileDate") =!= date)
-      .withColumn("creation_date", substring(col("creation_date"), 0, 10))
+      //.withColumn("creation_date", substring(col("creation_date"), 0, 10))
       //.withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFile)
       .orderBy("FileDate")
@@ -70,14 +72,14 @@ class Stage extends StageProcessing {
     logger.info(s"result count: ${result.count()}")
 
     // TODO: remove this debug
-    /*
+
     logger.info("New accumulator data")
     result
-      .groupBy("FileDate", "creation_date")
+      .groupBy("FileDate")
       .agg(count("creation_date").as("creation_date_count"))
       .orderBy(asc("FileDate"))
       .show(5)
-     */
+
 
     result
   }

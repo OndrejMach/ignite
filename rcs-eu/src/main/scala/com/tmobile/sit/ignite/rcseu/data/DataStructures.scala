@@ -2,6 +2,7 @@ package com.tmobile.sit.ignite.rcseu.data
 
 import com.tmobile.sit.common.readers.Reader
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
 case class InputData(activity: DataFrame, provision: DataFrame, register_requests: DataFrame)
 
@@ -16,3 +17,29 @@ case class OutputData(AccActivity:DataFrame,AccProvision:DataFrame,AccRegisterRe
 case class PersistentData(oldUserAgents: DataFrame, accumulated_activity: DataFrame,accumulated_provision:DataFrame,accumulated_register_requests:DataFrame)
 
 case class ResultPaths(lookupPath: String, outputPath: String)
+
+object FileSchemas {
+  val activitySchema = StructType(
+    Seq(
+      StructField("creation_date"      ,StringType , false),
+      StructField("from_user"          ,StringType , false),
+      StructField("to_user"            ,StringType , false),
+      StructField("from_network"       ,StringType , false),
+      StructField("to_network"         ,StringType , false),
+      StructField("type"               ,StringType , false),
+      StructField("duration"           ,IntegerType , true),
+      StructField("bytes_sent"         ,IntegerType , true),
+      StructField("bytes_received"     ,IntegerType , true),
+      StructField("call_id"            ,StringType , false),
+      StructField("contribution_id"    ,StringType , false),
+      StructField("src_ip"             ,StringType , false),
+      StructField("sip_code"           ,IntegerType , true),
+      StructField("sip_reason"         ,StringType , false),
+      StructField("user_agent"         ,StringType , false),
+      StructField("messages_sent"      ,IntegerType , true),
+      StructField("messages_received"  ,IntegerType , true),
+      StructField("from_tenant"        ,StringType , false),
+      StructField("to_tenant"          ,StringType , false)
+    )
+  )
+}
