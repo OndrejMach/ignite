@@ -37,8 +37,11 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
     if(isHistoric) {
       CSVWriter(outputData.UserAgents, resultPaths.outputPath+"User_agents.csv", delimiter = "\t").writeData()
 
+      logger.info("Writing acc_activity.parquet")
       outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_activity.parquet")
+      logger.info("Writing acc_provision.parquet")
       outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_provision.parquet")
+      logger.info("Writing acc_register_requests.parquet")
       outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_register_requests.parquet")
 
     }
@@ -62,9 +65,12 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
 
       CSVWriter(outputData.ServiceDaily, resultPaths.outputPath + "service_fact." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
 
-      outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath + "acc_activity.parquet")
-      outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath + "acc_provision.parquet")
-      outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath + "acc_register_requests.parquet")
+      logger.info("Writing acc_activity.parquet")
+      outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_activity.parquet")
+      logger.info("Writing acc_provision.parquet")
+      outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_provision.parquet")
+      logger.info("Writing acc_register_requests.parquet")
+      outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_register_requests.parquet")
     }
     //CSVWriter(outputData.AccActivity, resultPaths.lookupPath+"acc_activity.csv", delimiter = ";").writeData()
     //CSVWriter(outputData.AccProvision, resultPaths.lookupPath+"acc_provision.csv", delimiter = ";").writeData()
