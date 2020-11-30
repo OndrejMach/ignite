@@ -42,16 +42,12 @@ class Core extends ProcessingCore {
 
 
   //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
-  //TODO: change monotonically_increasing_id
- val dim = new Dimension()
+  val dim = new Dimension()
 
-
-
-      val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
-      val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
+  val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
+  val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
   fullUserAgents.cache()
   logger.info("Full user agents count: " + fullUserAgents.count())
-
 
       val provisionedDaily = null
       val provisionedMonthly = null
@@ -63,8 +59,6 @@ class Core extends ProcessingCore {
       val activeMonthly = null
       val activeYearly = null
       val serviceDaily = null
-
-
 
       OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,
         provisionedDaily,provisionedMonthly,provisionedYearly,
@@ -91,9 +85,7 @@ class Core extends ProcessingCore {
       acc_register_requests.cache()
       logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
-
       //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
-      //TODO: change monotonically_increasing_id
       val dim = new Dimension()
 
       val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)

@@ -62,20 +62,17 @@ class Stage extends StageProcessing {
     result
   }
 
-  //TODO: Find out what fields can be dropped to thin the accumulator.'tenant' for sure, we will have separate accumulators per natco
   override def preprocessProvision(provision: DataFrame, accumulated_provision:DataFrame): DataFrame = {
    logger.info("Preprocessing Provision Accumulator")
     val dailyFileProvision = provision
       .withColumn("FileDate", lit(date))
-     // .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+      .select("msisdn", "FileDate")
 
     logger.info(s"accumulated_provision ${accumulated_provision.filter(col("FileDate") =!= date).count()} daily file: ${dailyFileProvision.count()}")
     val dailyFileProvision1= accumulated_provision
-      //.drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
       .filter(col("FileDate") =!= date)
-      //.withColumn("Date", col("Date").cast("date"))
+      .select("msisdn", "FileDate")
       .withColumn("FileDate", col("FileDate").cast("date"))
-      //.select("FileDate",  "Date", "NatCo", "user_id")
       .union(dailyFileProvision)
       .orderBy("FileDate")
     logger.info(s"result count: ${dailyFileProvision1.count()}")
@@ -87,15 +84,13 @@ class Stage extends StageProcessing {
     logger.info("Preprocessing Register Requests Accumulator")
     val dailyFileRegister = register_requests
       .withColumn("FileDate", lit(date))
-    // .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+      .select("msisdn", "user_agent", "FileDate")
 
     logger.info(s"accumulated_register ${accumulated_register_requests.filter(col("FileDate") =!= date).count()} daily file: ${dailyFileRegister.count()}")
     val dailyFileRegister1= accumulated_register_requests
-      //.drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
       .filter(col("FileDate") =!= date)
-      //.withColumn("Date", col("Date").cast("date"))
+      .select("msisdn", "user_agent", "FileDate")
       .withColumn("FileDate", col("FileDate").cast("date"))
-      //.select("FileDate",  "Date", "NatCo", "user_id")
       .union(dailyFileRegister)
       .orderBy("FileDate")
     logger.info(s"result count: ${dailyFileRegister1.count()}")
