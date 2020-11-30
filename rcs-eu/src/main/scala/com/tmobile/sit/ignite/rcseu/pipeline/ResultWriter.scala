@@ -31,22 +31,20 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
   {
     logger.info("Writing output files")
 
-    //val fileSuffix = fileMetaData.file_date.replace("-","")+"_"+fileMetaData.file_natco_id
+    //val fileSuffix = natco + "." + dateforoutput
 
-    //if isHistoric = true (if the config parameter is true)
-    if(isHistoric) {
-      CSVWriter(outputData.UserAgents, resultPaths.outputPath+"User_agents.csv", delimiter = "\t").writeData()
+    // Write the accumulators and dimension always
+    CSVWriter(outputData.UserAgents, resultPaths.outputPath+"User_agents.csv", delimiter = "\t").writeData()
 
-      logger.info("Writing acc_activity.parquet")
-      outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_activity.parquet")
-      logger.info("Writing acc_provision.parquet")
-      outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_provision.parquet")
-      logger.info("Writing acc_register_requests.parquet")
-      outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+"acc_register_requests.parquet")
+    logger.info(s"Writing acc_activity_${natco}.parquet")
+    outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_activity_${natco}.parquet")
+    logger.info(s"Writing acc_provision_${natco}.parquet")
+    outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_provision_${natco}.parquet")
+    logger.info(s"Writing acc_register_requests.parquet")
+    outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_register_requests_${natco}.parquet")
 
-    }
-    else {
-      CSVWriter(outputData.UserAgents, resultPaths.outputPath + "User_agents.csv", delimiter = "\t").writeData()
+    //if isHistoric = false, write all files
+    if(!isHistoric) {
 
       CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath + "provisioned_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
       CSVWriter(outputData.ProvisionedMonthly, resultPaths.outputPath + "provisioned_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
@@ -64,13 +62,6 @@ class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSessio
       //CSVWriter(outputData.ActiveTotal, resultPaths.outputPath + "activity_total." + natco + ".csv", delimiter = ";").writeData()
 
       CSVWriter(outputData.ServiceDaily, resultPaths.outputPath + "service_fact." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
-
-      logger.info(s"Writing acc_activity_${natco}.parquet")
-      outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_activity_${natco}.parquet")
-      logger.info(s"Writing acc_provision_${natco}.parquet")
-      outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_provision_${natco}.parquet")
-      logger.info(s"Writing acc_register_requests.parquet")
-      outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_register_requests_${natco}.parquet")
     }
   }
 }
