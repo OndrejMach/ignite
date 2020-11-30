@@ -40,7 +40,6 @@ class Core extends ProcessingCore {
   acc_register_requests.cache()
   logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
-
   //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
   val dim = new Dimension()
 
@@ -115,13 +114,6 @@ class Core extends ProcessingCore {
         .withColumnRenamed("Provisioned_daily","Provisioned_yearly")
       logger.info("Provisioned yearly count: " + provisionedYearly.count())
 
-      /*val filtered_total_provision = persistentData.accumulated_provision.filter(col("FileDate").contains("20"))
-      val provisionedTotal1 = fact.getProvisionedDaily(filtered_total_provision, "20")
-      val provisionedTotal= provisionedTotal1.withColumnRenamed("ConKeyP1","ConKeyP4")
-        .withColumnRenamed("Provisioned_daily","Provisioned_total")
-      logger.info("Provisioned total count: " + provisionedTotal.count())*/
-      //----------------------------------------------------------------------------
-
       val filtered_daily_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(date))
       val registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, dayforkey)
       logger.info("Registered daily count: " + registeredDaily.count())
@@ -138,12 +130,6 @@ class Core extends ProcessingCore {
         .withColumnRenamed("Registered_daily","Registered_yearly")
       logger.info("Registered yearly count: " + registeredYearly.count())
 
-      /*val filtered_total_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains("20"))
-      val registeredTotal1 = fact.getRegisteredDaily(filtered_total_register, fullUserAgents, "20")
-      val registeredTotal= registeredTotal1.withColumnRenamed("ConKeyR1","ConKeyR4")
-        .withColumnRenamed("Registered_daily","Registered_total")
-      logger.info("Registered total count: " + registeredTotal.count())*/
-      //----------------------------------------------------------------------------
       val filtered_daily_active = persistentData.accumulated_activity.filter(col("creation_date").contains(date))
       val activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, dayforkey, natcoNetwork)
       logger.info("Active daily count: " + activeDaily.count())
@@ -166,19 +152,13 @@ class Core extends ProcessingCore {
         .withColumnRenamed("Active_daily_unsucc_orig", "Active_yearly_unsucc_orig")
       logger.info("Active yearly count: " + activeYearly.count())
 
-     /* val filtered_total_active = persistentData.accumulated_activity.filter(col("creation_date").contains("20"))
-      val activeTotal1 = fact.getActiveDaily(filtered_total_active, fullUserAgents, "20", natcoNetwork)
-      val activeTotal= activeTotal1.withColumnRenamed("ConKeyR1","ConKeyR4")
-      logger.info("Active total count: " + activeTotal.count())*/
-      //----------------------------------------------------------------------------
-
       //calling ServiceFactsDaily function from FactsProcessing
       //generating one file each day (only daily processing needed)
       val serviceDaily = fact.getServiceFactsDaily(persistentData.accumulated_activity)
       logger.info("Service facts daily count: " + serviceDaily.count())
 
 
-
+    // Prepare output data
     OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,
       provisionedDaily,provisionedMonthly,provisionedYearly,
       registeredDaily,registeredMonthly,registeredYearly,
