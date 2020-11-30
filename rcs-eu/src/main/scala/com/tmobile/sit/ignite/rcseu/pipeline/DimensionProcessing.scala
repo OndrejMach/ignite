@@ -19,6 +19,7 @@ class Dimension extends DimensionProcessing {
     val max_id: Integer = oldUserAgents.select("_UserAgentID").orderBy(desc("_UserAgentID")).first().getInt(0)
 
     val fullUserAgents1 = newUserAgents.as("n")
+      .filter("UserAgent is not null")
       .join(oldUserAgents.as("o"), lower(col("n.UserAgent")) === lower(col("o.UserAgent")), "leftanti")
       .withColumn("row_nr", row_number.over(Window.orderBy("UserAgent")))
       .withColumn("_UserAgentID", expr(s"$max_id + row_nr"))
