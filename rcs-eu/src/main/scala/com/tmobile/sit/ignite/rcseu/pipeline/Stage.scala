@@ -47,8 +47,7 @@ class Stage extends StageProcessing {
       .show(5)
     */
 
-    logger.info(s"accumulated_activity ${accumulated_activity.filter(col("FileDate") =!= date).count()} daily file: ${dailyFile.count()}")
-
+    logger.info(s"Daily file count: ${dailyFile.count()}")
     logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
 
     val result = accumulated_activity
@@ -57,7 +56,7 @@ class Stage extends StageProcessing {
       .union(dailyFile)
       .orderBy("FileDate")
 
-    logger.info(s"New activity accumulator: ${result.count()}"+" records")
+    //logger.info(s"New activity accumulator: ${result.count()}"+" records")
 
     result
   }
@@ -68,14 +67,16 @@ class Stage extends StageProcessing {
       .withColumn("FileDate", lit(date))
       .select("msisdn", "FileDate")
 
-    logger.info(s"accumulated_provision ${accumulated_provision.filter(col("FileDate") =!= date).count()} daily file: ${dailyFileProvision.count()}")
+    logger.info(s"Daily file count: ${dailyFileProvision.count()}")
+    logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
+
     val dailyFileProvision1= accumulated_provision
       .filter(col("FileDate") =!= date)
       .select("msisdn", "FileDate")
       .withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFileProvision)
       .orderBy("FileDate")
-    logger.info(s"result count: ${dailyFileProvision1.count()}")
+    //logger.info(s"New provision accumulator count: ${dailyFileProvision1.count()}")
 
     dailyFileProvision1
   }
@@ -86,14 +87,16 @@ class Stage extends StageProcessing {
       .withColumn("FileDate", lit(date))
       .select("msisdn", "user_agent", "FileDate")
 
-    logger.info(s"accumulated_register ${accumulated_register_requests.filter(col("FileDate") =!= date).count()} daily file: ${dailyFileRegister.count()}")
+    logger.info(s"Daily file count: ${dailyFileRegister.count()}")
+    logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
+
     val dailyFileRegister1= accumulated_register_requests
       .filter(col("FileDate") =!= date)
       .select("msisdn", "user_agent", "FileDate")
       .withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFileRegister)
       .orderBy("FileDate")
-    logger.info(s"result count: ${dailyFileRegister1.count()}")
+    //logger.info(s"New register requests count: ${dailyFileRegister1.count()}")
 
     dailyFileRegister1
   }

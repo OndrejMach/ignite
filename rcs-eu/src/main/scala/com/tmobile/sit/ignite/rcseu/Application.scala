@@ -15,13 +15,13 @@ object Application extends App with Logger {
     System.exit(0)
   }
   //TODO: natco network for Macedonia
-// variables needed in FactsProcesing and ProcessingCore for filtering
+  // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
   val natco = args(1)
   val isHistoric = args(2).toBoolean
 
-  val splitted = date.split('-')
-  val (year, monthNum, dayNum) = (splitted(0), splitted(1),splitted(2))
+  val date_split = date.split('-')
+  val (year, monthNum, dayNum) = (date_split(0), date_split(1),date_split(2))
   val month = year + "-" + monthNum
 
   val monthforkey = year + "\\" +monthNum
@@ -80,28 +80,26 @@ object Application extends App with Logger {
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
   val h = new Helper()
-  val activityFilePath = h.resolvePath(conf.settings, isHistoric)
-  val registerFilePath = h.resolvePath(conf.settings, isHistoric)
-  val provisionFilePath = h.resolvePath(conf.settings, isHistoric)
+  val activityFilePath = h.resolvePath(conf.settings, date, natco, isHistoric, "activity")
+  val registerFilePath = h.resolvePath(conf.settings, date, natco, isHistoric, "register_requests")
+  val provisionFilePath = h.resolvePath(conf.settings, date, natco, isHistoric, "provision")
 
   val inputReaders = InputData(
-    activity = new CSVReader(activityFilePath + s"activity_${date}_${natco}.csv.gz", schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read(),
-    provision = new CSVReader(registerFilePath + s"provision_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read(),
-    register_requests = new CSVReader(provisionFilePath + s"register_requests_${date}_${natco}.csv.gz", header = true, delimiter = "\t").read()
+    activity = new CSVReader(activityFilePath, schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read(),
+    provision = new CSVReader(provisionFilePath,schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
+    register_requests = new CSVReader(registerFilePath, schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
   )
-  logger.info("Activity file loaded: " + conf.settings.inputPath.get + s"activity_${date}_${natco}.csv.gz")
+  logger.info("Source files loaded")
 
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(conf.settings.outputPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
-    accumulated_activity =  sparkSession.read.parquet(conf.settings.lookupPath.get + s"acc_activity_${natco}.parquet"),
-    accumulated_provision =  sparkSession.read.parquet(conf.settings.lookupPath.get + s"acc_provision_${natco}.parquet"),
-    accumulated_register_requests =  sparkSession.read.parquet(conf.settings.lookupPath.get + s"acc_register_requests_${natco}.parquet")
 
-    //accumulated_activity = new CSVReader(conf.settings.lookupPath.get + "acc_activity.csv", header = true, delimiter = ";").read(),
-    //accumulated_provision = new CSVReader(conf.settings.lookupPath.get + "acc_provision.csv", header = true, delimiter = ";").read(),
-    //accumulated_register_requests = new CSVReader(conf.settings.lookupPath.get + "acc_register_requests.csv", header = true, delimiter = ";").read()
+    accumulated_activity =  sparkSession.read.format("parquet").load(conf.settings.lookupPath.get + s"acc_activity_${natco}.parquet"),
+    accumulated_provision =  sparkSession.read.format("parquet").load(conf.settings.lookupPath.get + s"acc_provision_${natco}.parquet"),
+    accumulated_register_requests =  sparkSession.read.format("parquet").load(conf.settings.lookupPath.get + s"acc_register_requests_${natco}.parquet")
+    )
 
-  )
+  logger.info("Persistent files loaded")
 
   val stageProcessing = new Stage()
 

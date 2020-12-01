@@ -29,7 +29,6 @@ class Dimension extends DimensionProcessing {
       fullUserAgents1
         .union(oldUserAgents)
 
-
     fullUserAgents
   }
 

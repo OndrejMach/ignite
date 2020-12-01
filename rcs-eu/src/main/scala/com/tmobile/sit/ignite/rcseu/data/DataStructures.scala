@@ -42,4 +42,51 @@ object FileSchemas {
       StructField("to_tenant"          ,StringType , false)
     )
   )
+
+  val provisionSchema = StructType(
+    Seq(
+      StructField("msisdn"      ,StringType , false),
+      StructField("tenant"      ,StringType , false)
+    )
+  )
+  val registerRequestsSchema = StructType(
+    Seq(
+      StructField("msisdn"      ,StringType , false),
+      StructField("user_agent"  ,StringType , false),
+      StructField("tenant"      ,StringType , false)
+    )
+  )
+
+  val activityAccSchema = StructType(
+    Seq(
+      StructField("creation_date"      ,StringType , false),
+      StructField("from_user"          ,StringType , false),
+      StructField("to_user"            ,StringType , false),
+      StructField("from_network"       ,StringType , false),
+      StructField("to_network"         ,StringType , false),
+      StructField("type"               ,StringType , false),
+      StructField("call_id"            ,StringType , false),
+      StructField("sip_code"           ,IntegerType , true),
+      StructField("user_agent"         ,StringType , false),
+      StructField("messages_sent"      ,IntegerType , true),
+      StructField("messages_received"  ,IntegerType , true),
+      StructField("from_tenant"        ,StringType , false),
+      StructField("to_tenant"          ,StringType , false),
+      StructField("FileDate"           ,StringType , false)
+    )
+  )
+
+  val provisionAccSchema = StructType(
+    Seq(
+      StructField("msisdn"      ,StringType , false),
+      StructField("FileDate"    ,StringType , false)
+    )
+  )
+  val registerRequestsAccSchema = StructType(
+    Seq(
+      StructField("msisdn"      ,StringType , false),
+      StructField("user_agent"  ,StringType , false),
+      StructField("FileDate"    ,StringType , false)
+    )
+  )
 }
