@@ -1,12 +1,7 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcseu.Application.natco
-import com.tmobile.sit.ignite.rcseu.Application.natcoID
-import com.tmobile.sit.ignite.rcseu.Application.natcoNetwork
-import com.tmobile.sit.ignite.rcseu.Application.date
-import com.tmobile.sit.ignite.rcseu.Application.dayforkey
-import com.tmobile.sit.ignite.rcseu.Application.monthforkey
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import org.apache.spark.sql.types.IntegerType
 
 
@@ -27,7 +22,7 @@ class Facts extends FactsProcessing {
   def getProvisionedDaily(provision: DataFrame,period_for_process:String): DataFrame = {
     val provisionedDaily = provision
       .withColumn("ConKeyP1",lit(period_for_process))
-      .withColumn("NatCo", lit(natcoID))
+      .withColumn("NatCo", lit(runVar.natcoID))
       .withColumn("ConKeyP1", concat_ws("|",col("ConKeyP1"),col("NatCo")))
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count","Provisioned_daily")
@@ -69,7 +64,7 @@ class Facts extends FactsProcessing {
 
     val RRfinal = register_requests_agg
       .withColumn("ConKeyR1",lit(period_for_process))
-      .withColumn("NatCo", lit(natcoID))
+      .withColumn("NatCo", lit(runVar.natcoID))
       .join(fullUserAgents, "UserAgent")
       .withColumn("ConKeyR1", concat_ws("|",col("ConKeyR1"),col("NatCo"),col("_UserAgentID")))
       .select("ConKeyR1","Registered_daily","UserAgent")
@@ -337,7 +332,7 @@ class Facts extends FactsProcessing {
 
     val keyTable= activity
       .withColumn("ConKeyA1",lit(period_for_process))
-      .withColumn("NatCo", lit(natcoID))
+      .withColumn("NatCo", lit(runVar.natcoID))
       .withColumn("ConKeyA1", concat_ws("|",col("ConKeyA1"),col("NatCo")))
       .select("ConKeyA1","user_agent").distinct()
 
@@ -374,7 +369,7 @@ class Facts extends FactsProcessing {
 
      */
     val sf1=activity
-      .filter(activity("creation_date").contains(date))
+      .filter(activity("creation_date").contains(runVar.date))
 
     //Files SENT-OnNet:
     val sf2 =sf1
@@ -459,7 +454,7 @@ class Facts extends FactsProcessing {
 
     //Chat SENT-OnNet:
     val sf8 =sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> runVar.natcoNetwork))
       .select("from_user","user_agent","creation_date","messages_sent")
       .agg(sum("messages_sent").alias("count"))
       .withColumn("_NetworkingID",lit("1"))
@@ -468,7 +463,7 @@ class Facts extends FactsProcessing {
 
     //Chat SENT-OffNet:
     val sf9 =sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> runVar.natcoNetwork))
       .select("from_user","user_agent","creation_date","messages_sent")
       .agg(sum("messages_sent").alias("count"))
       .withColumn("_NetworkingID",lit("2"))
@@ -478,7 +473,7 @@ class Facts extends FactsProcessing {
 
     //Chat RECEIVED-OnNet:
     val sf10 =sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+")&& sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+")&& sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> runVar.natcoNetwork))
       .select("from_user","user_agent","creation_date","messages_received")
       .agg(sum("messages_received").alias("count"))
       .withColumn("_NetworkingID",lit("1"))
@@ -487,7 +482,7 @@ class Facts extends FactsProcessing {
 
     //Chat RECEIVED-OffNet:
     val sf11 =sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+")&& sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+")&& sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> runVar.natcoNetwork))
       .select("from_user","user_agent","creation_date","messages_received")
       .agg(sum("messages_received").alias("count"))
       .withColumn("_NetworkingID",lit("2"))
@@ -506,10 +501,10 @@ class Facts extends FactsProcessing {
       .union(sf11)
 
     val finalsf1=finalsf
-      .withColumn("date",lit(dayforkey))
-      .withColumn("month",lit(monthforkey))
+      .withColumn("date",lit(runVar.dayforkey))
+      .withColumn("month",lit(runVar.monthforkey))
       .withColumn("tkey",lit("t"))
-      .withColumn("natco",lit(natcoID))
+      .withColumn("natco",lit(runVar.natcoID))
       .withColumn("DateKeyNatco", concat_ws("|",col("date"),col("month"),col("tkey"),col("natco")))
       .withColumn("Count", col("count").cast(IntegerType))
 
@@ -517,6 +512,4 @@ class Facts extends FactsProcessing {
 
     finalsf1
   }
-
-
 }

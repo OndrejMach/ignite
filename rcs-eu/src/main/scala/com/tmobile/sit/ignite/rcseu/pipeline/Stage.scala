@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import org.apache.spark.sql.functions._
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcseu.Application.date
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import org.apache.spark.sql.functions.{col, lit, split}
 import org.apache.spark.sql.DataFrame
 
@@ -25,15 +25,15 @@ class Stage extends StageProcessing {
     // a timestamp and was causing issues. The fix was:
     // .withColumn("creation_date", col("creation_date") - expr("INTERVAL 1 HOURS"))
     val dailyFile = activity
-      .withColumn("FileDate", lit(date))
+      .withColumn("FileDate", lit(runVar.date))
       .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
     logger.info(s"Daily file count: ${dailyFile.count()}")
-    logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
+    logger.info(s"Filtering out old accumulator data for FileDate ${runVar.date} and adding daily file")
 
     val result = accumulated_activity
       .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
-      .filter(col("FileDate") =!= date)
+      .filter(col("FileDate") =!= runVar.date)
       .union(dailyFile)
       .orderBy("FileDate")
 
@@ -43,14 +43,14 @@ class Stage extends StageProcessing {
   override def accumulateProvision(provision: DataFrame, accumulated_provision:DataFrame): DataFrame = {
    logger.info("Preprocessing Provision Accumulator")
     val dailyFileProvision = provision
-      .withColumn("FileDate", lit(date))
+      .withColumn("FileDate", lit(runVar.date))
       .select("msisdn", "FileDate")
 
     logger.info(s"Daily file count: ${dailyFileProvision.count()}")
-    logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
+    logger.info(s"Filtering out old accumulator data for FileDate ${runVar.date} and adding daily file")
 
     val dailyFileProvision1= accumulated_provision
-      .filter(col("FileDate") =!= date)
+      .filter(col("FileDate") =!= runVar.date)
       .select("msisdn", "FileDate")
       .withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFileProvision)
@@ -63,14 +63,14 @@ class Stage extends StageProcessing {
   override def accumulateRegisterRequests(register_requests: DataFrame, accumulated_register_requests:DataFrame): DataFrame = {
     logger.info("Preprocessing Register Requests Accumulator")
     val dailyFileRegister = register_requests
-      .withColumn("FileDate", lit(date))
+      .withColumn("FileDate", lit(runVar.date))
       .select("msisdn", "user_agent", "FileDate")
 
     logger.info(s"Daily file count: ${dailyFileRegister.count()}")
-    logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
+    logger.info(s"Filtering out old accumulator data for FileDate ${runVar.date} and adding daily file")
 
     val dailyFileRegister1= accumulated_register_requests
-      .filter(col("FileDate") =!= date)
+      .filter(col("FileDate") =!= runVar.date)
       .select("msisdn", "user_agent", "FileDate")
       .withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFileRegister)
@@ -90,7 +90,7 @@ class Stage extends StageProcessing {
       archive
         .withColumn("FilePath", input_file_name)
         .withColumn("FilePath", regexp_replace(col("FilePath"),"register_requests", "registerrequests"))
-        .withColumn("FileName", split(col("filePath"),"\\/").getItem(7))
+        .withColumn("FileName", reverse(split(col("filePath"),"\\/")).getItem(0))
         .withColumn("FileDate", split(split(col("fileName"),"\\_").getItem(1),"\\.").getItem(0))
         .drop("FilePath", "FileName")
   }

@@ -12,8 +12,6 @@ trait DimensionProcessing extends Logger{
 class Dimension extends DimensionProcessing {
   // adding new user agents from today's activity and register requests data
 
-
-
   def processUserAgentsSCD(oldUserAgents: DataFrame, newUserAgents: DataFrame): DataFrame = {
 
     val max_id: Integer = oldUserAgents.select("_UserAgentID").orderBy(desc("_UserAgentID")).first().getInt(0)
@@ -93,8 +91,5 @@ class Dimension extends DimensionProcessing {
       .select("UserAgent","OEM","Device","Client","FW","Client_vs")
     dfUA23
   }
-
-
-
 
 }

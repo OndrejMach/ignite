@@ -1,26 +1,27 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
-import com.tmobile.sit.ignite.rcseu.Application.{date, natco}
-import com.tmobile.sit.ignite.rcseu.config.Settings
-import org.apache.hadoop.fs.{FileSystem, Path}
+import com.tmobile.sit.ignite.rcseu.Application.{runVar}
+import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
 import org.apache.spark.sql.SparkSession
 
-
+trait Config extends Logger{
+  def getSettings():Settings
+}
 trait Help extends Logger{
-  def resolvePath(settings:Settings,date:String,natco:String,isHistoric:Boolean,fileName:String):String
+  def resolvePath(settings:Settings):String
 }
 
 class Helper() (implicit sparkSession: SparkSession) extends Help {
 
-  override def resolvePath(settings:Settings,date:String,natco:String,isHistoric:Boolean,fileName:String):String = {
+  override def resolvePath(settings:Settings):String = {
     // if historic, file is found in the archive
-    // check if it exists
-    // usually fail if it doesn't except for known list or when isHistoric = true (fast fix)
-    // TODO: implement known list
-    val path = if(isHistoric) { settings.archivePath.get} else { settings.inputPath.get }
-    // expected file like /data/sit/rcseu/input|archive/activity_2020-01-01_mt.csv.gz
-    val expectedFile = s"${path}${fileName}_${date}.csv_${natco}.csv.gz"
+
+    val path = if(runVar.isHistoric) { settings.archivePath.get} else { settings.inputPath.get }
+
+    /*
+    // expected file like /data/sit/rcseu/input|archive/activity_2020-01-01.csv_mt.csv.gz
+    val expectedFile = s"${path}${fileName}_${run.date}.csv_${run.natco}.csv.gz"
     // if file doesn't exist, use dummy one
     val dummyFile = s"${settings.lookupPath.get}empty_${fileName}.csv"
 
@@ -35,7 +36,7 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
       result = expectedFile
     } else { //file doesn't exist
       logger.warn(s"File $expectedFile exists: $fileExists")
-      if(isHistoric) { // If during a historic reprocessing run, replace with dummy file and move on
+      if(run.isHistoric) { // If during a historic reprocessing run, replace with dummy file and move on
         logger.warn(s"Using dummy file: $dummyFile")
         result = dummyFile
       }
@@ -46,5 +47,33 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
     }
     // Return correct result
     result
+    */
+
+    path
+  }
+}
+
+class Configurator() extends Config {
+  override def getSettings(): Settings = {
+    val configFile = if(System.getProperty("os.name").startsWith("Windows")) {
+      logger.info(s"Detected development configuration (${System.getProperty("os.name")})")
+      "rcs-eu.windows.conf"
+    } else {
+      logger.info(s"Detected production configuration (${System.getProperty("os.name")})")
+      "rcs-eu.linux.conf"
+    }
+
+    logger.info("Configuration setup for " + configFile)
+    val conf = new Setup(configFile)
+
+    if (!conf.settings.isAllDefined) {
+      logger.error("Application not properly configured!!")
+      conf.settings.printMissingFields()
+      System.exit(1)
+    }
+
+    conf.settings.printAllFields()
+
+    conf.settings
   }
 }
