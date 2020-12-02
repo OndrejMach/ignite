@@ -6,18 +6,16 @@ import com.tmobile.sit.ignite.rcseu.Application.date
 import org.apache.spark.sql.functions.{col, lit, split}
 import org.apache.spark.sql.DataFrame
 
-
 trait StageProcessing extends Logger{
-  def preprocessActivity(activity:DataFrame,accumulated_activity:DataFrame) : DataFrame
-  def preprocessProvision(provision: DataFrame, accumulated_provision:DataFrame) : DataFrame
-  def preprocessRegisterRequests(register_requests: DataFrame, accumulated_register_requests:DataFrame) : DataFrame
+  def accumulateActivity(activity:DataFrame, accumulated_activity:DataFrame) : DataFrame
+  def accumulateProvision(provision: DataFrame, accumulated_provision:DataFrame) : DataFrame
+  def accumulateRegisterRequests(register_requests: DataFrame, accumulated_register_requests:DataFrame) : DataFrame
+  def preprocessAccumulator(archive: DataFrame):DataFrame
 }
 
-//Creating accumulators for activity data, provision data and register requests data
 class Stage extends StageProcessing {
 
-  // TODO: Decide if we need the natco in these
-  override def preprocessActivity(activity: DataFrame,accumulated_activity:DataFrame): DataFrame = {
+  override def accumulateActivity(activity: DataFrame, accumulated_activity:DataFrame): DataFrame = {
     //taking today's file (the file with the date from program argument) and adding it to the accumulator
     //eventually replacing the data from the current day processing
     //dropping unused columns
@@ -30,23 +28,6 @@ class Stage extends StageProcessing {
       .withColumn("FileDate", lit(date))
       .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
-    /*
-    logger.info("Daily activity source file data:")
-    dailyFile
-      .withColumn("creation_date", substring(col("creation_date"), 0, 10))
-      .groupBy("FileDate", "creation_date")
-      .agg(count("creation_date").as("creation_date_count"))
-      .orderBy(asc("FileDate"))
-      .show(2)
-
-   logger.info("Old accumulator data")
-   accumulated_activity
-      .groupBy("FileDate")
-      .agg(count("creation_date").as("creation_date_count"))
-      .orderBy(asc("FileDate"))
-      .show(5)
-    */
-
     logger.info(s"Daily file count: ${dailyFile.count()}")
     logger.info(s"Filtering out old accumulator data for FileDate ${date} and adding daily file")
 
@@ -56,12 +37,10 @@ class Stage extends StageProcessing {
       .union(dailyFile)
       .orderBy("FileDate")
 
-    //logger.info(s"New activity accumulator: ${result.count()}"+" records")
-
     result
   }
 
-  override def preprocessProvision(provision: DataFrame, accumulated_provision:DataFrame): DataFrame = {
+  override def accumulateProvision(provision: DataFrame, accumulated_provision:DataFrame): DataFrame = {
    logger.info("Preprocessing Provision Accumulator")
     val dailyFileProvision = provision
       .withColumn("FileDate", lit(date))
@@ -81,7 +60,7 @@ class Stage extends StageProcessing {
     dailyFileProvision1
   }
 
-  override def preprocessRegisterRequests(register_requests: DataFrame,accumulated_register_requests:DataFrame): DataFrame = {
+  override def accumulateRegisterRequests(register_requests: DataFrame, accumulated_register_requests:DataFrame): DataFrame = {
     logger.info("Preprocessing Register Requests Accumulator")
     val dailyFileRegister = register_requests
       .withColumn("FileDate", lit(date))
@@ -100,4 +79,20 @@ class Stage extends StageProcessing {
 
     dailyFileRegister1
   }
+
+  override def preprocessAccumulator(archive: DataFrame):DataFrame = {
+      // TODO: make this method generic not based on getItem(x)
+      // hdfs:///data/sit/rcseu/archive/activity_2020-02-16_mt.csv.gz or something
+      // hdfs:///data/sit/rcseu/archive/provision_2020-03-31_st.csv.gz
+      // hdfs:///data/sit/rcseu/archive/register_requests_2020-01-01_cg.csv.gz
+      // Linux: split by /, getItem(7); split by _, getItem(1), split by ., getItem(0)
+      // Windows: split by /, getItem(8); split by _, getItem(1), split by ., getItem(0)
+      archive
+        .withColumn("FilePath", input_file_name)
+        .withColumn("FilePath", regexp_replace(col("FilePath"),"register_requests", "registerrequests"))
+        .withColumn("FileName", split(col("filePath"),"\\/").getItem(7))
+        .withColumn("FileDate", split(split(col("fileName"),"\\_").getItem(1),"\\.").getItem(0))
+        .drop("FilePath", "FileName")
+  }
+
 }

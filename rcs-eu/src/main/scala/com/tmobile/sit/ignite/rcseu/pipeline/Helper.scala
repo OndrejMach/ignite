@@ -20,7 +20,7 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
     // TODO: implement known list
     val path = if(isHistoric) { settings.archivePath.get} else { settings.inputPath.get }
     // expected file like /data/sit/rcseu/input|archive/activity_2020-01-01_mt.csv.gz
-    val expectedFile = s"${path}${fileName}_${date}_${natco}.csv.gz"
+    val expectedFile = s"${path}${fileName}_${date}.csv_${natco}.csv.gz"
     // if file doesn't exist, use dummy one
     val dummyFile = s"${settings.lookupPath.get}empty_${fileName}.csv"
 

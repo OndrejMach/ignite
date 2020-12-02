@@ -2,8 +2,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.rcseu.data.{OutputData, ResultPaths}
-import com.tmobile.sit.ignite.rcseu.data.{OutputData, ResultPaths}
+import com.tmobile.sit.ignite.rcseu.data.{OutputData}
 import org.apache.spark.sql.SparkSession
 import com.tmobile.sit.ignite.rcseu.Application.date
 import com.tmobile.sit.ignite.rcseu.Application.month
@@ -12,6 +11,7 @@ import com.tmobile.sit.ignite.rcseu.Application.natco
 import com.tmobile.sit.ignite.rcseu.Application.isHistoric
 import com.tmobile.sit.ignite.rcseu.Application.dateforoutput
 import com.tmobile.sit.ignite.rcseu.Application.monthforoutput
+import com.tmobile.sit.ignite.rcseu.config.Settings
 
 
 
@@ -25,43 +25,45 @@ trait Writer extends Logger{
  * file date and natco, as well as the ResultsPath class because it's writing both output and
  * lookup files for the next iteration
  */
-class ResultWriter(resultPaths: ResultPaths) (implicit sparkSession: SparkSession) extends Writer {
+class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) extends Writer {
 
   override def write(outputData: OutputData) =
   {
+    val debug = false;
+
     logger.info("Writing output files")
 
-    //val fileSuffix = natco + "." + dateforoutput
+    val persistencePath = settings.lookupPath.get
+    val outputPath = settings.outputPath.get
 
     // Write the accumulators and dimension always
-    CSVWriter(outputData.UserAgents, resultPaths.outputPath+"User_agents.csv", delimiter = "\t").writeData()
+    CSVWriter(outputData.UserAgents, persistencePath+"User_agents.csv", delimiter = "\t").writeData()
 
-    logger.info(s"Writing acc_activity_${natco}.parquet")
-    outputData.AccActivity.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_activity_${natco}.parquet")
-    logger.info(s"Writing acc_provision_${natco}.parquet")
-    outputData.AccProvision.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_provision_${natco}.parquet")
-    logger.info(s"Writing acc_register_requests.parquet")
-    outputData.AccRegisterRequests.write.mode("overwrite").parquet(resultPaths.lookupPath+s"acc_register_requests_${natco}.parquet")
+    if(debug) {
+      logger.info(s"Writing acc_activity_${natco}.parquet")
+      outputData.AccActivity.write.mode("overwrite").parquet(persistencePath + s"acc_activity_${natco}.parquet")
+      logger.info(s"Writing acc_provision_${natco}.parquet")
+      outputData.AccProvision.write.mode("overwrite").parquet(persistencePath + s"acc_provision_${natco}.parquet")
+      logger.info(s"Writing acc_register_requests.parquet")
+      outputData.AccRegisterRequests.write.mode("overwrite").parquet(persistencePath + s"acc_register_requests_${natco}.parquet")
+    }
 
     //if isHistoric = false, write all files
     if(!isHistoric) {
 
-      CSVWriter(outputData.ProvisionedDaily, resultPaths.outputPath + "provisioned_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ProvisionedMonthly, resultPaths.outputPath + "provisioned_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ProvisionedYearly, resultPaths.outputPath + "provisioned_yearly." + natco + "." + year + ".csv", delimiter = "\t").writeData()
-      //CSVWriter(outputData.ProvisionedTotal, resultPaths.outputPath + "provisioned_total." + natco + ".csv", delimiter = ";").writeData()
+      CSVWriter(outputData.ProvisionedDaily, outputPath + "provisioned_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.ProvisionedYearly, outputPath + "provisioned_yearly." + natco + "." + year + ".csv", delimiter = "\t").writeData()
 
-      CSVWriter(outputData.RegisteredDaily, resultPaths.outputPath + "registered_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.RegisteredMonthly, resultPaths.outputPath + "registered_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.RegisteredYearly, resultPaths.outputPath + "registered_yearly." + natco + "." + year + ".csv", delimiter = "\t").writeData()
-      //CSVWriter(outputData.RegisteredTotal, resultPaths.outputPath + "registered_total." + natco + ".csv", delimiter = ";").writeData()
+      CSVWriter(outputData.RegisteredDaily, outputPath + "registered_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.RegisteredMonthly, outputPath + "registered_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.RegisteredYearly, outputPath + "registered_yearly." + natco + "." + year + ".csv", delimiter = "\t").writeData()
 
-      CSVWriter(outputData.ActiveDaily, resultPaths.outputPath + "activity_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ActiveMonthly, resultPaths.outputPath + "activity_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ActiveYearly, resultPaths.outputPath + "activity_yearly." + natco + "." + year + ".csv", delimiter = "\t").writeData()
-      //CSVWriter(outputData.ActiveTotal, resultPaths.outputPath + "activity_total." + natco + ".csv", delimiter = ";").writeData()
+      CSVWriter(outputData.ActiveDaily, outputPath + "activity_daily." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.ActiveMonthly, outputPath + "activity_monthly." + natco + "." + monthforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.ActiveYearly, outputPath + "activity_yearly." + natco + "." + year + ".csv", delimiter = "\t").writeData()
 
-      CSVWriter(outputData.ServiceDaily, resultPaths.outputPath + "service_fact." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
+      CSVWriter(outputData.ServiceDaily, outputPath + "service_fact." + natco + "." + dateforoutput + ".csv", delimiter = "\t").writeData()
     }
   }
 }

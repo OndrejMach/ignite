@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcseu.data.{InputData, OutputData, PersistentData, PreprocessedData}
-import org.apache.spark.sql.functions.{col, monotonically_increasing_id}
+import org.apache.spark.sql.functions.col
 import com.tmobile.sit.ignite.rcseu.Application.date
 import com.tmobile.sit.ignite.rcseu.Application.month
 import com.tmobile.sit.ignite.rcseu.Application.year
@@ -10,6 +10,7 @@ import com.tmobile.sit.ignite.rcseu.Application.natcoNetwork
 import com.tmobile.sit.ignite.rcseu.Application.isHistoric
 import com.tmobile.sit.ignite.rcseu.Application.dayforkey
 import com.tmobile.sit.ignite.rcseu.Application.monthforkey
+import org.apache.spark.sql.DataFrame
 
 trait ProcessingCore extends Logger{
   def process(inputData: InputData, preprocessedData: PreprocessedData, persistentData: PersistentData) : OutputData
@@ -19,132 +20,51 @@ class Core extends ProcessingCore {
 
   override def process(inputData: InputData,stageData: PreprocessedData, persistentData: PersistentData): OutputData = {
 
-    //stageData.activity.show()
-    //stageData.provision.show()
-    //stageData.registerRequests.show()
+    var provisionedDaily:DataFrame = null
+    var provisionedMonthly:DataFrame = null
+    var provisionedYearly:DataFrame = null
+    var registeredDaily:DataFrame = null
+    var registeredMonthly:DataFrame = null
+    var registeredYearly:DataFrame = null
+    var activeDaily:DataFrame = null
+    var activeMonthly:DataFrame = null
+    var activeYearly:DataFrame = null
+    var serviceDaily:DataFrame = null
 
-    //if isHistoric = true (if the config parameter is true)
-    if (isHistoric) {
-  //in Stage creating accumulators for activity data, provision data and register requests data
-  //val stage = new Stage()
+    val acc_activity = stageData.acc_activity
+    acc_activity.cache()
+    logger.info("Activity accumulator count: " + acc_activity.count())
 
-  val acc_activity = stageData.activity
-  acc_activity.cache()
-  logger.info("Activity accumulator count: " + acc_activity.count())
+    val acc_provision = stageData.acc_provision
+    acc_provision.cache()
+    logger.info("Provision accumulator count: " + acc_provision.count())
 
-  val acc_provision = stageData.provision
-  acc_provision.cache()
-  logger.info("Provision accumulator count: " + acc_provision.count())
+    val acc_register_requests = stageData.acc_register_requests
+    acc_register_requests.cache()
+    logger.info("Register requests accumulator count: " + acc_register_requests.count())
 
-  val acc_register_requests = stageData.registerRequests
-  acc_register_requests.cache()
-  logger.info("Register requests accumulator count: " + acc_register_requests.count())
+    //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
+    val dim = new Dimension()
 
-  //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
-  val dim = new Dimension()
+    //TODO: decide if here the new user agents should only be based on daily input files
+    val newUserAgents = dim.getNewUserAgents(stageData.acc_activity, stageData.acc_register_requests)
+    val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
+    fullUserAgents.cache()
 
-  val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
-  val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
-  fullUserAgents.cache()
-  //logger.info("Full user agents count: " + fullUserAgents.count())
+    if (!isHistoric) {
 
-      val provisionedDaily = null
-      val provisionedMonthly = null
-      val provisionedYearly = null
-      val registeredDaily = null
-      val registeredMonthly = null
-      val registeredYearly = null
-      val activeDaily = null
-      val activeMonthly = null
-      val activeYearly = null
-      val serviceDaily = null
-
-      OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,
-        provisionedDaily,provisionedMonthly,provisionedYearly,
-        registeredDaily,registeredMonthly,registeredYearly,
-        activeDaily,activeMonthly,activeYearly,
-        serviceDaily)
-}
-    else {
-
-      //otherwise if isHistoric = false (if the config parameter is false) process all the data
-
-      //in Stage creating accumulators for activity data, provision data and register requests data
-      val stage = new Stage()
-
-      val acc_activity = stageData.activity
-      acc_activity.cache()
-      //logger.info("Activity accumulator count: " + acc_activity.count())
-
-      val acc_provision = stageData.provision
-      acc_provision.cache()
-      //logger.info("Provision accumulator count: " + acc_provision.count())
-
-      val acc_register_requests = stageData.registerRequests
-      acc_register_requests.cache()
-      //logger.info("Register requests accumulator count: " + acc_register_requests.count())
-
-      //logic for UserAgents dimension, creating daily new file and replacing old one, adding only new user agents
-      val dim = new Dimension()
-
-      val newUserAgents = dim.getNewUserAgents(stageData.activity, stageData.registerRequests)
-      val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
-      fullUserAgents.cache()
-      //logger.info("Full user agents count: " + fullUserAgents.count())
-
-
-      // Processing facts, filtering data by date, month, year
-      // and calling the FactsProcessing function on the filtered data
-      //creating separate variable for each output
+      // Processing facts, aggregating accumulated data by date, month, year
       val fact = new Facts()
 
-      logger.info("Processing daily provisioned")
-      val filtered_daily_provision = persistentData.accumulated_provision.filter(col("FileDate").contains(date))
-      val provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, dayforkey)
-      //logger.info("Provisioned daily count: " + provisionedDaily.count())
-
-      logger.info("Processing monthly provisioned")
-      val filtered_monthly_provision = persistentData.accumulated_provision.filter(col("FileDate").contains(month))
-      val provisionedMonthly1 = fact.getProvisionedDaily(filtered_monthly_provision, monthforkey)
-      val provisionedMonthly= provisionedMonthly1.withColumnRenamed("ConKeyP1","ConKeyP2")
-          .withColumnRenamed("Provisioned_daily","Provisioned_monthly")
-      //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
-
-      logger.info("Processing yearly provisioned")
-      val filtered_yearly_provision = persistentData.accumulated_provision.filter(col("FileDate").contains(year))
-      val provisionedYearly1 = fact.getProvisionedDaily(filtered_yearly_provision, year)
-      val provisionedYearly= provisionedYearly1.withColumnRenamed("ConKeyP1","ConKeyP3")
-        .withColumnRenamed("Provisioned_daily","Provisioned_yearly")
-     //logger.info("Provisioned yearly count: " + provisionedYearly.count())
-
-      logger.info("Processing daily register requests")
-      val filtered_daily_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(date))
-      val registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, dayforkey)
-      //logger.info("Registered daily count: " + registeredDaily.count())
-
-      logger.info("Processing monthly register requests")
-      val filtered_monthly_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(month))
-      val registeredMonthly1 = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, monthforkey)
-      val registeredMonthly= registeredMonthly1.withColumnRenamed("ConKeyR1","ConKeyR2")
-        .withColumnRenamed("Registered_daily","Registered_monthly")
-      //logger.info("Registered monthly count: " + registeredMonthly.count())
-
-      logger.info("Processing yearly register requests")
-      val filtered_yearly_register = persistentData.accumulated_register_requests.filter(col("FileDate").contains(year))
-      val registeredYearly1 = fact.getRegisteredDaily(filtered_yearly_register, fullUserAgents, year)
-      val registeredYearly= registeredYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
-        .withColumnRenamed("Registered_daily","Registered_yearly")
-      //logger.info("Registered yearly count: " + registeredYearly.count())
-
       logger.info("Processing daily activity")
-      val filtered_daily_active = persistentData.accumulated_activity.filter(col("creation_date").contains(date))
-      val activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, dayforkey, natcoNetwork)
+      val filtered_daily_active = acc_activity.filter(col("creation_date").contains(date))
+      activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, dayforkey, natcoNetwork)
       //logger.info("Active daily count: " + activeDaily.count())
 
       logger.info("Processing monthly activity")
-      val filtered_monthly_active = persistentData.accumulated_activity.filter(col("creation_date").contains(month))
+      val filtered_monthly_active = acc_activity.filter(col("creation_date").contains(month))
       val activeMonthly1 = fact.getActiveDaily(filtered_monthly_active, fullUserAgents, monthforkey, natcoNetwork)
-      val activeMonthly= activeMonthly1.withColumnRenamed("ConKeyA1","ConKeyA2")
+      activeMonthly= activeMonthly1.withColumnRenamed("ConKeyA1","ConKeyA2")
         .withColumnRenamed("Active_daily_succ_origterm", "Active_monthly_succ_origterm")
         .withColumnRenamed("Active_daily_succ_orig", "Active_monthly_succ_orig")
         .withColumnRenamed("Active_daily_unsucc_origterm", "Active_monthly_unsucc_origterm")
@@ -152,27 +72,70 @@ class Core extends ProcessingCore {
       //logger.info("Active monthly count: " + activeMonthly.count())
 
       logger.info("Processing yearly activity")
-      val filtered_yearly_active = persistentData.accumulated_activity.filter(col("creation_date").contains(year))
+      val filtered_yearly_active = acc_activity.filter(col("creation_date").contains(year))
       val activeYearly1 = fact.getActiveDaily(filtered_yearly_active, fullUserAgents, year, natcoNetwork)
-      val activeYearly= activeYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
+      activeYearly= activeYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
         .withColumnRenamed("Active_daily_succ_origterm", "Active_yearly_succ_origterm")
         .withColumnRenamed("Active_daily_succ_orig", "Active_yearly_succ_orig")
         .withColumnRenamed("Active_daily_unsucc_origterm", "Active_yearly_unsucc_origterm")
         .withColumnRenamed("Active_daily_unsucc_orig", "Active_yearly_unsucc_orig")
       //logger.info("Active yearly count: " + activeYearly.count())
 
-      //calling ServiceFactsDaily function from FactsProcessing
+      //******************************************************************************************************//
+
+      logger.info("Processing daily provisioned")
+      val filtered_daily_provision = acc_provision.filter(col("FileDate").contains(date))
+      provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, dayforkey)
+      //logger.info("Provisioned daily count: " + provisionedDaily.count())
+
+      logger.info("Processing monthly provisioned")
+      val filtered_monthly_provision = acc_provision.filter(col("FileDate").contains(month))
+      val provisionedMonthly1 = fact.getProvisionedDaily(filtered_monthly_provision, monthforkey)
+      provisionedMonthly= provisionedMonthly1.withColumnRenamed("ConKeyP1","ConKeyP2")
+        .withColumnRenamed("Provisioned_daily","Provisioned_monthly")
+      //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
+
+      logger.info("Processing yearly provisioned")
+      val filtered_yearly_provision = acc_provision.filter(col("FileDate").contains(year))
+      val provisionedYearly1 = fact.getProvisionedDaily(filtered_yearly_provision, year)
+      provisionedYearly= provisionedYearly1.withColumnRenamed("ConKeyP1","ConKeyP3")
+        .withColumnRenamed("Provisioned_daily","Provisioned_yearly")
+      //logger.info("Provisioned yearly count: " + provisionedYearly.count())
+
+      //******************************************************************************************************//
+
+      logger.info("Processing daily register requests")
+      val filtered_daily_register = acc_register_requests.filter(col("FileDate").contains(date))
+      registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, dayforkey)
+      //logger.info("Registered daily count: " + registeredDaily.count())
+
+      logger.info("Processing monthly register requests")
+      val filtered_monthly_register = acc_register_requests.filter(col("FileDate").contains(month))
+      val registeredMonthly1 = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, monthforkey)
+      registeredMonthly= registeredMonthly1.withColumnRenamed("ConKeyR1","ConKeyR2")
+        .withColumnRenamed("Registered_daily","Registered_monthly")
+      //logger.info("Registered monthly count: " + registeredMonthly.count())
+
+      logger.info("Processing yearly register requests")
+      val filtered_yearly_register = acc_register_requests.filter(col("FileDate").contains(year))
+      val registeredYearly1 = fact.getRegisteredDaily(filtered_yearly_register, fullUserAgents, year)
+      registeredYearly= registeredYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
+        .withColumnRenamed("Registered_daily","Registered_yearly")
+      //logger.info("Registered yearly count: " + registeredYearly.count())
+
+      //******************************************************************************************************//
+
       //generating one file each day (only daily processing needed)
       logger.info("Processing service fact")
-      val serviceDaily = fact.getServiceFactsDaily(persistentData.accumulated_activity)
+      serviceDaily = fact.getServiceFactsDaily(acc_activity)
       //logger.info("Service facts daily count: " + serviceDaily.count())
+    }
 
-
-    // Prepare output data
+    // Create output data object
     OutputData(acc_activity,acc_provision,acc_register_requests,fullUserAgents,
       provisionedDaily,provisionedMonthly,provisionedYearly,
       registeredDaily,registeredMonthly,registeredYearly,
       activeDaily,activeMonthly,activeYearly,
       serviceDaily)
-  }}
+  }
 }

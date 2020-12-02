@@ -3,18 +3,19 @@ package com.tmobile.sit.ignite.rcseu
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.config.Setup
-import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData, ResultPaths}
-import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Pipeline, ResultWriter, Helper}
+import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
+import com.tmobile.sit.ignite.rcseu.pipeline.{Core, Helper, Pipeline, ResultWriter}
 import com.tmobile.sit.ignite.rcseu.pipeline.Stage
-
 
 object Application extends App with Logger {
 
+  //TODO: implement better flags like run-daily, run-monthly, run-yearly, run-all, run-debug
   if(args.length != 3) {
-    logger.error("No arguments specified. Usage: ... <date> <natco>")
+    logger.error("No arguments specified. Usage: ... <date:yyyy-mm-dd> <natco:cc> <isHistoric:bool>")
     System.exit(0)
   }
-  //TODO: natco network for Macedonia
+
+  //TODO: natco network for Macedonia; move this out
   // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
   val natco = args(1)
@@ -50,10 +51,10 @@ object Application extends App with Logger {
   val mk="-"
 
   val natcoNetwork = if (natco == "mt") mt
-                    else if (natco == "st") st
-                    else if (natco == "cr") cr
-                    else if (natco == "cg") cg
-                    else if (natco == "mk") mk
+  else if (natco == "st") st
+  else if (natco == "cr") cr
+  else if (natco == "cg") cg
+  else if (natco == "mk") mk
   else "natco network is not correct"
 
   logger.info(s"Date: $date, month:$month, year:$year, natco: $natco, natcoNetwork: $natcoNetwork, isHistoric: $isHistoric")
@@ -80,6 +81,7 @@ object Application extends App with Logger {
   implicit val sparkSession = getSparkSession(conf.settings.appName.get)
 
   val h = new Helper()
+  // Use helper to reprocess historical data
   val activityFilePath = h.resolvePath(conf.settings, date, natco, isHistoric, "activity")
   val registerFilePath = h.resolvePath(conf.settings, date, natco, isHistoric, "register_requests")
   val provisionFilePath = h.resolvePath(conf.settings, date, natco, isHistoric, "provision")
@@ -92,12 +94,27 @@ object Application extends App with Logger {
   logger.info("Source files loaded")
 
   val persistentData = PersistentData(
-    oldUserAgents = new CSVReader(conf.settings.outputPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
+    oldUserAgents = new CSVReader(conf.settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
 
-    accumulated_activity =  sparkSession.read.format("parquet").load(conf.settings.lookupPath.get + s"acc_activity_${natco}.parquet"),
-    accumulated_provision =  sparkSession.read.format("parquet").load(conf.settings.lookupPath.get + s"acc_provision_${natco}.parquet"),
-    accumulated_register_requests =  sparkSession.read.format("parquet").load(conf.settings.lookupPath.get + s"acc_register_requests_${natco}.parquet")
-    )
+    //TODO: see if this works with CSVReader class class for consistency
+    activity_archives = sparkSession.read.format("csv")
+      .option("header", "true")
+      .option("delimiter","\\t")
+      .schema(FileSchemas.activitySchema)
+      .load(conf.settings.archivePath.get + s"activity*${year}*${natco}.csv*"),
+
+    provision_archives = sparkSession.read.format("csv")
+      .option("header", "true")
+      .option("delimiter","\\t")
+      .schema(FileSchemas.provisionSchema)
+      .load(conf.settings.archivePath.get + s"provision*${year}*${natco}.csv*"),
+
+    register_requests_archives = sparkSession.read.format("csv")
+      .option("header", "true")
+      .option("delimiter","\\t")
+      .schema(FileSchemas.registerRequestsSchema)
+      .load(conf.settings.archivePath.get + s"register_requests*${year}*${natco}*.csv*")
+  )
 
   logger.info("Persistent files loaded")
 
@@ -105,8 +122,9 @@ object Application extends App with Logger {
 
   val coreProcessing = new Core()
 
-  val resultPaths = ResultPaths(conf.settings.lookupPath.get, conf.settings.outputPath.get)
-  val resultWriter = new ResultWriter(resultPaths)
+  val resultWriter = new ResultWriter(conf.settings)
+
+  logger.info("Running pipeline")
 
   val pipeline = new Pipeline(inputReaders,persistentData,stageProcessing,coreProcessing,resultWriter)
 

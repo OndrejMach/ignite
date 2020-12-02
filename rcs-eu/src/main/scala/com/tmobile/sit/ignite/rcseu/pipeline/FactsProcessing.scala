@@ -374,7 +374,6 @@ class Facts extends FactsProcessing {
     val sf1=activity
       .filter(activity("creation_date").contains(date))
 
-
     //Files SENT-OnNet:
     val sf2 =sf1
       .withColumn("_NetworkingID",lit("1"))
