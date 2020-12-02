@@ -4,17 +4,13 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcseu.data.{OutputData}
 import org.apache.spark.sql.SparkSession
-import com.tmobile.sit.ignite.rcseu.Application.date
-import com.tmobile.sit.ignite.rcseu.Application.month
 import com.tmobile.sit.ignite.rcseu.Application.year
 import com.tmobile.sit.ignite.rcseu.Application.natco
 import com.tmobile.sit.ignite.rcseu.Application.isHistoric
 import com.tmobile.sit.ignite.rcseu.Application.dateforoutput
 import com.tmobile.sit.ignite.rcseu.Application.monthforoutput
 import com.tmobile.sit.ignite.rcseu.config.Settings
-
-
-
+import com.tmobile.sit.ignite.rcseu.Application.debug
 
 trait Writer extends Logger{
   def write(output: OutputData): Unit
@@ -29,8 +25,6 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
 
   override def write(outputData: OutputData) =
   {
-    val debug = false;
-
     logger.info("Writing output files")
 
     val persistencePath = settings.lookupPath.get

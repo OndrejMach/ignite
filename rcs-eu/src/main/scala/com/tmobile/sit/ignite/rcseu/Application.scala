@@ -15,6 +15,9 @@ object Application extends App with Logger {
     System.exit(0)
   }
 
+  // DEBUG variable to be used in other methods
+  val debug = false;
+
   //TODO: natco network for Macedonia; move this out
   // variables needed in FactsProcesing and ProcessingCore for filtering
   val date = args(0)
