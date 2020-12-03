@@ -4,10 +4,11 @@ package com.tmobile.sit.ignite.rcseu.config
 class RunConfig(_args: Array[String]) {
   val args = _args
 
-  // TODO: natco network for Macedonia; move this out
+  // TODO: natco network for Macedonia
   val date = args(0)
   val natco = args(1)
   val isHistoric = args(2).toBoolean
+  val runFor = args(3)
 
   val debug = false;
   val processDaily = true;
@@ -41,7 +42,7 @@ class RunConfig(_args: Array[String]) {
   val st="dt-slovak-telecom"
   val cg="dt-cosmote-greece"
   val cr="dt-telecom-romania"
-  val mk="-"
+  val mk="dt-makedonski-telecom"
 
   val natcoNetwork = if (natco == "mt") mt
   else if (natco == "st") st

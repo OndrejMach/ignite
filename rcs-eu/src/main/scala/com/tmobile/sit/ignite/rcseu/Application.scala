@@ -9,8 +9,8 @@ import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeli
 object Application extends App with Logger {
 
   //TODO: implement better flags like processDaily, processMonthly, processYearly, processAll, run-debug
-  if(args.length != 3) {
-    logger.error("No arguments specified. Usage: ... <date:yyyy-mm-dd> <natco:cc> <isHistoric:bool>")
+  if(args.length != 4) {
+    logger.error("No arguments specified. Usage: ... <date:yyyy-mm-dd> <natco:String> <isHistoric:bool> <runFor:String>")
     System.exit(0)
   }
 
