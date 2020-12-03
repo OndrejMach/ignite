@@ -81,12 +81,7 @@ class Stage extends StageProcessing {
   }
 
   override def preprocessAccumulator(archive: DataFrame):DataFrame = {
-      // TODO: make this method generic not based on getItem(x)
-      // hdfs:///data/sit/rcseu/archive/activity_2020-02-16_mt.csv.gz or something
-      // hdfs:///data/sit/rcseu/archive/provision_2020-03-31_st.csv.gz
-      // hdfs:///data/sit/rcseu/archive/register_requests_2020-01-01_cg.csv.gz
-      // Linux: split by /, getItem(7); split by _, getItem(1), split by ., getItem(0)
-      // Windows: split by /, getItem(8); split by _, getItem(1), split by ., getItem(0)
+
       archive
         .withColumn("FilePath", input_file_name)
         .withColumn("FilePath", regexp_replace(col("FilePath"),"register_requests", "registerrequests"))
@@ -94,5 +89,4 @@ class Stage extends StageProcessing {
         .withColumn("FileDate", split(split(col("fileName"),"\\_").getItem(1),"\\.").getItem(0))
         .drop("FilePath", "FileName")
   }
-
 }

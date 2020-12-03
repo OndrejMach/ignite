@@ -9,6 +9,11 @@ class RunConfig(_args: Array[String]) {
   val natco = args(1)
   val isHistoric = args(2).toBoolean
 
+  val debug = false;
+  val processDaily = true;
+  val processMonthly = true;
+  val processYearly = true;
+
   val date_split = date.split('-')
   val (year, monthNum, dayNum) = (date_split(0), date_split(1),date_split(2))
   val month = year + "-" + monthNum

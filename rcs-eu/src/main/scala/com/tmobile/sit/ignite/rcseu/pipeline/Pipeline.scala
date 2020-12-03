@@ -4,7 +4,7 @@ import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.functions.{count, desc}
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
-import com.tmobile.sit.ignite.rcseu.Application.debug
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 
 
 class Pipeline(inputData: InputData, persistentData: PersistentData, stage: StageProcessing,
@@ -17,7 +17,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     val inputProvision = inputData.provision
     val inputRegisterRequests = inputData.register_requests
 
-    if(debug) {
+    if(runVar.debug) {
     logger.info("Inputs")
     inputActivity.agg(count("*").as("no_records")).show(3)
     inputProvision.agg(count("*").as("no_records")).show(3)
@@ -29,7 +29,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)
     val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)
 
-    if(debug) {
+    if(runVar.debug) {
     logger.info("Archives")
     archiveActivity.groupBy("FileDate").agg(count("*").as("no_records")).orderBy(desc("FileDate")).show(3)
     archiveProvision.groupBy("FileDate").agg(count("*").as("no_records")).orderBy(desc("FileDate")).show(3)
@@ -41,7 +41,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     val accProvision = stage.accumulateProvision(inputProvision,archiveProvision)
     val accRegisterRequests =  stage.accumulateRegisterRequests(inputRegisterRequests,archiveRegisterRequests)
 
-    if(debug) {
+    if(runVar.debug) {
     logger.info("Accumulated")
     accActivity.groupBy("FileDate").agg(count("*").as("no_records")).orderBy(desc("FileDate")).show(3)
     accProvision.groupBy("FileDate").agg(count("*").as("no_records")).orderBy(desc("FileDate")).show(3)

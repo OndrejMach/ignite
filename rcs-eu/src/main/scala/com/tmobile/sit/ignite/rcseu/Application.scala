@@ -8,14 +8,13 @@ import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeli
 
 object Application extends App with Logger {
 
-  //TODO: implement better flags like run-daily, run-monthly, run-yearly, run-all, run-debug
+  //TODO: implement better flags like processDaily, processMonthly, processYearly, processAll, run-debug
   if(args.length != 3) {
     logger.error("No arguments specified. Usage: ... <date:yyyy-mm-dd> <natco:cc> <isHistoric:bool>")
     System.exit(0)
   }
 
-  // DEBUG variable to be used in other methods
-  val debug = false;
+  // Get the run variables based on input arguments
   val runVar = new RunConfig(args)
 
   logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco: ${runVar.natco}, " +
@@ -37,27 +36,39 @@ object Application extends App with Logger {
   )
   logger.info("Source files loaded")
 
+  // read whole year only if doing yearly processing
+  val fileMask = if(runVar.processYearly)
+  {
+    logger.info("Processing yearly data")
+    runVar.year
+  } else {
+    logger.info("Processing daily and monthly data")
+    runVar.month
+  }
+
+  logger.info(s"Reading archive files for: $fileMask")
+
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
-    //TODO: see if this works with CSVReader class class for consistency
+
     activity_archives = sparkSession.read.format("csv")
       .option("header", "true")
       .option("delimiter","\\t")
       .schema(FileSchemas.activitySchema)
-      .load(settings.archivePath.get + s"activity*${runVar.year}*${runVar.natco}.csv*"),
+      .load(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*"),
     provision_archives = sparkSession.read.format("csv")
       .option("header", "true")
       .option("delimiter","\\t")
       .schema(FileSchemas.provisionSchema)
-      .load(settings.archivePath.get + s"provision*${runVar.year}*${runVar.natco}.csv*"),
+      .load(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*"),
     register_requests_archives = sparkSession.read.format("csv")
       .option("header", "true")
       .option("delimiter","\\t")
       .schema(FileSchemas.registerRequestsSchema)
-      .load(settings.archivePath.get + s"register_requests*${runVar.year}*${runVar.natco}*.csv*")
+      .load(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
   )
 
-  logger.info("Persistent files loaded")
+  logger.info(s"Persistent files loaded for $fileMask")
 
   val stageProcessing = new Stage()
 

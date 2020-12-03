@@ -45,9 +45,11 @@ class Dimension extends DimensionProcessing {
 
    val activityandregistered = activity
       .select("user_agent")
+      .distinct()
       .union(
         registerRequests
           .select("user_agent")
+          .distinct()
       )
      .distinct()
      .sort("user_agent")
