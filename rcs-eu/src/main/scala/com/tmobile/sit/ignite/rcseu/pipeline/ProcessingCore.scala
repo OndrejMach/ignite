@@ -44,7 +44,7 @@ class Core extends ProcessingCore {
     //TODO: decide if here the new user agents should only be based on daily input files
     val newUserAgents = dim.getNewUserAgents(inputData.activity, inputData.register_requests)
     val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
-    fullUserAgents.cache()
+    //fullUserAgents.cache() //done in dimension
 
     // Processing facts, aggregating accumulated data by date, month, year
     val fact = new Facts()

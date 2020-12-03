@@ -52,7 +52,7 @@ class Stage extends StageProcessing {
     val dailyFileProvision1= accumulated_provision
       .filter(col("FileDate") =!= runVar.date)
       .select("msisdn", "FileDate")
-      .withColumn("FileDate", col("FileDate").cast("date"))
+      //.withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFileProvision)
       .orderBy("FileDate")
     //logger.info(s"New provision accumulator count: ${dailyFileProvision1.count()}")
@@ -72,7 +72,7 @@ class Stage extends StageProcessing {
     val dailyFileRegister1= accumulated_register_requests
       .filter(col("FileDate") =!= runVar.date)
       .select("msisdn", "user_agent", "FileDate")
-      .withColumn("FileDate", col("FileDate").cast("date"))
+      //.withColumn("FileDate", col("FileDate").cast("date"))
       .union(dailyFileRegister)
       .orderBy("FileDate")
     //logger.info(s"New register requests count: ${dailyFileRegister1.count()}")

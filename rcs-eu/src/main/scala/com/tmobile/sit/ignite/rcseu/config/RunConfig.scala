@@ -4,7 +4,6 @@ package com.tmobile.sit.ignite.rcseu.config
 class RunConfig(_args: Array[String]) {
   val args = _args
 
-  // TODO: natco network for Macedonia
   val date = args(0)
   val natco = args(1)
   val isHistoric = args(2).toBoolean
@@ -13,7 +12,8 @@ class RunConfig(_args: Array[String]) {
   val debug = false;
   val processDaily = true;
   val processMonthly = true;
-  val processYearly = true;
+
+  val processYearly = if(runFor.equals("yearly")) {true} else {false}
 
   val date_split = date.split('-')
   val (year, monthNum, dayNum) = (date_split(0), date_split(1),date_split(2))

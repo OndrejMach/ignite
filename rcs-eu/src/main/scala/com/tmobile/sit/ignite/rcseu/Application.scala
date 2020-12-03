@@ -2,30 +2,33 @@ package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.ignite.rcseu.config.{RunConfig, Setup}
+import com.tmobile.sit.ignite.rcseu.config.{RunConfig}
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
 
 object Application extends App with Logger {
 
-  //TODO: implement better flags like processDaily, processMonthly, processYearly, processAll, run-debug
+  // First of all check arguments
   if(args.length != 4) {
-    logger.error("No arguments specified. Usage: ... <date:yyyy-mm-dd> <natco:String> <isHistoric:bool> <runFor:String>")
+    logger.error("Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <isHistoric:true|false> <runFor:yearly|daily>")
     System.exit(0)
   }
 
   // Get the run variables based on input arguments
   val runVar = new RunConfig(args)
 
-  logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco: ${runVar.natco}, " +
-    s"natcoNetwork: ${runVar.natcoNetwork}, isHistoric: ${runVar.isHistoric}")
+  logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco:${runVar.natco}, " +
+    s"natcoNetwork: ${runVar.natcoNetwork}, isHistoric: ${runVar.isHistoric}, runFor:${runVar.runFor} ")
 
+  // Get settings and create spark session
   val settings = new Configurator().getSettings()
   implicit val sparkSession = getSparkSession(settings.appName.get)
 
+  // Instantiate helper and resolve source file paths
   val h = new Helper()
   val sourceFilePath = h.resolvePath(settings)
 
+  // Read sources
   val inputReaders = InputData(
     activity = new CSVReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv.gz",
       schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read(),
@@ -51,21 +54,21 @@ object Application extends App with Logger {
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
 
-    activity_archives = sparkSession.read.format("csv")
+    activity_archives = sparkSession.read
       .option("header", "true")
       .option("delimiter","\\t")
       .schema(FileSchemas.activitySchema)
-      .load(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*"),
-    provision_archives = sparkSession.read.format("csv")
+      .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*"),
+    provision_archives = sparkSession.read
       .option("header", "true")
       .option("delimiter","\\t")
       .schema(FileSchemas.provisionSchema)
-      .load(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*"),
-    register_requests_archives = sparkSession.read.format("csv")
+      .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*"),
+    register_requests_archives = sparkSession.read
       .option("header", "true")
       .option("delimiter","\\t")
       .schema(FileSchemas.registerRequestsSchema)
-      .load(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
+      .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
   )
 
   logger.info(s"Persistent files loaded for $fileMask")
