@@ -49,6 +49,8 @@ class Core extends ProcessingCore {
     // Processing facts, aggregating accumulated data by date, month, year
     val fact = new Facts()
 
+    //**********************************************Activity************************************************//
+
     // normal processing for day and month
     if(!runVar.processYearly) {
       logger.info("Processing daily activity") // here we need the accumulator
@@ -72,7 +74,7 @@ class Core extends ProcessingCore {
     // yearly processing only
     if(runVar.processYearly) {
       logger.info("Processing yearly activity")
-      val filtered_yearly_active = acc_activity.filter(col("creation_date").contains(runVar.year))
+      val filtered_yearly_active = acc_activity//.filter(col("creation_date").contains(runVar.year))
       val activeYearly1 = fact.getActiveDaily(filtered_yearly_active, fullUserAgents, runVar.year, runVar.natcoNetwork)
 
       activeYearly= activeYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
@@ -82,13 +84,14 @@ class Core extends ProcessingCore {
         .withColumnRenamed("Active_daily_unsucc_orig", "Active_yearly_unsucc_orig")
       //logger.info("Active yearly count: " + activeYearly.count())
     }
-    //******************************************************************************************************//
+
+    //**********************************************Provision***********************************************//
 
     // normal processing for day and month
     if(!runVar.processYearly) {
       // TODO: can we optimize this to read only the daily file?
       logger.info("Processing daily provisioned")
-      val filtered_daily_provision = acc_provision.filter(col("FileDate").contains(runVar.date))
+      val filtered_daily_provision = acc_provision.filter(col("FileDate") === runVar.date)
 
       provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, runVar.dayforkey)
       //logger.info("Provisioned daily count: " + provisionedDaily.count())
@@ -102,9 +105,10 @@ class Core extends ProcessingCore {
       //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
     }
 
+    // yearly processing only
     if(runVar.processYearly) {
       logger.info("Processing yearly provisioned")
-      val filtered_yearly_provision = acc_provision.filter(col("FileDate").contains(runVar.year))
+      val filtered_yearly_provision = acc_provision//.filter(col("FileDate").contains(runVar.year))
       val provisionedYearly1 = fact.getProvisionedDaily(filtered_yearly_provision, runVar.year)
 
       provisionedYearly = provisionedYearly1.withColumnRenamed("ConKeyP1", "ConKeyP3")
@@ -112,11 +116,13 @@ class Core extends ProcessingCore {
       //logger.info("Provisioned yearly count: " + provisionedYearly.count())
     }
 
-    //******************************************************************************************************//
+    //*******************************************Register Requests******************************************//
+
+    // normal processing for day and month
     if(!runVar.processYearly) {
       // TODO: can we optimize this to read only the daily file?
       logger.info("Processing daily register requests")
-      val filtered_daily_register = acc_register_requests.filter(col("FileDate").contains(runVar.date))
+      val filtered_daily_register = acc_register_requests.filter(col("FileDate") === runVar.date)
 
       registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, runVar.dayforkey)
       //logger.info("Registered daily count: " + registeredDaily.count())
@@ -130,15 +136,19 @@ class Core extends ProcessingCore {
       //logger.info("Registered monthly count: " + registeredMonthly.count())
     }
 
+    // yearly processing only
     if(runVar.processYearly) {
       logger.info("Processing yearly register requests")
-      val filtered_yearly_register = acc_register_requests.filter(col("FileDate").contains(runVar.year))
+      val filtered_yearly_register = acc_register_requests//.filter(col("FileDate").contains(runVar.year))
       val registeredYearly1 = fact.getRegisteredDaily(filtered_yearly_register, fullUserAgents, runVar.year)
       registeredYearly = registeredYearly1.withColumnRenamed("ConKeyR1", "ConKeyR3")
         .withColumnRenamed("Registered_daily", "Registered_yearly")
       //logger.info("Registered yearly count: " + registeredYearly.count())
     }
-    //******************************************************************************************************//
+
+    //*********************************************Service Fact*********************************************//
+
+    // normal processing for day and month
     if(!runVar.processYearly) {
       //generating one file each day (only daily processing needed)
       logger.info("Processing daily service fact")
