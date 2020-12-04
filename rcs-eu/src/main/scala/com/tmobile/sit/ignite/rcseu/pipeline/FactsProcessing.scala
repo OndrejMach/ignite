@@ -37,7 +37,8 @@ class Facts extends FactsProcessing {
       val split = i.toUpperCase.split("/").reverse
       split.head.toCharArray.filter(_.isDigit).mkString("").toLong
     }
-    agents.sortWith((i,j) => encode(i)>encode(j)).head
+    //TODO: validate this change
+    agents.sortWith((j,i) => encode(i)>encode(j)).head
   }
 
   val getMaxuserAgent = udf(getMaxuserAgentDef)
