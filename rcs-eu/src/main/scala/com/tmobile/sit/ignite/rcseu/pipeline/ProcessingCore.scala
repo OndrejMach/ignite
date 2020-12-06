@@ -49,8 +49,6 @@ class Core extends ProcessingCore {
     // Processing facts, aggregating accumulated data by date, month, year
     val fact = new Facts()
 
-
-
     // normal processing for day and month
     if(!runVar.processYearly) {
 
@@ -72,46 +70,50 @@ class Core extends ProcessingCore {
         .withColumnRenamed("Active_daily_unsucc_orig", "Active_monthly_unsucc_orig")
       //logger.info("Active monthly count: " + activeMonthly.count())
 
-      //**********************************************Provision***********************************************//
-
-      // TODO: can we optimize this to read only the daily file?
-      logger.info("Processing daily provisioned")
-      val filtered_daily_provision = acc_provision.filter(col("FileDate") === runVar.date)
-
-      provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, runVar.dayforkey)
-      //logger.info("Provisioned daily count: " + provisionedDaily.count())
-
-      logger.info("Processing monthly provisioned")
-      val filtered_monthly_provision = acc_provision.filter(col("FileDate").contains(runVar.month))
-      val provisionedMonthly1 = fact.getProvisionedDaily(filtered_monthly_provision, runVar.monthforkey)
-
-      provisionedMonthly = provisionedMonthly1.withColumnRenamed("ConKeyP1", "ConKeyP2")
-        .withColumnRenamed("Provisioned_daily", "Provisioned_monthly")
-      //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
-
-      //*******************************************Register Requests******************************************//
-
-      // TODO: can we optimize this to read only the daily file?
-      logger.info("Processing daily register requests")
-      val filtered_daily_register = acc_register_requests.filter(col("FileDate") === runVar.date)
-
-      registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, runVar.dayforkey)
-      //logger.info("Registered daily count: " + registeredDaily.count())
-
-      logger.info("Processing monthly register requests")
-      val filtered_monthly_register = acc_register_requests.filter(col("FileDate").contains(runVar.month))
-      val registeredMonthly1 = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, runVar.monthforkey)
-
-      registeredMonthly = registeredMonthly1.withColumnRenamed("ConKeyR1", "ConKeyR2")
-        .withColumnRenamed("Registered_daily", "Registered_monthly")
-      //logger.info("Registered monthly count: " + registeredMonthly.count())
-
       //*********************************************Service Fact*********************************************//
 
-      //generating one file each day (only daily processing needed)
       logger.info("Processing daily service fact")
       serviceDaily = fact.getServiceFactsDaily(acc_activity)
       //logger.info("Service facts daily count: " + serviceDaily.count())
+
+      // Don't run provision and register requests processing when updating activity and service_fact data
+      if(!runVar.runMode.equals("update")) {
+        //**********************************************Provision***********************************************//
+        // TODO: can we optimize this to read only the daily file?
+        logger.info("Processing daily provisioned")
+        //val filtered_daily_provision = acc_provision.filter(col("FileDate") === runVar.date)
+        val filtered_daily_provision = inputData.provision
+        provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, runVar.dayforkey)
+        //logger.info("Provisioned daily count: " + provisionedDaily.count())
+
+        logger.info("Processing monthly provisioned")
+        val filtered_monthly_provision = acc_provision.filter(col("FileDate").contains(runVar.month))
+        val provisionedMonthly1 = fact.getProvisionedDaily(filtered_monthly_provision, runVar.monthforkey)
+        provisionedMonthly =
+          provisionedMonthly1
+          .withColumnRenamed("ConKeyP1", "ConKeyP2")
+          .withColumnRenamed("Provisioned_daily", "Provisioned_monthly")
+        //logger.info("Provisioned monthly count: " + provisionedMonthly.count())
+
+        //*******************************************Register Requests******************************************//
+
+        // TODO: can we optimize this to read only the daily file?
+        logger.info("Processing daily register requests")
+        //val filtered_daily_register = acc_register_requests.filter(col("FileDate") === runVar.date)
+        val filtered_daily_register = inputData.register_requests
+        registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, runVar.dayforkey)
+        //logger.info("Registered daily count: " + registeredDaily.count())
+
+        logger.info("Processing monthly register requests")
+        val filtered_monthly_register = acc_register_requests.filter(col("FileDate").contains(runVar.month))
+        val registeredMonthly1 = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, runVar.monthforkey)
+
+        registeredMonthly =
+          registeredMonthly1
+          .withColumnRenamed("ConKeyR1", "ConKeyR2")
+          .withColumnRenamed("Registered_daily", "Registered_monthly")
+        //logger.info("Registered monthly count: " + registeredMonthly.count())
+      }
     }
 
     // yearly processing only

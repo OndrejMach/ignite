@@ -9,8 +9,8 @@ import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeli
 object Application extends App with Logger {
 
   // First of all check arguments
-  if(args.length != 4) {
-    logger.error("Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <isHistoric:true|false> <runFor:yearly|daily>")
+  if(args.length != 3) {
+    logger.error("Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <runFor:yearly|daily|update>")
     System.exit(0)
   }
 
@@ -18,7 +18,7 @@ object Application extends App with Logger {
   val runVar = new RunConfig(args)
 
   logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco:${runVar.natco}, " +
-    s"natcoNetwork: ${runVar.natcoNetwork}, isHistoric: ${runVar.isHistoric}, runFor:${runVar.runFor} ")
+    s"natcoNetwork: ${runVar.natcoNetwork}, runMode:${runVar.runMode} ")
 
   // Get settings and create spark session
   val settings = new Configurator().getSettings()
@@ -27,11 +27,12 @@ object Application extends App with Logger {
   // Instantiate helper and resolve source file paths
   val h = new Helper()
   val sourceFilePath = h.resolvePath(settings)
+  val activityFiles = h.resolveActivity(sourceFilePath)
 
   // Read sources
   val inputReaders = InputData(
-    activity = new CSVReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv.gz",
-      schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read(),
+    // Special treatment to resolve activity in case the runMode is 'update'
+    activity = activityFiles,
     provision = new CSVReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.csv.gz",
       schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
     register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv.gz",

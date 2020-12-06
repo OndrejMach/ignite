@@ -25,6 +25,7 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
     val persistencePath = settings.lookupPath.get
     val outputPath = settings.outputPath.get
 
+    /*
     if(runVar.debug) {
       logger.info(s"Writing acc_activity_${runVar.natco}.parquet")
       outputData.AccActivity.write.mode("overwrite").parquet(persistencePath + s"acc_activity_${runVar.natco}.parquet")
@@ -32,23 +33,32 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
       outputData.AccProvision.write.mode("overwrite").parquet(persistencePath + s"acc_provision_${runVar.natco}.parquet")
       logger.info(s"Writing acc_register_requests.parquet")
       outputData.AccRegisterRequests.write.mode("overwrite").parquet(persistencePath + s"acc_register_requests_${runVar.natco}.parquet")
-    }
+    }*/
 
+    // Always write user_agents
     CSVWriter(outputData.UserAgents, persistencePath+"User_agents.csv", delimiter = "\t").writeData()
 
+    // If daily processing or daily update
     if(!runVar.processYearly) {
-      logger.info("Writing daily and monthly data")
+      if(runVar.runMode.equals("update")) {
+        logger.info(s"Updating data for ${runVar.date} by including data from ${runVar.tomorrowDate}")
+      }
+      else {
+        logger.info("Writing daily and monthly data")
+      }
       CSVWriter(outputData.ActiveDaily, outputPath + "activity_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ProvisionedDaily, outputPath + "provisioned_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.RegisteredDaily, outputPath + "registered_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
-
       CSVWriter(outputData.ActiveMonthly, outputPath + "activity_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.RegisteredMonthly, outputPath + "registered_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
-
       CSVWriter(outputData.ServiceDaily, outputPath + "service_fact." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
+
+      if(!runVar.runMode.equals("update")) {
+        CSVWriter(outputData.ProvisionedDaily, outputPath + "provisioned_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
+        CSVWriter(outputData.RegisteredDaily, outputPath + "registered_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
+        CSVWriter(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
+        CSVWriter(outputData.RegisteredMonthly, outputPath + "registered_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
+      }
     }
 
+    // if yearly processing
     if(runVar.processYearly) {
       logger.info("Writing yearly data")
       CSVWriter(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv", delimiter = "\t").writeData()

@@ -11,7 +11,6 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
                core: ProcessingCore, writer: ResultWriter)(implicit sparkSession: SparkSession) extends Logger{
   def run(): Unit = {
 
-
     // Read input files
     val inputActivity = inputData.activity
     val inputProvision = inputData.provision
