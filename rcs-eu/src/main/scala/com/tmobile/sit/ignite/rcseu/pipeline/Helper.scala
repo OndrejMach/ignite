@@ -12,11 +12,23 @@ trait Config extends Logger{
 }
 trait Help extends Logger{
   def resolvePath(settings:Settings):String
+  def getArchiveFileMask():String
+  def resolveActivity(sourceFilePath: String):DataFrame
 }
 
 class Helper() (implicit sparkSession: SparkSession) extends Help {
 
-  def resolveActivity(sourceFilePath: String):DataFrame = {
+  override def getArchiveFileMask():String = {
+    if(runVar.processYearly) {
+      logger.info("Processing yearly archive data")
+      runVar.year
+    } else {
+      logger.info("Processing daily and monthly archive data")
+      runVar.month
+    }
+  }
+
+  override def resolveActivity(sourceFilePath: String):DataFrame = {
     if(runVar.runMode.equals("update")) {
       logger.info("runMode: update")
       logger.info(s"Reading activity data for ${runVar.date} and ${runVar.tomorrowDate}")

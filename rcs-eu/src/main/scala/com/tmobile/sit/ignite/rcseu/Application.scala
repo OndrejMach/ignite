@@ -28,6 +28,7 @@ object Application extends App with Logger {
   val h = new Helper()
   val sourceFilePath = h.resolvePath(settings)
   val activityFiles = h.resolveActivity(sourceFilePath)
+  val fileMask = h.getArchiveFileMask()
 
   // Read sources
   val inputReaders = InputData(
@@ -38,19 +39,11 @@ object Application extends App with Logger {
     register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv.gz",
       schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
   )
+
   logger.info("Source files loaded")
 
   // read whole year only if doing yearly processing
-  val fileMask = if(runVar.processYearly)
-  {
-    logger.info("Processing yearly data")
-    runVar.year
-  } else {
-    logger.info("Processing daily and monthly data")
-    runVar.month
-  }
-
-  logger.info(s"Reading archive files for: $fileMask")
+  logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
     oldUserAgents = new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
@@ -72,7 +65,7 @@ object Application extends App with Logger {
       .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
   )
 
-  logger.info(s"Persistent files loaded for $fileMask")
+  logger.info(s"Persistent files loaded for ${fileMask}")
 
   val stageProcessing = new Stage()
 

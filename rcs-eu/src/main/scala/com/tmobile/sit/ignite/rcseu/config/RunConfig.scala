@@ -1,6 +1,7 @@
 package com.tmobile.sit.ignite.rcseu.config
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
 // variables needed in FactsProcesing and ProcessingCore for filtering
 class RunConfig(_args: Array[String]) {
   val args = _args
@@ -14,8 +15,6 @@ class RunConfig(_args: Array[String]) {
   val tomorrowDate=dateformat.plusDays(1).toString()
 
   val debug = false;
-  val processDaily = true;
-  val processMonthly = true;
 
   val processYearly = if(runMode.equals("yearly")) {true} else {false}
 
