@@ -37,13 +37,12 @@ class Facts extends FactsProcessing {
       val split = i.toUpperCase.split("/").reverse
       split.head.toCharArray.filter(_.isDigit).mkString("").toLong
     }
-    //TODO: validate this change
+    //TODO: validate this change. Maybe just do simple max string?
     agents.sortWith((j,i) => encode(i)>encode(j)).head
   }
 
   val getMaxuserAgent = udf(getMaxuserAgentDef)
 ///
-
 
   def getRegisteredDaily(register_requests: DataFrame,fullUserAgents: DataFrame,period_for_process:String): DataFrame = {
     //aggregating unique number of registered users in the specific period_for_process and natco

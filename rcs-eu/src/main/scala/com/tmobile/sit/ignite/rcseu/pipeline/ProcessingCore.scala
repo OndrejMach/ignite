@@ -81,8 +81,8 @@ class Core extends ProcessingCore {
         //**********************************************Provision***********************************************//
         // TODO: can we optimize this to read only the daily file?
         logger.info("Processing daily provisioned")
-        //val filtered_daily_provision = acc_provision.filter(col("FileDate") === runVar.date)
-        val filtered_daily_provision = inputData.provision
+        val filtered_daily_provision = acc_provision.filter(col("FileDate") === runVar.date)
+        //val filtered_daily_provision = inputData.provision
         provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, runVar.dayforkey)
         //logger.info("Provisioned daily count: " + provisionedDaily.count())
 
@@ -99,8 +99,8 @@ class Core extends ProcessingCore {
 
         // TODO: can we optimize this to read only the daily file?
         logger.info("Processing daily register requests")
-        //val filtered_daily_register = acc_register_requests.filter(col("FileDate") === runVar.date)
-        val filtered_daily_register = inputData.register_requests
+        val filtered_daily_register = acc_register_requests.filter(col("FileDate") === runVar.date)
+        //val filtered_daily_register = inputData.register_requests
         registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, runVar.dayforkey)
         //logger.info("Registered daily count: " + registeredDaily.count())
 
