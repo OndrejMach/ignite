@@ -125,7 +125,7 @@ class Core extends ProcessingCore {
       val filtered_yearly_active = acc_activity//.filter(col("creation_date").contains(runVar.year))
       val activeYearly1 = fact.getActiveDaily(filtered_yearly_active, fullUserAgents, runVar.year, runVar.natcoNetwork)
 
-      activeYearly= activeYearly1.withColumnRenamed("ConKeyR1","ConKeyR3")
+      activeYearly= activeYearly1.withColumnRenamed("ConKeyA1","ConKeyA3")
         .withColumnRenamed("Active_daily_succ_origterm", "Active_yearly_succ_origterm")
         .withColumnRenamed("Active_daily_succ_orig", "Active_yearly_succ_orig")
         .withColumnRenamed("Active_daily_unsucc_origterm", "Active_yearly_unsucc_origterm")
