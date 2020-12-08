@@ -52,12 +52,12 @@ class Facts extends FactsProcessing {
     val maxDate = register_requests.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
     val onlyMaxDate = register_requests.join(maxDate, Seq("msisdn", "FileDate"), "inner")
     val grouped = onlyMaxDate.groupBy("msisdn").agg(collect_set("user_agent").alias("agent_list"))
-    val register_requests_max1 = grouped.withColumn("maxAgent",getMaxuserAgent(col("agent_list")))
-    val register_requests_max = register_requests_max1.withColumn("maxAgentLower",lower(col("maxAgent")))
+    val register_requests_max = grouped.withColumn("maxAgent",getMaxuserAgent(col("agent_list")))
 
     val register_requests_agg =
       register_requests_max
-        .groupBy((col("maxAgentLower"))).agg(countDistinct("msisdn").as("msisdn_count"),max("maxAgent").as("maxAgent"))
+        .groupBy("maxAgent").agg(countDistinct("msisdn").as("msisdn_count"))
+        //.filter($"maxAgent".isin(testUserAgent:_*))
         .orderBy(desc("maxAgent"))
         .withColumnRenamed("maxAgent","UserAgent")
         .withColumnRenamed("msisdn_count","Registered_daily")
