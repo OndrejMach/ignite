@@ -29,9 +29,8 @@ class Facts extends FactsProcessing {
     provisionedDaily
   }
 
-//definition of getMaxUserAgent function, will be used in register_requests and activity data
+  //definition of getMaxUserAgent function, will be used in register_requests and activity data
   // for finding the max user_agent value
-
   def getMaxuserAgentDef = (agents: Seq[String]) => {
     def encode(i:String) = {
       val split = i.toUpperCase.split("/").reverse
