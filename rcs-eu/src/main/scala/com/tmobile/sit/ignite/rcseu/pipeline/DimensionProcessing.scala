@@ -23,6 +23,8 @@ class Dimension extends DimensionProcessing {
       .withColumn("_UserAgentID", expr(s"$max_id + row_nr"))
       .drop("row_nr")
 
+    logger.info(s"Detected ${fullUserAgents1.count} new user agents.")
+
     val fullUserAgents =
       fullUserAgents1
         .union(oldUserAgents)
