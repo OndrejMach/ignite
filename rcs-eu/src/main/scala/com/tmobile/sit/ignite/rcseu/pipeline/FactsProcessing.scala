@@ -38,7 +38,7 @@ class Facts extends FactsProcessing {
       split.head.toCharArray.filter(_.isDigit).mkString("").toLong
     }
     //TODO: validate this change. Maybe just do simple max string?
-    agents.sortWith((j,i) => encode(i)>encode(j)).head
+    agents.sortWith((i,j) => encode(i)>encode(j)).head
   }
 
   val getMaxuserAgent = udf(getMaxuserAgentDef)
