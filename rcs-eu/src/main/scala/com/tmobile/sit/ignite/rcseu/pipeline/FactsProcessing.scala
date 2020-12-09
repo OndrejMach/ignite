@@ -338,7 +338,8 @@ class Facts extends FactsProcessing {
       .select("ConKeyA1","user_agent").distinct()
 
     val finalFinal=finalTable
-      .join(fullUserAgents,finalTable("user_agent") <=>  fullUserAgents("UserAgent"),"left_outer").distinct()
+      .join(fullUserAgents,
+        lower(finalTable("user_agent")) <=> lower(fullUserAgents("UserAgent")),"left_outer")
       .join(keyTable,finalTable("user_agent") <=>  keyTable("user_agent"),"left_outer")
       .withColumn("ConKeyA1", concat_ws("|",col("ConKeyA1"),col("_UserAgentID")))
       .drop("_UserAgentID","OEM","Device","Client","FW","Client_vs","user_agent")
