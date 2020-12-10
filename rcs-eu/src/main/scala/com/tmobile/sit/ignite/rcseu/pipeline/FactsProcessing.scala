@@ -372,6 +372,8 @@ class Facts extends FactsProcessing {
      */
     val sf1=activity
       .filter(activity("creation_date").contains(runVar.date))
+      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
+
 
     //Files SENT-OnNet:
     val sf2 =sf1
