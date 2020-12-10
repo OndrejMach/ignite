@@ -344,6 +344,13 @@ class Facts extends FactsProcessing {
       .withColumn("ConKeyA1", concat_ws("|",col("ConKeyA1"),col("_UserAgentID")))
       .drop("_UserAgentID","OEM","Device","Client","FW","Client_vs","user_agent")
 
+      .groupBy("ConKeyA1").sum()
+      .withColumnRenamed("sum(Active_daily_succ_origterm)","Active_daily_succ_origterm")
+      .withColumnRenamed("sum(Active_daily_succ_orig)","Active_daily_succ_orig")
+      .withColumnRenamed("sum(Active_daily_unsucc_origterm)","Active_daily_unsucc_origterm")
+      .withColumnRenamed("sum(Active_daily_unsucc_orig)","Active_daily_unsucc_orig")
+
+
     finalFinal
 
   }
