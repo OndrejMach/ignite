@@ -1,5 +1,7 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
+import java.time.{LocalDateTime, ZoneId}
+
 /**
  * some helper methods for mostly data transformation
  */
@@ -21,5 +23,15 @@ package object fileprocessors {
     } catch {
       case e: Exception => None
     }
+  }
+
+  val getTimeZoneOffset : Long = {
+    val utc = ZoneId.of("UTC")
+    val ldt = LocalDateTime.now()
+    val utcDT = LocalDateTime.now(utc)
+
+    import java.time.temporal._
+
+    Math.round(utcDT.until(ldt, ChronoUnit.SECONDS).toDouble/3600)
   }
 }

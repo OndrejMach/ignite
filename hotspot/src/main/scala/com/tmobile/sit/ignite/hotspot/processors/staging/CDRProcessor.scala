@@ -28,7 +28,7 @@ class CDRProcessor(cdrFileReader: Reader, fileDate: Date, encoderPath: String)(i
     val data = cdrFileReader.read().as[String]
 
     val ret = data.filter($"value".startsWith(lit("D;"))).map(CDRStructures.CDRInput(_))
-      .withColumn("ts", from_unixtime($"session_start_ts"-lit(2*3600)).cast(TimestampType))
+      .withColumn("ts", from_unixtime($"session_start_ts"-lit(com.tmobile.sit.ignite.hotspot.processors.fileprocessors.getTimeZoneOffset*3600)).cast(TimestampType))
       .withColumn("wlan_session_date", to_date($"ts").cast(DateType))
       .withColumn("user_name", lit("565C4BB4137DD2BFC1D2EA5EBC70ADB3"))
       .withColumn("user_name_extension", lit(null).cast(StringType))

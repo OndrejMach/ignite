@@ -16,12 +16,12 @@ abstract class RCSEWriter(processingDate: Date) extends Logger {
     logger.info(s"Writing to path ${path}")
 
 
-    data.show(false)
+    //data.show(false)
 
     val toWrite = data
       .withColumn("date", lit(processingDate))
 
-    toWrite.show(false)
+    //toWrite.show(false)
 
     toWrite
       .write

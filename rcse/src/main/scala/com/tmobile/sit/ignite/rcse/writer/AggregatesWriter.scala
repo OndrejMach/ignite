@@ -24,7 +24,7 @@ case class AggregatesData(initConf: DataFrame, initUser: DataFrame, uauAggregate
 class AggregatesWriter(processingDate: Date, data: AggregatesData)(implicit sparkSession: SparkSession, settings: Settings ) extends RCSEWriter(processingDate = processingDate) {
   def writeData() = {
     logger.info("Writing init user aggregates")
-    data.initUser.show(false)
+    //data.initUser.show(false)
 
     writeParquet(data.initUser, settings.stage.initUser)
 

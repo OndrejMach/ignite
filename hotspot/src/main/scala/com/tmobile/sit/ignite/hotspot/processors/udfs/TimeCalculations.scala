@@ -49,7 +49,7 @@ object DirtyStuff{
 object TimeCalculations {
   @strictfp
   val toQuartersUnixTime = (startTS: Long, eventTS: Long, SesVolume: Long, SesDuration: Long, processingDate: Timestamp ) => {
-    val odate_start = processingDate.toLocalDateTime.toEpochSecond(ZoneOffset.UTC) + 2*3600
+    val odate_start = processingDate.toLocalDateTime.toEpochSecond(ZoneOffset.UTC) + com.tmobile.sit.ignite.hotspot.processors.fileprocessors.getTimeZoneOffset*3600
     val odate_end = odate_start + 86400
 
     def isDateValid(end_quarter: Long): Boolean = {

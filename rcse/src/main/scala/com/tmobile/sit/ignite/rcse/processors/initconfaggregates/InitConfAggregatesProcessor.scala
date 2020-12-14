@@ -70,7 +70,7 @@ class InitConfAggregatesProcessor(lookups: LookupsData, inputData: InitConfInput
       .withColumn("id", monotonically_increasing_id())
 
     val changed = changedAll
-      .sort("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
+     // .sort("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .groupBy("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
         first("natco_code").alias("natco_code"),

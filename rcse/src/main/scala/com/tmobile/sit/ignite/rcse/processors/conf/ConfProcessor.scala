@@ -5,13 +5,15 @@ import java.sql.Date
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, first, lit, when, broadcast, max}
+import org.apache.spark.sql.functions.{broadcast, col, first, lit, max, when}
+import org.apache.spark.sql.types.StringType
 
 /**
  * Conf file processing. It takes incoming DM events and creates a new conf file. The intention is to create a new file for every new day.
- * @param inputs - input events + the actual conf file
- * @param lookups - lookups - tac, client, terminal..
- * @param max_Date - max date which actually indicates that row is still valid - this one is a far-future date
+ *
+ * @param inputs          - input events + the actual conf file
+ * @param lookups         - lookups - tac, client, terminal..
+ * @param max_Date        - max date which actually indicates that row is still valid - this one is a far-future date
  * @param processing_date - input events processing date
  * @param sparkSession
  */
@@ -26,7 +28,7 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
     "rcse_curr_client_id", "rcse_curr_terminal_id",
     "rcse_curr_terminal_sw_id", "modification_date")
 
-  private  val preprocessedTac = {
+  private val preprocessedTac = {
     logger.info("Preparing TAC data")
     logger.info(s"TAC RAW: ${lookups.tac.count()}")
 
@@ -38,10 +40,12 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       .agg(
         max("rcse_terminal_id").alias("rcse_terminal_id")
       )
+      /*
       .groupBy("rcse_terminal_id")
       .agg(
         max("tac_code").alias("tac_code")
       )
+    */
 
     val terminalLookupID = lookups
       .terminal
@@ -54,13 +58,13 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
     val ret1 = lookups.tac
       .filter($"valid_to" >= lit(max_Date) && $"id".isNotNull)
       .join(terminalLookupTAC, Seq("tac_code"), "left_outer")
-      .withColumnRenamed("rcse_terminal_id","rcse_terminal_id_tac" )
+      .withColumnRenamed("rcse_terminal_id", "rcse_terminal_id_tac")
       .drop("rcse_terminal_id")
 
     val ret = ret1.join(terminalLookupID, $"terminal_id_terminal" === $"id", "left_outer")
       .withColumn("rcse_terminal_id_term", $"rcse_terminal_id")
       .drop("rcse_terminal_id", "terminal_id_terminal")
-      .select($"tac_code", $"id".as("terminal_id"), $"rcse_terminal_id_tac", $"rcse_terminal_id_term".as("rcse_terminal_id_term"))
+      .select($"tac_code", $"id".cast(StringType).as("terminal_id"), $"rcse_terminal_id_tac", $"rcse_terminal_id_term".as("rcse_terminal_id_term"))
       .repartition(10)
 
     logger.info(s"TAC preproc: ${ret.count()}")
@@ -70,9 +74,11 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
     ret
   }
 
-  private  val preprocessedEvents = {
+  private val preprocessedEvents = {
     logger.info("Preprocessing Events data")
     logger.info(s"Events count RAW: ${inputs.events.count()}")
+
+    //inputs.events.summary().show(false)
 
     val ret = inputs.events
       .drop("tac_code")
@@ -96,14 +102,24 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       )
       .persist()
 
+   val nullTID = ret.filter($"rcse_init_terminal_id".isNull)
+   val nullCTID = ret.filter($"rcse_curr_terminal_id".isNull)
+
+    logger.debug(s"TID null count: ${nullTID.count()}, CTID null count: ${nullCTID.count()}")
+
     logger.info(s"events preprocessed: ${ret.count()}")
 
     ret
   }
 
-  private  val conf2 = {
+  private val conf2 = {
     logger.info("Getting conf data with TAC")
     logger.info(s"OLD conf: ${inputs.confData.count()}")
+
+    val nullTID = inputs.confData.filter($"rcse_init_terminal_id".isNull)
+    val nullCTID = inputs.confData.filter($"rcse_curr_terminal_id".isNull)
+
+    logger.debug(s"OLD CONF null count: ${nullTID.count()}, CTID null count: ${nullCTID.count()}")
 
     val terminalLookup = preprocessedTac.withColumn("e", lit(1)).select("rcse_terminal_id_tac", "rcse_terminal_id_term", "e")
 
@@ -117,9 +133,9 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
         (($"rcse_curr_terminal_id".isNotNull && $"term" =!= $"rcse_curr_terminal_id") ||
           $"rcse_curr_terminal_id".isNull))
 
-    logger.info(s"Interim count ${ret1.count()}")
+    logger.debug(s"Interim count ${ret1.count()}")
 
-      val ret = ret1
+    val ret = ret1
       .withColumn("rcse_curr_terminal_id", $"term")
       .withColumn("modification_date", lit(processing_date))
       //.sort("msisdn")
@@ -131,17 +147,19 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       .select(
         outColumns.head, outColumns.tail: _*
       )
+      .distinct()
       .persist()
 
-    logger.info(s"conf enriched: ${ret.count()}")
+
+    logger.debug(s"conf enriched: ${ret.count()}")
 
     ret
   }
 
-  private  val joinedEventsConfData = {
+  private val joinedEventsConfData = {
     logger.info("Addig Events")
 
-    inputs.confData.filter("msisdn is null").show(false)
+    //inputs.confData.filter("msisdn is null").show(false)
 
     val confColumns = inputs.confData.columns.map(_ + "_conf")
     val retu = preprocessedEvents
@@ -154,35 +172,35 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
       )
       .persist()
 
-    logger.info(s"Joined events and conf: ${retu.count()}")
+    logger.debug(s"Joined events and conf: ${retu.count()}")
 
     retu
   }
 
-  private  val umatched = {
+  private val umatched = {
     logger.info("Filtering unmatched rows")
-    val filt  = joinedEventsConfData
+    val filt = joinedEventsConfData
       .filter($"e".isNull)
 
 
-    filt.select("msisdn").distinct().show()
+    //filt.select("msisdn").distinct().show()
 
-    logger.info(s"UnMatched filtered: ${filt.count()}")
+    logger.debug(s"UnMatched filtered: ${filt.count()}")
 
-     val ret= filt.select(outColumns.head, outColumns.tail : _*
-        //outColumns.map(i => col(i + "_conf").as(i)): _*
-      )
+    val ret = filt.select(outColumns.head, outColumns.tail: _*
+      //outColumns.map(i => col(i + "_conf").as(i)): _*
+    )
       .filter($"msisdn".isNotNull)
 
-    logger.info(s"UnMatched count: ${ret.count()}")
+    logger.debug(s"UnMatched count: ${ret.count()}")
 
     ret
   }
 
 
-  private  val joined = {
+  private val joined = {
     logger.info("Getting matched data")
-    val ret  = joinedEventsConfData
+    val ret = joinedEventsConfData
       .filter($"e".isNotNull)
       .withColumn("modification_date", $"date_id")
       .withColumn("date_id", $"date_id_conf")
@@ -194,11 +212,11 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
         outColumns.head, outColumns.tail: _*
       )
       .persist()
-    logger.info(s"Getting events and conf data matched: ${ret.count()}")
+    logger.debug(s"Getting events and conf data matched: ${ret.count()}")
     ret
   }
 
-  private  val updJoin = {
+  private val updJoin = {
     val tmpUpdate = joined
       .union(conf2)
       .groupBy("msisdn")
@@ -206,9 +224,9 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
         first(outColumns.head).alias(outColumns.head),
         outColumns.tail.filter(_ != "msisdn").map(i => first(i).alias(i)): _*
       )
-        .persist()
+      .persist()
 
-    logger.info(s"tmpUpdate: ${tmpUpdate.count()}")
+    logger.debug(s"tmpUpdate: ${tmpUpdate.count()}")
 
     logger.info("Calculating final output for matched data")
 
@@ -248,15 +266,18 @@ class ConfProcessor(inputs: ConfToStageInputs, lookups: LookupsData, max_Date: D
         outColumns.head, outColumns.tail: _*
       )
 
-    logger.info(s"Final without unmatched ${ret.count()}")
+    ret.filter("rcse_curr_terminal_sw_id is null").show(false)
+
+    logger.debug(s"Final without unmatched ${ret.count()}")
     ret
 
   }
 
 
   val result = {
-    logger.info(s"Unioning matched and unmatched to get final result, unmatched: ${umatched.count()}")
+    logger.debug(s"Unioning matched and unmatched to get final result, unmatched: ${umatched.count()}")
     updJoin.union(umatched)
+      .distinct()
   }
 
 }

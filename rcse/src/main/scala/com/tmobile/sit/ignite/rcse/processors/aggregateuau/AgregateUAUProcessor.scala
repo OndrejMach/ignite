@@ -5,7 +5,7 @@ import java.sql.Date
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.inputs.{AgregateUAUInputs, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, concat_ws, count, first, lit}
+import org.apache.spark.sql.functions.{col, concat_ws, count, first, lit, max}
 import org.apache.spark.storage.StorageLevel
 
 /**
@@ -44,9 +44,9 @@ class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time
 
 
   private val activeUsersPreprocessed = {
-    logger.info("GPreprocessing active users")
+    logger.info("Preprocessing active users")
 
-    val clientCols = lookups.client.columns.filter(_ !="rcse_client_id").map(i => first(i).alias(i))
+    val clientCols = lookups.client.columns.filter(_ !="rcse_client_id").map(i => max(i).alias(i))
 
     val client = lookups.client
         .groupBy("rcse_client_id")
@@ -54,7 +54,7 @@ class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time
           clientCols.head,
           clientCols.tail :_*
         )
-    val terminalCols = lookups.terminal.columns.filter(_!="rcse_terminal_id").map(i=>first(i).alias(i) )
+    val terminalCols = lookups.terminal.columns.filter(_!="rcse_terminal_id").map(i=>max(i).alias(i) )
 
     val terminal = lookups.terminal
         .groupBy("rcse_terminal_id")
@@ -70,9 +70,9 @@ class AgregateUAUProcessor(inputs: AgregateUAUInputs, lookups: LookupsData, time
         first("date_id").alias("date_id"),
         first("natco_code").alias("natco_code"),
         first("rcse_tc_status_id").alias("rcse_tc_status_id"),
-        first("rcse_curr_client_id").alias("rcse_curr_client_id"),
-        first("rcse_curr_terminal_id").alias("rcse_curr_terminal_id"),
-        first("rcse_curr_terminal_sw_id").alias("rcse_curr_terminal_sw_id")
+        max("rcse_curr_client_id").alias("rcse_curr_client_id"),
+        max("rcse_curr_terminal_id").alias("rcse_curr_terminal_id"),
+        max("rcse_curr_terminal_sw_id").alias("rcse_curr_terminal_sw_id")
       )
       .withColumnRenamed("rcse_curr_client_id", "rcse_client_id")
       .withColumnRenamed("rcse_curr_terminal_id", "rcse_terminal_id")

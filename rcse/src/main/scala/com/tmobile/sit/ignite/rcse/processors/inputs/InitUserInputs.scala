@@ -13,7 +13,7 @@ class InitUserInputs(implicit sparkSession: SparkSession,settings: Settings) ext
   val confData = {
     logger.info(s"Reading data from ${settings.stage.confFile}${todaysPartition}")
     val conf = sparkSession.read.parquet(s"${settings.stage.confFile}${todaysPartition}")
-    conf.show(false)
+    //conf.show(false)
     conf
 
   }
@@ -21,8 +21,8 @@ class InitUserInputs(implicit sparkSession: SparkSession,settings: Settings) ext
   val initData = {
     logger.info(s"Reading data from ${settings.stage.initUser + yesterdaysPartition}")
     val data = sparkSession.read.parquet(settings.stage.initUser + yesterdaysPartition )
-    logger.info(s"InitConf count: ${data.count()}")
-    data.show(false)
+    logger.debug(s"InitConf count: ${data.count()}")
+   // data.show(false)
     data
   }
 }

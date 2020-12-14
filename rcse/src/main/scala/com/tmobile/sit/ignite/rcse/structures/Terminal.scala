@@ -85,6 +85,6 @@ object Terminal {
 
   val terminalDoutputCols = Seq("rcse_terminal_id", "tac_code", "terminal_id",
     "rcse_terminal_vendor_sdesc", "rcse_terminal_vendor_ldesc",
-    "rcse_terminal_model_sdesc", "rcse_terminal_model_ldesc",
-    "modification_date")
+    "rcse_terminal_model_sdesc", "rcse_terminal_model_ldesc")
+    //"modification_date")
 }

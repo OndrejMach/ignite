@@ -56,13 +56,15 @@ class DMDimension(eventInputsEnriched: DataFrame,
             )
         )
 
+    //outputPrep.filter("rcse_terminal_id is null").show(false)
+
     val outputDone = outputPrep
       .filter($"rcse_terminal_sw_id".isNotNull)
       .select(
         EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
       )
     logger.info("Generating daily DM output")
-    outputPrep
+    val ret = outputPrep
       .filter($"rcse_terminal_sw_id".isNull)
       .drop("rcse_terminal_sw_id")
       .terminalSWLookup(newTerminalSW)
@@ -70,5 +72,10 @@ class DMDimension(eventInputsEnriched: DataFrame,
         EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
       )
       .union(outputDone)
+
+    //ret.filter("rcse_terminal_sw_id is null").show(false)
+
+    ret
+
   }
 }
