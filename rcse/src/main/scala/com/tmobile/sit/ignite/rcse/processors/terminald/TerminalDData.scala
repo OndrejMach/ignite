@@ -13,7 +13,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class TerminalDData(terminalDData: DataFrame)(implicit sparkSession: SparkSession) extends Logger {
   import sparkSession.implicits._
-
+/*
   val maxTerminalID = {
     logger.info("Getting max ID")
     terminalDData
@@ -21,6 +21,8 @@ class TerminalDData(terminalDData: DataFrame)(implicit sparkSession: SparkSessio
       .collect()(0)
       .getInt(0)
   }
+
+ */
 
 
   val terminalFiltered = {

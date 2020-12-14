@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcse.processors.terminald
 
 import com.tmobile.sit.common.Logger
-import org.apache.spark.sql.functions.{count, first, length, lit}
+import org.apache.spark.sql.functions.{count, first, length, lit, max}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
@@ -34,11 +34,11 @@ class TacData(tac: DataFrame, maxDate: java.sql.Date)(implicit sparkSession: Spa
        .groupBy("tac_code")
        .agg(
          count("*").alias("count"),
-         first("terminal_id").alias("terminal_id"),
-         first("id").alias("id"),
-         first("manufacturer").alias("manufacturer"),
-         first("model").alias("model"),
-         first("load_date").alias("load_date")
+         max("terminal_id").alias("terminal_id"),
+         max("id").alias("id"),
+         max("manufacturer").alias("manufacturer"),
+         max("model").alias("model"),
+         max("load_date").alias("load_date")
        )
        .filter($"count" === lit(1))
        .drop("count")

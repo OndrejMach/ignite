@@ -32,7 +32,7 @@ class RegDerDimension(inputEventsRegDer: DataFrame,
     import sparkSession.implicits._
 
     logger.info("Calaulating REGDER dimension")
-    inputEventsRegDer
+    val ret = inputEventsRegDer
 
       .groupBy("msisdn","rcse_event_type")
       .agg(
@@ -69,9 +69,13 @@ class RegDerDimension(inputEventsRegDer: DataFrame,
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
       .terminalSWLookup(terminalSW)
-      .select(
-        EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
-      ).persist()
+      .persist()
+
+    //ret.filter("msisdn='1D0EA6E0134F8F38FBD7A81BBF507D04'").show(false)
+
+    ret.select(
+      EventsStage.stageColumns.head, EventsStage.stageColumns.tail: _*
+    )
   }
 
 

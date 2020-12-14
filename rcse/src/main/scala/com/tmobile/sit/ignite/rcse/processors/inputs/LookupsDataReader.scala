@@ -65,7 +65,7 @@ class LookupsDataReader(implicit sparkSession: SparkSession, settings: Settings)
     logger.info(s"Reading data from ${settings.stage.terminalSWPath}")
     val terminalSW =
       sparkSession.read.parquet(settings.stage.terminalSWPath)
-        .filter($"modification_date".isNotNull)
+       // .filter($"modification_date".isNotNull)
         .withColumn("rcse_terminal_sw_desc", upper($"rcse_terminal_sw_desc"))
     getActualData(terminalSW)
   }

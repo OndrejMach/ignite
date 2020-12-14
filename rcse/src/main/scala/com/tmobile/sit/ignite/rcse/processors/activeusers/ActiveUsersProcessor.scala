@@ -22,7 +22,7 @@ class ActiveUsersProcessor(inputs: ActiveUsersInputs, processingDate: Date)(impl
     logger.info("Preparing input data")
     inputs.inputEvents
     .select("date_id", "natco_code", "msisdn")
-    .sort("msisdn")
+    //.sort("msisdn")
     .groupBy("msisdn")
     .agg(first("date_id").as("date_id"), first("natco_code").as("natco_code"))
   }
@@ -68,6 +68,7 @@ class ActiveUsersProcessor(inputs: ActiveUsersInputs, processingDate: Date)(impl
       .withColumn("rcse_curr_client_id", when($"rcse_curr_client_id".isNull, $"rcse_curr_client_id_yesterday").otherwise($"rcse_curr_client_id"))
       .withColumn("rcse_curr_terminal_id", when($"rcse_curr_terminal_id".isNull, $"rcse_curr_terminal_id_yesterday").otherwise($"rcse_curr_terminal_id"))
       .withColumn("rcse_curr_terminal_sw_id", when($"rcse_curr_terminal_sw_id".isNull, $"rcse_curr_terminal_sw_id_yesterday").otherwise($"rcse_curr_terminal_sw_id"))
+      .na.fill(-999, Seq("rcse_tc_status_id", "rcse_curr_client_id", "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id"))
       .select("date_id", "natco_code", "msisdn", "rcse_tc_status_id", "rcse_curr_client_id", "rcse_curr_terminal_id", "rcse_curr_terminal_sw_id")
   }
 }

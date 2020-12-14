@@ -4,7 +4,7 @@ import java.sql.Date
 
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{lit, when, max, monotonically_increasing_id, first}
+import org.apache.spark.sql.functions.{lit, when, max, first, sha2, concat, col}
 import org.apache.spark.sql.types.{IntegerType, LongType}
 
 /**
@@ -22,7 +22,7 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
   val newTerminal = {
     import sparkSession.implicits._
     logger.info("Getting old terminals")
-    val maxID = oldTerminal.select(max("rcse_terminal_id").cast(IntegerType)).collect()(0).getInt(0)
+    //val maxID = oldTerminal.select(max("rcse_terminal_id").cast(IntegerType)).collect()(0).getInt(0)
 
     val dimensionBOld =
       enrichedEvents
@@ -37,46 +37,50 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
           $"terminal_vendor".as("rcse_terminal_vendor_sdesc"),
           $"terminal_vendor".as("rcse_terminal_vendor_ldesc"),
           $"terminal_model".as("rcse_terminal_model_sdesc"),
-          $"terminal_model".as("rcse_terminal_model_ldesc"),
-          lit(load_date).as("modification_date")
+          $"terminal_model".as("rcse_terminal_model_ldesc")
+        //  lit(load_date).as("modification_date")
         )
 
 
     logger.info("From the input data getting potentially new terminals")
+    val filtered = enrichedEvents
+      .filter($"rcse_terminal_id".isNull)
+      .join(tacData.select("manufacturer", "model", "terminal_id", "load_date"), Seq("terminal_id"), "left_outer")
+      .withColumn("tac_code", when($"terminal_id".isNull, $"tac_code"))
+      .withColumn("rcse_terminal_vendor_sdesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
+      .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
+      .withColumn("rcse_terminal_model_sdesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
+      .withColumn("rcse_terminal_model_ldesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
+
+    //filtered.filter("rcse_terminal_model_sdesc = 'DSB-0220'").show(false)
+
+
     val dimensionBNew =
-      enrichedEvents
-        .filter($"rcse_terminal_id".isNull)
-        .withColumn("rcse_terminal_id", lit(-1).cast(IntegerType))
-        .join(tacData.select("manufacturer", "model", "terminal_id", "load_date"), Seq("terminal_id"), "left_outer")
-        .withColumn("tac_code", when($"terminal_id".isNull, $"tac_code"))
-        .withColumn("rcse_terminal_vendor_sdesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
-        .withColumn("rcse_terminal_vendor_ldesc", when($"terminal_id".isNotNull, $"manufacturer").otherwise($"terminal_vendor"))
-        .withColumn("rcse_terminal_model_sdesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
-        .withColumn("rcse_terminal_model_ldesc", when($"terminal_id".isNotNull, $"model").otherwise($"terminal_model"))
+      filtered
+        //.withColumn("rcse_terminal_id", lit(-1).cast(IntegerType))
         .groupBy("rcse_terminal_vendor_sdesc", "rcse_terminal_model_sdesc", "terminal_id", "tac_code")
         .agg(
-          first("rcse_terminal_id").as("rcse_terminal_id"),
+          //first("rcse_terminal_id").as("rcse_terminal_id"),
           first("rcse_terminal_vendor_ldesc").as("rcse_terminal_vendor_ldesc"),
           first("rcse_terminal_model_ldesc").as("rcse_terminal_model_ldesc")
         )
-        .withColumn("rcse_terminal_id", (monotonically_increasing_id() + maxID).cast(IntegerType))
-        .select(
-          $"rcse_terminal_id",
-          $"tac_code",
-          $"terminal_id",
-          $"rcse_terminal_vendor_sdesc",
-          $"rcse_terminal_vendor_ldesc",
-          $"rcse_terminal_model_sdesc",
-          $"rcse_terminal_model_ldesc",
-          lit(load_date).as("modification_date")
-        )
+        //.withColumn("rcse_terminal_id", (monotonically_increasing_id() + maxID).cast(IntegerType))
+        .withColumn("rcse_terminal_id", sha2(
+          concat(c($"tac_code"), c($"terminal_id"), c($"rcse_terminal_vendor_sdesc"), c($"rcse_terminal_vendor_ldesc"),
+            c($"rcse_terminal_model_sdesc"), c($"rcse_terminal_model_ldesc")), 256))
+          .select(oldTerminal.columns.map(col(_)) :_*)
+
+
+   // dimensionBNew.filter("rcse_terminal_model_sdesc = 'DSB-0220'").show(false)
 
 
     val cols = dimensionBOld.columns.map(i => i + "_old")
 
     logger.info("merging all together to get new terminals")
-    oldTerminal
-      //.drop("entry_id", "load_date")
+
+    //oldTerminal.printSchema()
+    //dimensionBNew.printSchema()
+    val ret = oldTerminal
       .union(dimensionBNew)
       .join(dimensionBOld.toDF(cols: _*), $"rcse_terminal_id" === $"rcse_terminal_id_old", "left_outer")
       .withColumn("tac_code", when($"tac_code".isNull, $"tac_code_old").otherwise($"tac_code"))
@@ -85,7 +89,7 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
       .withColumn("rcse_terminal_vendor_ldesc", when($"rcse_terminal_vendor_ldesc".isNull, $"rcse_terminal_vendor_ldesc_old").otherwise($"rcse_terminal_vendor_ldesc"))
       .withColumn("rcse_terminal_model_sdesc", when($"rcse_terminal_model_sdesc".isNull, $"rcse_terminal_model_sdesc_old").otherwise($"rcse_terminal_model_sdesc"))
       .withColumn("rcse_terminal_model_ldesc", when($"rcse_terminal_model_ldesc".isNull, $"rcse_terminal_model_ldesc_old").otherwise($"rcse_terminal_model_ldesc"))
-      .withColumn("modification_date", when($"modification_date".isNull, $"modification_date_old").otherwise($"modification_date"))
+      //  .withColumn("modification_date", when($"modification_date".isNull, $"modification_date_old").otherwise($"modification_date"))
       .select(
         "rcse_terminal_id",
         "tac_code",
@@ -93,18 +97,19 @@ class TerminalDimension(enrichedEvents: DataFrame, oldTerminal: DataFrame, tacDa
         "rcse_terminal_vendor_sdesc",
         "rcse_terminal_vendor_ldesc",
         "rcse_terminal_model_sdesc",
-        "rcse_terminal_model_ldesc",
-        "modification_date"
+        "rcse_terminal_model_ldesc"
+        // "modification_date"
       )
-      .groupBy("rcse_terminal_id")
+      .groupBy("rcse_terminal_id", "tac_code", "terminal_id")
       .agg(
-        first("tac_code").alias("tac_code"),
-        first("terminal_id").alias("terminal_id"),
+        //first("tac_code").alias("tac_code"),
+        //first("terminal_id").alias("terminal_id"),
         first("rcse_terminal_vendor_sdesc").alias("rcse_terminal_vendor_sdesc"),
         first("rcse_terminal_vendor_ldesc").alias("rcse_terminal_vendor_ldesc"),
         first("rcse_terminal_model_sdesc").alias("rcse_terminal_model_sdesc"),
-        first("rcse_terminal_model_ldesc").alias("rcse_terminal_model_ldesc"),
-        first("modification_date").alias("modification_date")
+        first("rcse_terminal_model_ldesc").alias("rcse_terminal_model_ldesc")
+        // max("modification_date").alias("modification_date")
       )
+    ret
   }
 }

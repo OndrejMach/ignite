@@ -20,7 +20,7 @@ object UDFs {
     var cntUsersAll = cnt_users_all
     var ret = ListBuffer[DatesCount]()
     val refDateLocalTime = LocalDate.of(1900,1,1)
-    while (dateId.isBefore(dateUpperBound.toLocalDate) || (dateId.isEqual(dateUpperBound.toLocalDate))) {
+    while (dateId.isBefore(dateUpperBound.toLocalDate) || dateId.isEqual(dateUpperBound.toLocalDate)) {
       var rcse_reg_users_new = 0
       if (!dQueue.isEmpty && dQueue.head == DAYS.between( refDateLocalTime,dateId)) {
         rcse_reg_users_new = uQueue.head

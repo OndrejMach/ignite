@@ -37,8 +37,8 @@ class SessionsQProcessor(dataCDRs: DataFrame, processingDate: Timestamp)(implici
       .withColumn("wlan_user_provider_code", $"user_provider_id")
       .withColumn("startTS", $"session_start_ts")
       .withColumn("eventTS", $"session_event_ts")
-      .withColumn("session_start_ts", from_unixtime($"session_start_ts" - lit(2 * 3600))) //-lit(2*3600)
-      .withColumn("session_event_ts", from_unixtime($"session_event_ts" - lit(2 * 3600))) //-lit(2*3600)
+      .withColumn("session_start_ts", from_unixtime($"session_start_ts" - lit(getTimeZoneOffset * 3600))) //-lit(2*3600)
+      .withColumn("session_event_ts", from_unixtime($"session_event_ts" - lit(getTimeZoneOffset * 3600))) //-lit(2*3600)
 
 
 

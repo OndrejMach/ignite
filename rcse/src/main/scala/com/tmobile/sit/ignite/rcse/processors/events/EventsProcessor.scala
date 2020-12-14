@@ -8,7 +8,7 @@ import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import com.tmobile.sit.ignite.rcse.processors.inputs.{EventsInputData, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.{LongType, StringType}
 import org.apache.spark.storage.StorageLevel
 
 /**
@@ -40,8 +40,10 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
     logger.info("Getting DM events")
     val dmEventsOnly = inputData.dataInput.filter($"rcse_event_type" === lit("DM"))
 
+    //dmEventsOnly.summary().show(false)
+
     logger.info("Calculating new events with Tac, terminal and client lookups")
-    dmEventsOnly
+    val ret = dmEventsOnly
       .withColumn("natco_code", lit("TMD"))
       .join(inputData.imsi3DesLookup, $"imsi" === $"number", "left_outer")
       .withColumn("imsi", $"des")
@@ -58,14 +60,14 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
       .clientLookup(lookups.client)
       .terminalLookup(lookups.terminal)
       .withColumn("rcse_terminal_id",
-        when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal".cast(LongType))
-          .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac".cast(LongType))
-            .otherwise($"rcse_terminal_id_desc".cast(LongType))
+        when($"rcse_terminal_id_terminal".isNotNull, $"rcse_terminal_id_terminal".cast(StringType))
+          .otherwise(when($"rcse_terminal_id_tac".isNotNull, $"rcse_terminal_id_tac".cast(StringType))
+            .otherwise($"rcse_terminal_id_desc".cast(StringType))
           )
       )
       .drop("rcse_terminal_id_terminal", "rcse_terminal_id_tac", "rcse_terminal_id_desc")
       .terminalSWLookup(lookups.terminalSW)
-      .sort($"msisdn".asc, $"date_id".asc)
+      //.sort($"msisdn".asc, $"date_id".asc)
       .groupBy("msisdn")
       .agg(
         max("date_id").alias("date_id"),
@@ -73,6 +75,10 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
           last(i).alias(i)
         }): _*
       ).persist()
+
+    //ret.filter("imsi ='FFD0B3202B490807FA0C5063621CFE1C'").show(false)
+
+    ret
   }
 
   private val inputEventsRegDer = inputData.dataInput.filter($"rcse_event_type" =!= lit("DM"))
@@ -86,6 +92,19 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
     logger.info("Getting new data for client dimension")
     val client = new ClientDimension(eventsEnriched = withLookups, clientsOld = lookups.client, load_date = load_date).newClient.persist(StorageLevel.MEMORY_ONLY)
 
+    //terminalSW.filter("rcse_terminal_sw_id is null").show(false)
+    //terminal.filter("rcse_terminal_id is null").show(false)
+
+
+    logger.info("Getting DM data")
+    val dm = new DMDimension(eventInputsEnriched = withLookups,
+      newClient = client,
+      newTerminal = terminal,
+      newTerminalSW = terminalSW,
+      msisdn3DesLookup = inputData.msisdn3DesLookup)
+      .eventsDM
+      .persist()
+
 
     logger.info("Getting regDer output")
     val regDer = new RegDerDimension(inputEventsRegDer = inputEventsRegDer,
@@ -98,14 +117,6 @@ class EventsProcessor(inputData: EventsInputData, lookups: LookupsData, load_dat
     ).regDerOutput
       .persist()
 
-    logger.info("Getting DM data")
-    val dm = new DMDimension(eventInputsEnriched = withLookups,
-      newClient = client,
-      newTerminal = terminal,
-      newTerminalSW = terminalSW,
-      msisdn3DesLookup = inputData.msisdn3DesLookup)
-      .eventsDM
-      .persist()
 
     EventsOutput(client = client, terminal = terminal, terminalSW = terminalSW, regDer = regDer.persist(), dm = dm.persist(), tac = lookups.tac)
   }

@@ -8,7 +8,7 @@ import com.tmobile.sit.ignite.rcse.processors.inputs.{InitUserInputs, LookupsDat
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
 import com.tmobile.sit.ignite.rcse.structures.InitUsers
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, collect_list, count, datediff, explode, first, lit, max, monotonically_increasing_id, udf, when}
+import org.apache.spark.sql.functions.{col, collect_list, count, datediff, explode, first, lit, max, monotonically_increasing_id, udf, when, asc, last}
 import org.apache.spark.sql.types.{DateType, IntegerType}
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 
@@ -39,8 +39,12 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
 
   private val userPreprocessed = {
     logger.info("Preparing init user data")
-    inputData.confData
-      .filter($"date_id" === lit(processingDate) && ($"rcse_tc_status_id" === lit(0) || $"rcse_tc_status_id" === lit(1)))
+    val filtered = inputData.confData
+      .filter($"date_id" >= lit(processingDate) && ($"rcse_tc_status_id" === lit(0) || $"rcse_tc_status_id" === lit(1)))
+
+    logger.debug(s"filtered count ${filtered.count()}")
+
+     val ret= filtered
       .groupBy("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
         count("*").alias("rcse_reg_users_new"),
@@ -48,6 +52,9 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
       )
       .withColumn("rcse_reg_users_all", lit(0))
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
+
+    logger.debug(s"conf count: ${ret.count()}")
+    ret
   }
 
 
@@ -64,11 +71,11 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
     val processingDateMinus1 = Date.valueOf(processingDate.toLocalDate.minusDays(1))
     val refDate = Date.valueOf(LocalDate.of(1900, 1, 1))
 
-    inputData.initData
+    val ret = inputData.initData
       .drop("load_date", "entry_id")
       .filter($"date_id" === lit(Date.valueOf(processingDate.toLocalDate.minusDays(1))))
       .union(userPreprocessed)
-      .sort("rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id", "date_id")
+      //.sort("date_id")
       .withColumn("date_id_upper_bound", when(lit(processingDate) <= lit(maxDateId), lit(maxDateId)).otherwise(lit(processingDate)))
       .withColumn("cnt_users_all", when($"date_id" === lit(processingDateMinus1), $"rcse_reg_users_all").otherwise(0))
       .groupBy("rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
@@ -85,15 +92,20 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
       .withColumn("rcse_reg_users_new", $"date_metrics".getItem("rcse_reg_users_new"))
       .withColumn("rcse_reg_users_all", $"date_metrics".getItem("rcse_reg_users_all"))
       .select("date_id", "natco_code", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id", "rcse_reg_users_new", "rcse_reg_users_all")
+
+    logger.debug(s"INIT_DATE1 count: ${ret.count()}")
+    ret
   }
 
   def getData = {
-    logger.info("Deting result")
+    logger.info("Getting result")
 
     val initUpdated = inputData.initData
       .drop("load_date", "entry_id")
       .filter($"date_id" < lit(processingDate))
       .union(initDate1)
+
+    logger.debug(s"initUpdated count ${initUpdated.count()}")
 
     val changedAll = initUpdated
       .join(tacPreprocessed.select("rcse_terminal_id_tac", "rcse_terminal_id_term").withColumn("e", lit(1)),
@@ -105,16 +117,20 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
       .select(InitUsers.workColumns.head, InitUsers.workColumns.tail: _*)
       .withColumn("id", monotonically_increasing_id())
 
+    logger.debug(s"changedAll count ${changedAll.count()}")
+
     val changed = changedAll
-      .sort("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
+     // .sort(asc("rcse_old_terminal_id"), asc("id"))
       .groupBy("date_id", "rcse_init_client_id", "rcse_init_terminal_id", "rcse_init_terminal_sw_id")
       .agg(
         first("natco_code").alias("natco_code"),
-        first("rcse_old_terminal_id").alias("rcse_old_terminal_id"),
+        max("rcse_old_terminal_id").alias("rcse_old_terminal_id"),
         max("rcse_reg_users_new").alias("rcse_reg_users_new"),
         max("rcse_reg_users_all").alias("rcse_reg_users_all"),
-        first("id").alias("id")
+        max("id").alias("id")
       )
+
+    logger.debug(s"changed count ${changed.count()}")
 
     val duplicates = changedAll
       .join(
@@ -123,6 +139,8 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
         "left")
       .filter($"id_agg".isNull)
       .select(InitUsers.workColumns.head, InitUsers.workColumns.tail: _*)
+
+    logger.debug(s"duplicates count ${duplicates.count()}")
 
     val join1Work = initUpdated
       .withColumn("l", lit(1))
@@ -137,18 +155,27 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
           $"rcse_init_terminal_sw_id" === $"rcse_init_terminal_sw_id_right",
         "right")
 
+    logger.debug(s"join1Work count ${join1Work.count()}")
+
     val join1 = join1Work
       .filter($"l" === lit(1) && $"rcse_old_terminal_id_right".isNotNull)
       .withColumn("rcse_old_terminal_id", $"rcse_old_terminal_id_right")
       .select(InitUsers.workColumns.head, InitUsers.workColumns.tail: _*)
 
+    logger.debug(s"join1 count ${join1.count()}")
+
     val unmatched = join1Work
       .filter($"l".isNull)
       .drop("l", "r")
       .select(InitUsers.workColumns.map(i => col(i + "_right").alias(i)): _*)
+      .withColumn("rcse_init_terminal_id", $"rcse_old_terminal_id")
+
+    logger.debug(s"unmatched count ${unmatched.count()}")
 
     val teeABSort = duplicates
       .union(join1)
+
+    logger.debug(s"teeABSort count ${teeABSort.count()}")
 
     val join2 = initUpdated
       .withColumn("l", lit(1))
@@ -166,6 +193,8 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
       .withColumnRenamed("rcse_old_terminal_id_right", "rcse_old_terminal_id")
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
+    logger.debug(s"join2 count ${join2.count()}")
+
     val join3 = join2
       .withColumn("l", lit(1))
       .join(
@@ -182,7 +211,9 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
       .withColumn("rcse_reg_users_all", when($"r".isNotNull, $"rcse_reg_users_all" + $"rcse_reg_users_all_right").otherwise($"rcse_reg_users_all"))
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
 
-    join3
+    logger.debug(s"join3 count ${join3.count()}")
+
+    val ret = join3
       .withColumn("l", lit(1))
       .join(
         teeABSort
@@ -196,5 +227,7 @@ class InitUserAggregatesProcessor(inputData: InitUserInputs, lookups: LookupsDat
       )
       .filter($"r".isNull)
       .select(InitUsers.stageColumns.head, InitUsers.stageColumns.tail: _*)
+    logger.debug(s"ret count ${ret.count()}")
+    ret
   }
 }
