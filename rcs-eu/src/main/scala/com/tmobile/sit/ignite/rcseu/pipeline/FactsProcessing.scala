@@ -378,10 +378,14 @@ class Facts extends FactsProcessing {
     Chat received-OffNet: sum(messages_received) WHERE type=CHAT AND sip_code=200 AND from_network!=to_network
 
      */
+
+
+
     val sf1=activity
       .filter(activity("creation_date").contains(runVar.date))
-      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
-
+      .distinct()
+      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))//.distinct()
+    ///println(s"########### BEFORE ${activity.filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network"))).count()}  AFTER: ${sf1.filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network"))).count()} ")
 
     //Files SENT-OnNet:
     val sf2 =sf1
@@ -391,6 +395,8 @@ class Facts extends FactsProcessing {
       //.select("from_user","user_agent","creation_date")
       .groupBy("_NetworkingID","_ServiceID")
       .count()
+
+   //sf2.show(false)
 
     //.agg(max("_NetworkingID").alias("_NetworkingID"),max("user_agent_UNS").alias("user_agent_UNS"))
 
@@ -511,6 +517,8 @@ class Facts extends FactsProcessing {
       .union(sf9)
       .union(sf10)
       .union(sf11)
+
+    //finalsf.filter("_NetworkingID=1 and _ServiceID=5").show(false)
 
     val finalsf1=finalsf
       .withColumn("date",lit(runVar.dayforkey))

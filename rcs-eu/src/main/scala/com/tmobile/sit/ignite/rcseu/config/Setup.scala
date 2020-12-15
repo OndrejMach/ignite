@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseu.config
 import com.tmobile.sit.common.config.ServiceConfig
 
 
-class Setup(configFile: String = "rcs-eu.windows.conf")  {
+class Setup(configFile: String = "rcs-eu.linux.conf")  {
 
   val settings = {
     val serviceConf = new ServiceConfig(Some(configFile))

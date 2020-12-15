@@ -91,8 +91,12 @@ class Stage extends StageProcessing {
 
   override def preprocessAccumulator(archive: DataFrame):DataFrame = {
 
-      archive
+      val int = archive
         .withColumn("FilePath", input_file_name)
+
+      //int.withColumn("reverse",reverse(split(col("FilePath"),"\\/") )).select("FilePath", "reverse").show(false)
+
+       int
         .withColumn("FilePath", regexp_replace(col("FilePath"),"register_requests", "registerrequests"))
         .withColumn("FileName", reverse(split(col("FilePath"),"\\/")).getItem(0))
         .withColumn("FileDate", split(split(col("FileName"),"\\_").getItem(1),"\\.").getItem(0))
