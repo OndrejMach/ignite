@@ -7,9 +7,9 @@ package object rcseu {
     SparkSession.builder()
       //.appName("rcs-eu")
       //.master("local[*]")//turn on when running locally
-      .config("spark.executor.instances", "2")
-      .config("spark.executor.memory", "8g")
-      .config("spark.executor.cores", "2")
+      .config("spark.executor.instances", "4")
+      .config("spark.executor.memory", "16g")
+      .config("spark.executor.cores", "4")
       .config("spark.driver.memory", "10g")
       .config("spark.driver.maxResultSize", "10g")
       .config("spark.executor.JavaOptions", "-XX:+UseG1GC")
