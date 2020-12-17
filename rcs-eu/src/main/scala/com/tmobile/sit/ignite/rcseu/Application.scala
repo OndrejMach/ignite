@@ -2,14 +2,15 @@ package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.ignite.rcseu.config.{RunConfig}
+import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
+import org.apache.spark.sql.functions.{col, split}
 
 object Application extends App with Logger {
 
   // First of all check arguments
-  if(args.length != 3) {
+  if (args.length != 3) {
     logger.error("Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <runFor:yearly|daily|update>")
     System.exit(0)
   }
@@ -50,20 +51,25 @@ object Application extends App with Logger {
 
     activity_archives = sparkSession.read
       .option("header", "true")
-      .option("delimiter","\\t")
+      .option("delimiter", "\\t")
       .schema(FileSchemas.activitySchema)
-      .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*"),
+      .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*")
+      //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      //.distinct()
+    ,
     provision_archives = sparkSession.read
       .option("header", "true")
-      .option("delimiter","\\t")
+      .option("delimiter", "\t")
       .schema(FileSchemas.provisionSchema)
       .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*"),
     register_requests_archives = sparkSession.read
       .option("header", "true")
-      .option("delimiter","\\t")
+      .option("delimiter", "\\t")
       .schema(FileSchemas.registerRequestsSchema)
       .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
   )
+
+  persistentData.activity_archives.show(false)
 
   logger.info(s"Persistent files loaded for ${fileMask}")
 
@@ -75,7 +81,7 @@ object Application extends App with Logger {
 
   logger.info("Running pipeline")
 
-  val pipeline = new Pipeline(inputReaders,persistentData,stageProcessing,coreProcessing,resultWriter)
+  val pipeline = new Pipeline(inputReaders, persistentData, stageProcessing, coreProcessing, resultWriter)
 
   pipeline.run()
 

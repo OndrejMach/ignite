@@ -6,7 +6,7 @@ package object rcseu {
   def getSparkSession(sparkAppName: String): SparkSession = {
     SparkSession.builder()
       //.appName("rcs-eu")
-      //.master("local[*]")//turn on when running locally
+      .master("local[*]")//turn on when running locally
       .config("spark.executor.instances", "2")
       .config("spark.executor.memory", "8g")
       .config("spark.executor.cores", "2")
