@@ -28,6 +28,10 @@ class Stage extends StageProcessing {
       .drop("FilePath", "FileName")
       //.drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
+    //dailyFile
+     // .filter(col("type") === "FT_POST" && (col("from_network") <=> col("to_network")))
+      //  .filter()
+
     logger.info(s"Daily file count: ${dailyFile.count()}")
     logger.info(s"Filtering out old accumulator data for FileDate ${runVar.date} and adding daily file")
 

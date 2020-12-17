@@ -27,6 +27,7 @@ class Core extends ProcessingCore {
 
     val acc_activity = stageData.acc_activity
     acc_activity.cache()
+
     logger.info("Activity accumulator count: " + acc_activity.count())
 
     val acc_provision = stageData.acc_provision
