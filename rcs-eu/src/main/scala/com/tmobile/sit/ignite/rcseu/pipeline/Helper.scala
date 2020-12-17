@@ -36,11 +36,11 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
         .option("header", "true")
         .option("delimiter","\\t")
         .schema(FileSchemas.activitySchema)
-        .csv(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv.gz",
-             sourceFilePath + s"activity_${runVar.tomorrowDate}*${runVar.natco}.csv.gz")}
+        .csv(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv*",
+             sourceFilePath + s"activity_${runVar.tomorrowDate}*${runVar.natco}.csv*")}
     else {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")
-      new CSVReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv.gz",
+      new CSVReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv*",
         schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read()
     }
   }
