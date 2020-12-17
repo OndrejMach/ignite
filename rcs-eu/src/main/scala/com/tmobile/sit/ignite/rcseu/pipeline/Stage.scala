@@ -26,13 +26,13 @@ class Stage extends StageProcessing {
       .withColumn("FileName", reverse(split(col("FilePath"),"\\/")).getItem(0))
       .withColumn("FileDate", split(split(col("FileName"),"\\_").getItem(1),"\\.").getItem(0))
       .drop("FilePath", "FileName")
-      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+      //.drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
     logger.info(s"Daily file count: ${dailyFile.count()}")
     logger.info(s"Filtering out old accumulator data for FileDate ${runVar.date} and adding daily file")
 
     var resultTmp = archive_activity
-      .drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
+      //.drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
       .filter(col("FileDate") =!= runVar.date)
 
     // When doing an update, remove tomorrow's activity date from the accumulator before joining on today's data
