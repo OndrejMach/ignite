@@ -388,12 +388,12 @@ class Facts extends FactsProcessing {
 
     val sf1 = activity
       .filter(col("creation_date").startsWith(runVar.date))
-      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+     // .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
       //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
       //.filter(activity("creation_date").contains(runVar.date))
       //  .distinct()
-      .distinct()
-    //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))//.distinct()
+      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      .distinct() //.distinct()
     ///println(s"########### BEFORE ${activity.filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network"))).count()}  AFTER: ${sf1.filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network"))).count()} ")
 
     //Files SENT-OnNet:
@@ -431,12 +431,12 @@ class Facts extends FactsProcessing {
 
 
     val sf_post = sf1
-      .filter(sf1("type") === "FT_POST" && sf1("from_network") <=> sf1("to_network"))
+      .filter(sf1("type") === "FT_POST" && sf1("from_network") === sf1("to_network"))
       .select("call_id", "to_network")
 
 
     val sf4 = sf_get
-      .join(sf_post, sf_get("call_id1") <=> sf_post("call_id"))
+      .join(sf_post.select("call_id").distinct(), (sf_get("call_id1") <=> sf_post("call_id")) )
       .withColumnRenamed("from_user", "uau")
       .withColumn("_NetworkingID", lit("1"))
       .withColumn("_ServiceID", lit("6"))
@@ -457,10 +457,14 @@ class Facts extends FactsProcessing {
       .select("call_id", "to_network")
       //.distinct()
 
+    //sf_get1.summary().show(false)
 
+    val sf5_join = sf_get1
+      .join(sf_post1.select("call_id").distinct(), sf_get1("call_id1") <=> sf_post1("call_id"))
 
-    val sf5 = sf_get1
-      .join(sf_post1, sf_get1("call_id1") === sf_post1("call_id"))
+    //sf5_join.except(sf5_join.distinct()).show(false)
+
+    val sf5 = sf5_join
       .withColumnRenamed("from_user", "uau")
       .withColumn("_NetworkingID", lit("2"))
       .withColumn("_ServiceID", lit("6"))

@@ -12,7 +12,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
   def run(): Unit = {
 
     // Read input files
-    val inputActivity = inputData.activity //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
+    val inputActivity = inputData.activity//.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
     val inputProvision = inputData.provision
     val inputRegisterRequests = inputData.register_requests
 
