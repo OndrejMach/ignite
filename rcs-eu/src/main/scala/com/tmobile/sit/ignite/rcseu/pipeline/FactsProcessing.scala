@@ -49,13 +49,14 @@ class Facts extends FactsProcessing {
     // and for the specific user agent
     //then joining with user agent id from Dimension processing
 
-    val maxDate = register_requests.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
+    val register_requests1= register_requests.withColumn("msiDate", concat_ws("|", col("msisdn"), col("FileDate")))
+
+    val maxDate = register_requests1.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
       .withColumn("msiDate1", concat_ws("|", col("msisdn"), col("FileDate")))
-    val onlyMaxDate = register_requests.join(maxDate, register_requests(("msiDate")) <=> maxDate(("msiDate1")), "inner")
+    val onlyMaxDate = register_requests1.join(maxDate, register_requests1(("msiDate")) <=> maxDate(("msiDate1")), "inner")
     val grouped = onlyMaxDate.groupBy("msiDate1").agg(collect_set("user_agent").alias("agent_list"))
     val register_requests_max1 = grouped.withColumn("maxAgent", getMaxuserAgent(col("agent_list")))
     val register_requests_max = register_requests_max1.withColumn("maxAgentLower", lower(col("maxAgent")))
-
     //numbersDf("numbers") <=> lettersDf("numbers")
 
     val register_requests_agg =
