@@ -50,17 +50,18 @@ class Facts extends FactsProcessing {
     //then joining with user agent id from Dimension processing
 
     val maxDate = register_requests.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
-    val onlyMaxDate = register_requests.join(maxDate, Seq("msisdn", "FileDate"), "inner")
-    val grouped = onlyMaxDate.groupBy("msisdn").agg(collect_set("user_agent").alias("agent_list"))
+      .withColumn("msiDate1", concat_ws("|", col("msisdn"), col("FileDate")))
+    val onlyMaxDate = register_requests.join(maxDate, register_requests(("msiDate")) <=> maxDate(("msiDate1")), "inner")
+    val grouped = onlyMaxDate.groupBy("msiDate1").agg(collect_set("user_agent").alias("agent_list"))
     val register_requests_max1 = grouped.withColumn("maxAgent", getMaxuserAgent(col("agent_list")))
     val register_requests_max = register_requests_max1.withColumn("maxAgentLower", lower(col("maxAgent")))
 
+    //numbersDf("numbers") <=> lettersDf("numbers")
+
     val register_requests_agg =
       register_requests_max
-        .groupBy((col("maxAgentLower"))).agg(countDistinct("msisdn").as("msisdn_count"), max("maxAgent").as("maxAgent"))
-        //.filter($"maxAgent".isin(testUserAgent:_*))
+        .groupBy((col("maxAgentLower"))).agg(countDistinct("msiDate1").as("msisdn_count"), max("maxAgent").as("maxAgent"))
         .orderBy(desc("maxAgent"))
-        //.withColumnRenamed("maxAgentLower","UserAgent")
         .withColumnRenamed("msisdn_count", "Registered_daily")
 
     val RRfinal = register_requests_agg
