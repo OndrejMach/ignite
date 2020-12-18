@@ -51,19 +51,23 @@ class Facts extends FactsProcessing {
 
     val register_requests1= register_requests.withColumn("msiDate", concat_ws("|", col("msisdn"), col("FileDate")))
 
-    val maxDate = register_requests1.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
-      .withColumn("msiDate1", concat_ws("|", col("msisdn"), col("FileDate")))
+    val maxDate = register_requests1.groupBy("msisdn").agg(max("FileDate").alias("FileDate1"))
+      .withColumn("msiDate1", concat_ws("|", col("msisdn"), col("FileDate1")))
+      .withColumnRenamed("msisdn","msisdn1")
+
+
     val onlyMaxDate = register_requests1.join(maxDate, register_requests1(("msiDate")) <=> maxDate(("msiDate1")), "inner")
-    val grouped = onlyMaxDate.groupBy("msiDate1").agg(collect_set("user_agent").alias("agent_list"))
-    val register_requests_max1 = grouped.withColumn("maxAgent", getMaxuserAgent(col("agent_list")))
-    val register_requests_max = register_requests_max1.withColumn("maxAgentLower", lower(col("maxAgent")))
+    val grouped = onlyMaxDate.groupBy("msisdn").agg(max(lower(col("user_agent"))).alias("maxAgentLower"),max("FileDate"),max("msisdn"))
+
+
     //numbersDf("numbers") <=> lettersDf("numbers")
 
     val register_requests_agg =
-      register_requests_max
-        .groupBy((col("maxAgentLower"))).agg(countDistinct("msiDate1").as("msisdn_count"), max("maxAgent").as("maxAgent"))
-        .orderBy(desc("maxAgent"))
+      grouped
+        .groupBy((col("maxAgentLower"))).agg(count("*").as("msisdn_count"))
+        //.orderBy(desc("maxAgent"))
         .withColumnRenamed("msisdn_count", "Registered_daily")
+
 
     val RRfinal = register_requests_agg
       .withColumn("ConKeyR1", lit(period_for_process))
