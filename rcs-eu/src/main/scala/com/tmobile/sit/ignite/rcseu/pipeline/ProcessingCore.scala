@@ -42,7 +42,7 @@ class Core extends ProcessingCore {
     val dim = new Dimension()
 
     logger.info("Updating user agents based on daily activity and register requests")
-    //TODO: decide if here the new user agents should only be based on daily input files
+
     val newUserAgents = dim.getNewUserAgents(inputData.activity, inputData.register_requests)
     val fullUserAgents = dim.processUserAgentsSCD(persistentData.oldUserAgents, newUserAgents)
     //fullUserAgents.cache() //done in dimension

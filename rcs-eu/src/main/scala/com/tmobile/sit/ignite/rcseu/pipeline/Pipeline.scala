@@ -12,11 +12,9 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
   def run(): Unit = {
 
     // Read input files
-    val inputActivity = inputData.activity.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
+    val inputActivity = inputData.activity //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
     val inputProvision = inputData.provision
     val inputRegisterRequests = inputData.register_requests
-
-
 
     if(runVar.debug) {
     logger.info("Inputs")
@@ -25,14 +23,13 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     inputRegisterRequests.agg(count("*").as("no_records")).show(3)
     }
 
-    persistentData.activity_archives.printSchema()
-    persistentData.activity_archives.show(false)
+    //persistentData.activity_archives.printSchema()
+    //persistentData.activity_archives.show(false)
 
     // Read archive files, extract and add file date
     val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives)
     val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)
     val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)
-
 
     if(runVar.debug) {
     logger.info("Archives")
@@ -43,8 +40,6 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 
     // Get accumulators (archive + input)
     val accActivity = stage.accumulateActivity(inputActivity,archiveActivity)
-
-
     val accProvision = stage.accumulateProvision(inputProvision,archiveProvision)
     val accRegisterRequests =  stage.accumulateRegisterRequests(inputRegisterRequests,archiveRegisterRequests)
 
@@ -54,6 +49,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     accProvision.groupBy("FileDate").agg(count("*").as("no_records")).orderBy(desc("FileDate")).show(3)
     accRegisterRequests.groupBy("FileDate").agg(count("*").as("no_records")).orderBy(desc("FileDate")).show(3)
     }
+
     // Create preprocessedData object
     val preprocessedData = PreprocessedData(accActivity,accProvision,accRegisterRequests)
 

@@ -69,8 +69,6 @@ object Application extends App with Logger {
       .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
   )
 
-  persistentData.activity_archives.show(false)
-
   logger.info(s"Persistent files loaded for ${fileMask}")
 
   val stageProcessing = new Stage()

@@ -76,7 +76,6 @@ class Facts extends FactsProcessing {
 
   }
 
-  //TODO: add NatcoNetwork
   def getActiveDaily(activity: DataFrame, fullUserAgents: DataFrame, period_for_process: String, natcoNetwork: String): DataFrame = {
     //aggregated according to the QlikSense script from Jarda
 
@@ -379,17 +378,16 @@ class Facts extends FactsProcessing {
     Chat received-OffNet: sum(messages_received) WHERE type=CHAT AND sip_code=200 AND from_network!=to_network
 
      */
-
     activity.printSchema()
+    //activity.show(false)
 
-    activity.show(false)
     val sf1 = activity
       .filter(col("creation_date").startsWith(runVar.date))
-      //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
       //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
       //.filter(activity("creation_date").contains(runVar.date))
       //  .distinct()
-      //.distinct()
+      .distinct()
     //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))//.distinct()
     ///println(s"########### BEFORE ${activity.filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network"))).count()}  AFTER: ${sf1.filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network"))).count()} ")
 
