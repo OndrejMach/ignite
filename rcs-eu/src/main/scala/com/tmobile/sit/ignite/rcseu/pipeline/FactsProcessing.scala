@@ -379,7 +379,7 @@ class Facts extends FactsProcessing {
     Chat received-OffNet: sum(messages_received) WHERE type=CHAT AND sip_code=200 AND from_network!=to_network
 
      */
-    activity.printSchema()
+    //activity.printSchema()
     //activity.show(false)
 
     val sf1 = activity
