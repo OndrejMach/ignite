@@ -445,24 +445,26 @@ class Facts extends FactsProcessing {
       .count
 
     //Files RECEIVED-OffNet:
+    /*
+    sf1.printSchema()
     val sf_get1 = sf1
       .withColumnRenamed("call_id", "call_id1")
-      .filter(sf1("type") <=> "FT_GET" and col("from_user").startsWith("+"))
-      .select("call_id1", "user_agent", "creation_date")
+      .filter(sf1("type") === lit("FT_GET") and col("from_user").startsWith("+"))
+      //.select("call_id1", "user_agent", "creation_date", "from_user","from_network", "to_network", "sip_code")
       //.distinct()
 
 
     val sf_post1 = sf1
-      .filter(sf1("type") <=> "FT_POST" && col("from_user").startsWith("+") && not(sf1("from_network") <=> sf1("to_network")))
-      .select("call_id", "to_network")
+      .filter(sf1("type") === lit("FT_POST") && col("from_user").startsWith("+") && not(sf1("from_network") <=> sf1("to_network")))
+      .select("call_id", "to_network" )
       //.distinct()
 
-    //sf_get1.summary().show(false)
 
     val sf5_join = sf_get1
       .join(sf_post1.select("call_id").distinct(), sf_get1("call_id1") <=> sf_post1("call_id"))
 
-    //sf5_join.except(sf5_join.distinct()).show(false)
+    //sf5_join.sort("from_user", "creation_date").repartition(1).write.option("header","true").csv("/Users/ondrejmachacek/tmp/rcseu/analysis/ft_join")
+
 
     val sf5 = sf5_join
       .withColumnRenamed("from_user", "uau")
@@ -471,6 +473,22 @@ class Facts extends FactsProcessing {
       //.select("uau","user_agent","creation_date")
       .groupBy("_NetworkingID", "_ServiceID")
       .count
+    */
+    val lkp = sf1
+      .filter(col("to_network").isNotNull)
+      .groupBy("call_id")
+      .agg(last("to_network").alias("to_network"))
+
+    val sf5 =
+      sf1.filter(col("type") === "FT_GET")
+        .drop("to_network")
+        .join(lkp,Seq("call_id"),"left_outer")
+        .filter(!(col("from_network").isNotNull && col("to_network").isNotNull && (col("from_network") === col("to_network"))))
+        .withColumn("_NetworkingID", lit("2"))
+        .withColumn("_ServiceID", lit("6"))
+        .groupBy("_NetworkingID", "_ServiceID")
+        .count
+
     //GroupChat SENT-OnNet:
     val sf6 = sf1
       .filter(sf1("type") <=> "GROUP_CHAT" and col("from_user").startsWith("+") && sf1("sip_code") <=> 200)
