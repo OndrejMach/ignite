@@ -558,6 +558,7 @@ class Facts extends FactsProcessing {
       .union(sf9)
       .union(sf10)
       .union(sf11)
+      .filter(col("count").isNotNull)
 
     //finalsf.filter("_NetworkingID=1 and _ServiceID=5").show(false)
 
