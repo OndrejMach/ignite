@@ -367,6 +367,7 @@ class Facts extends FactsProcessing {
 
     finalFinal
       .na.fill(0,Seq("Active_daily_succ_origterm","Active_daily_succ_orig","Active_daily_unsucc_orig","Active_daily_unsucc_origterm"))
+
   }
 
   def getServiceFactsDaily(activity: DataFrame): DataFrame = {
