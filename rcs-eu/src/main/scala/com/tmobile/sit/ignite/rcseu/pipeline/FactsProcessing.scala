@@ -91,6 +91,13 @@ class Facts extends FactsProcessing {
     // successfully originated for CHAT
     // successfully originated for CHAT
     val df1 = activity
+      //.filter(col("creation_date").startsWith(runVar.date))
+      // .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
+      //.filter(activity("creation_date").contains(runVar.date))
+      //  .distinct()
+      //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      //.distinct()
     // .na.fill("NULL",Seq("user_agent"))
 
     val df2 = df1
@@ -357,8 +364,9 @@ class Facts extends FactsProcessing {
       .withColumnRenamed("sum(Active_daily_unsucc_orig)", "Active_daily_unsucc_orig")
 
 
-    finalFinal
 
+    finalFinal
+      .na.fill(0,Seq("Active_daily_succ_origterm","Active_daily_succ_orig","Active_daily_unsucc_orig","Active_daily_unsucc_origterm"))
   }
 
   def getServiceFactsDaily(activity: DataFrame): DataFrame = {
