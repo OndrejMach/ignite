@@ -26,7 +26,10 @@ class Facts extends FactsProcessing {
       .withColumn("ConKeyP1", concat_ws("|", col("ConKeyP1"), col("NatCo")))
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count", "Provisioned_daily")
+
     provisionedDaily
+      .withColumn("ConKeyP1", when(size(split(col("ConKeyP1"), "\\|")) === lit(2), concat(col("ConKeyP1"), lit("|")) )
+        .otherwise(col("ConKeyP1")))
   }
 
   //definition of getMaxUserAgent function, will be used in register_requests and activity data
@@ -78,6 +81,8 @@ class Facts extends FactsProcessing {
       .select("ConKeyR1", "Registered_daily", "UserAgent")
 
     RRfinal
+      .withColumn("ConKeyR1", when(size(split(col("ConKeyR1"), "\\|")) === lit(2), concat(col("ConKeyR1"), lit("|")) )
+        .otherwise(col("ConKeyR1")))
 
   }
 
