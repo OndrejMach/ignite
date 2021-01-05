@@ -367,6 +367,8 @@ class Facts extends FactsProcessing {
 
     finalFinal
       .na.fill(0,Seq("Active_daily_succ_origterm","Active_daily_succ_orig","Active_daily_unsucc_orig","Active_daily_unsucc_origterm"))
+      .withColumn("ConKeyA1", when(size(split(col("ConKeyA1"), "\\|")) === lit(2), concat(col("ConKeyA1"), lit("|")) )
+        .otherwise(col("ConKeyA1")))
 
   }
 
