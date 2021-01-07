@@ -438,26 +438,48 @@ class Facts extends FactsProcessing {
       .groupBy("_NetworkingID", "_ServiceID")
       .count
     //Files RECEIVED-OnNet:
+
+
+    val lkp =
+      activity
+        .select("to_network", "call_id")
+        .filter(col("to_network").isNotNull)
+        .groupBy("call_id")
+        .agg(
+          last("to_network").alias("to_network")
+        )
+
+    val sf4 = sf1
+      .filter(sf1("type") === "FT_GET")
+      .drop("to_network")
+      .join(lkp, Seq("call_id"), "left_outer")
+      .filter(col("from_network") === col("to_network"))
+      .withColumn("_NetworkingID", lit("1"))
+      .withColumn("_ServiceID", lit("6"))
+      .groupBy("_NetworkingID", "_ServiceID")
+      .count
+
+    /*
+
     val sf_get = sf1
       .withColumnRenamed("call_id", "call_id1")
       .filter(sf1("type") === "FT_GET")
       .select("call_id1", "user_agent", "creation_date")
 
-
     val sf_post = sf1
-      .filter(sf1("type") === "FT_POST" && sf1("from_network") === sf1("to_network"))
+      .filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network")))
       .select("call_id", "to_network")
 
 
     val sf4 = sf_get
-      .join(sf_post.select("call_id").distinct(), (sf_get("call_id1") <=> sf_post("call_id")) )
+      .join(sf_post.select("call_id").distinct(), (sf_get("call_id1") <=> sf_post("call_id")))
       .withColumnRenamed("from_user", "uau")
       .withColumn("_NetworkingID", lit("1"))
       .withColumn("_ServiceID", lit("6"))
       //.select("uau","user_agent","creation_date")
       .groupBy("_NetworkingID", "_ServiceID")
       .count
-
+    */
     //Files RECEIVED-OffNet:
     /*
     sf1.printSchema()
@@ -488,20 +510,18 @@ class Facts extends FactsProcessing {
       .groupBy("_NetworkingID", "_ServiceID")
       .count
     */
-    val lkp = sf1
-      .filter(col("to_network").isNotNull)
-      .groupBy("call_id")
-      .agg(last("to_network").alias("to_network"))
 
-    val sf5 =
-      sf1.filter(col("type") === "FT_GET")
-        .drop("to_network")
-        .join(lkp,Seq("call_id"),"left_outer")
-        .filter(!(col("from_network").isNotNull && col("to_network").isNotNull && (col("from_network") === col("to_network"))))
-        .withColumn("_NetworkingID", lit("2"))
-        .withColumn("_ServiceID", lit("6"))
-        .groupBy("_NetworkingID", "_ServiceID")
-        .count
+
+    val sf5 = sf1.filter(col("type") === "FT_GET")
+      .drop("to_network")
+      .join(lkp, Seq("call_id"), "left_outer")
+      //.filter(!(col("from_network").isNotNull && col("to_network").isNotNull && (col("from_network") === col("to_network"))))
+      .filter(col("from_network").isNull || col("to_network").isNull || !(col("from_network") === col("to_network")))
+      .withColumn("_NetworkingID", lit("2"))
+      .withColumn("_ServiceID", lit("6"))
+      .groupBy("_NetworkingID", "_ServiceID")
+      .count
+
 
     //GroupChat SENT-OnNet:
     val sf6 = sf1
