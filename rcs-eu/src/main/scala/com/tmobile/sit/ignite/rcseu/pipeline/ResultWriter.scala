@@ -56,6 +56,9 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
         CSVWriter(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
         CSVWriter(outputData.RegisteredMonthly, outputPath + "registered_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
       }
+      else if (runVar.runMode.equals("update") && runVar.date.endsWith("-12-31")) {
+        CSVWriter(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv", delimiter = "\t").writeData()
+      }
     }
 
     // if yearly processing
