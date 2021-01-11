@@ -94,6 +94,8 @@ class Facts extends FactsProcessing {
     // successfully originated for CHAT
     // successfully originated for CHAT
     val df1 = activity
+      .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      .distinct()
       //.filter(col("creation_date").startsWith(runVar.date))
       // .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
       //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
