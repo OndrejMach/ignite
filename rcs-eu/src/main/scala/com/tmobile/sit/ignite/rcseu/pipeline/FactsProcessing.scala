@@ -226,6 +226,9 @@ class Facts extends FactsProcessing {
     //final join
     val finaldf = result4
       .join(resultU4, result4("user_agent") <=> resultU4("user_agent_UNS"), "outer")
+      .withColumn("user_agent", when(col("user_agent").isNull, col("user_agent_UNS"))
+        .otherwise(col("user_agent")))
+      .na.fill(0, Seq("count", "count_UNS"))
       .select("user_agent", "count", "count_UNS")
 
 
@@ -338,6 +341,9 @@ class Facts extends FactsProcessing {
     //also joining with the full user agents dimension to get the user agent id
     val finaldfO = result4O
       .join(resultU4O, result4O("user_agent") <=> resultU4O("user_agent_UNS"), "outer")
+      .withColumn("user_agent", when(col("user_agent").isNull, col("user_agent_UNS"))
+        .otherwise(col("user_agent")))
+      .na.fill(0, Seq("count", "count_UNS"))
       .select("user_agent", "count", "count_UNS")
       .withColumnRenamed("count", "Active_daily_succ_orig")
       .withColumnRenamed("count_UNS", "Active_daily_unsucc_orig")
