@@ -41,7 +41,7 @@ object Application extends App with Logger {
       schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
   )
 
-  logger.info("Source files loaded")
+  logger.info("Input files loaded")
 
   // read whole year only if doing yearly processing
   logger.info(s"Reading archive files for: ${fileMask}")
@@ -69,7 +69,7 @@ object Application extends App with Logger {
       .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
   )
 
-  logger.info(s"Persistent files loaded for ${fileMask}")
+  logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")
 
   val stageProcessing = new Stage()
 

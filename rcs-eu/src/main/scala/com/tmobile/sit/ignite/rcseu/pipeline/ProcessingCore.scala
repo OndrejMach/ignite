@@ -115,6 +115,20 @@ class Core extends ProcessingCore {
           .withColumnRenamed("Registered_daily", "Registered_monthly")
         //logger.info("Registered monthly count: " + registeredMonthly.count())
       }
+      //Run this only when doing an 'update' for December 31st
+      else if(runVar.date.endsWith("-12-31")){
+        //*********************************************Yearly Activity******************************************//
+        logger.info("Running special case for end-of-year update. Overwriting yearly activity data.")
+        logger.info("Processing yearly activity")
+        val filtered_yearly_active = acc_activity.filter(col("creation_date").contains(runVar.year))
+        val activeYearly1 = fact.getActiveDaily(filtered_yearly_active, fullUserAgents, runVar.year, runVar.natcoNetwork)
+
+        activeYearly= activeYearly1.withColumnRenamed("ConKeyA1","ConKeyA3")
+          .withColumnRenamed("Active_daily_succ_origterm", "Active_yearly_succ_origterm")
+          .withColumnRenamed("Active_daily_succ_orig", "Active_yearly_succ_orig")
+          .withColumnRenamed("Active_daily_unsucc_origterm", "Active_yearly_unsucc_origterm")
+          .withColumnRenamed("Active_daily_unsucc_orig", "Active_yearly_unsucc_orig")
+      }
     }
 
     // yearly processing only

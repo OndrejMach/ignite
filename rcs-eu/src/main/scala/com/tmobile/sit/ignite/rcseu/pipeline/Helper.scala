@@ -19,7 +19,9 @@ trait Help extends Logger{
 class Helper() (implicit sparkSession: SparkSession) extends Help {
 
   override def getArchiveFileMask():String = {
-    if(runVar.processYearly) {
+    // if yearly reprocessing or update on 31st of January
+    if(runVar.runMode.equals("yearly") ||
+      (runVar.runMode.equals("update") && runVar.date.endsWith("-12-31"))) {
       logger.info("Processing yearly archive data")
       runVar.year
     } else {
