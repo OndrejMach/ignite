@@ -50,24 +50,19 @@ class Facts extends FactsProcessing {
     // and for the specific user agent
     //then joining with user agent id from Dimension processing
 
-    val register_requests1= register_requests.withColumn("msiDate", concat_ws("|", col("msisdn"), col("FileDate")))
-
-    val maxDate = register_requests1.groupBy("msisdn").agg(max("FileDate").alias("FileDate1"))
-      .withColumn("msiDate1", concat_ws("|", col("msisdn"), col("FileDate1")))
-      .withColumnRenamed("msisdn","msisdn1")
-
-
-    val onlyMaxDate = register_requests1.join(maxDate, register_requests1(("msiDate")) <=> maxDate(("msiDate1")), "inner")
+    val maxDate = register_requests.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
+    val onlyMaxDate = register_requests.join(maxDate, Seq("msisdn", "FileDate"), "inner")
     val grouped = onlyMaxDate.groupBy("msisdn").agg(max(lower(col("user_agent"))).alias("maxAgentLower"),max("FileDate"),max("msisdn"))
-
-
-    //numbersDf("numbers") <=> lettersDf("numbers")
+    //  val register_requests_max1 = grouped.withColumn("maxAgent",getMaxuserAgent(col("agent_list")))
+    // val register_requests_max = register_requests_max1.withColumn("maxAgentLower",lower(col("maxAgent")))
 
     val register_requests_agg =
       grouped
-        .groupBy((col("maxAgentLower"))).agg(count("*").as("msisdn_count"))
+        .groupBy((col("maxAgentLower"))).agg(countDistinct("max(msisdn)").as("msisdn_count"))
+        //.filter($"maxAgent".isin(testUserAgent:_*))
         //.orderBy(desc("maxAgent"))
-        .withColumnRenamed("msisdn_count", "Registered_daily")
+        //.withColumnRenamed("maxAgentLower","UserAgent")
+        .withColumnRenamed("msisdn_count","Registered_daily")
 
 
     val RRfinal = register_requests_agg
@@ -76,7 +71,7 @@ class Facts extends FactsProcessing {
       .join(fullUserAgents,
         register_requests_agg("maxAgentLower") <=> lower(fullUserAgents("UserAgent")))
       .withColumn("ConKeyR1", concat_ws("|", col("ConKeyR1"), col("NatCo"), col("_UserAgentID")))
-      .select("ConKeyR1", "Registered_daily", "UserAgent")
+      .select("ConKeyR1", "Registered_daily")
 
     RRfinal
       .withColumn("ConKeyR1", when(size(split(col("ConKeyR1"), "\\|")) === lit(2), concat(col("ConKeyR1"), lit("|")) )
