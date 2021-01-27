@@ -1,15 +1,14 @@
-package com.tmobile.sit.ignite.hotspot.readers
+package com.tmobile.sit.ignite.exchangerates.processing
 
 import com.tmobile.sit.common.readers.Reader
-import com.tmobile.sit.ignite.hotspot.Application.sparkSession
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * helper reader for exchange rates
  * @param path
  */
 
-class ExchangeRatesReader(path: String) extends Reader{
+class ExchangeRatesReader(path: String)(implicit sparkSession: SparkSession) extends Reader{
   override def read(): DataFrame = {
     logger.info(s"getting exchange rates from file ${path}")
     sparkSession

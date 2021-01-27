@@ -85,8 +85,7 @@ object StageTypes {
                      wlif_in_volume: Option[Double],
                      wlif_out_volume: Option[Double],
                      wlif_termination_cause: Option[String]
-                    // entry_id: Long,
-                    // load_date: Timestamp
+
                    )
 
   case class FlightLeg(
@@ -108,7 +107,6 @@ object StageTypes {
                         wlif_session_volume_out: Option[Double],
                         wlif_session_volume_in: Option[Double],
                         wlif_active_sessions: Option[Long]
-                      //  entry_id: Long
-                       // load_date: Timestamp
+
                       )
 }

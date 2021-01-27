@@ -1,6 +1,10 @@
 group 'ignite'
 //version '1.0-SNAPSHOT'
-version='1.0'
+//Specify here the SW version of your package
+def majorVersion = "1.0"
+
+
+version=majorVersion+'_'+ new Date().format('yyyyMMdd')
 
 
 buildscript {

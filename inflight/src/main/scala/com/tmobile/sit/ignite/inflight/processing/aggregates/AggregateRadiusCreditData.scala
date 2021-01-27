@@ -29,7 +29,7 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
         col("wlif_session_stop") >= unix_timestamp(lit(firstDate)).cast("timestamp") &&
         col("wlif_session_stop") < unix_timestamp(lit(lastPlus1Date)).cast("timestamp")
     )
-    //filtered.select("wlif_session_stop").distinct().show(false)
+
     logger.debug(s"COUNT RADIUS AFTER FILTER: ${filtered.count()}")
     filtered
       .groupBy("wlif_username", "wlif_flight_id")
@@ -59,6 +59,7 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
         .agg(
           max("wlan_request_date").alias("wlan_request_date")
         )
+
     voucher
       .join(maxVals, Seq("wlan_request_date", "wlan_username"), "leftsemi")
 
@@ -66,7 +67,9 @@ class AggregateRadiusCreditData(radius: Dataset[Radius], voucher: Dataset[MapVou
 
   lazy val filterOrderDB: DataFrame = {
     logger.info("Filtering OrderDB")
-    val maxVals = orderDB.groupBy("username")
+    val maxVals = orderDB
+      .filter(o => (o.result_code.get == "OK") && (!o.cancellation.isDefined))
+      .groupBy("username")
       .agg(
         max("ta_request_date").alias("ta_request_date")
       )

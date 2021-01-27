@@ -46,7 +46,7 @@ repositories {
 
 
 dependencies {
-    implementation 'com.tmobile.sit:spark_common:1.8'
+    implementation 'com.tmobile.sit:spark_common:1.18'
     compile "org.scala-lang:scala-library:2.11.12"
     compile "org.scala-lang:scala-reflect:2.11.12"
     compile "org.scala-lang:scala-compiler:2.11.12"
@@ -67,10 +67,14 @@ dependencies {
 
     compile 'com.github.fommil.netlib:all:1.1.2'
 
+    compile "net.sf.ucanaccess:ucanaccess:5.0.0"
+    compile group: 'com.healthmarketscience.jackcess', name: 'jackcess', version: '3.5.0'
+    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.4'
 
-    //testCompile 'org.scalatest:scalatest_2.11:3.0.0'
-    //testCompile 'junit:junit:4.12'
-   // testCompile 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
-    //testCompile 'org.apache.spark:spark-hive_2.11:2.3.0'
+
+ //   testCompile 'org.scalatest:scalatest_2.11:3.0.0'
+ //   testCompile 'junit:junit:4.12'
+  //  testCompile 'com.holdenkarau:spark-testing-base_2.11:2.4.5_0.11.0'
+  //  testCompile 'org.apache.spark:spark-hive_2.11:2.4.5'
 
 }

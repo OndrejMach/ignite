@@ -24,8 +24,7 @@ class NormalisedExchangeRates(exchangeRates: Dataset[InputTypes.ExchangeRates], 
     ret
   }
   def joinWithExchangeRates(table: DataFrame): DataFrame = {
-    //table.printSchema()
-    //table.filter("wlif_username ='1f3281f8d08e6da82736a9469df2c536cb1b937c4a12654bf48ecafe'").show(false)
+
     logger.info("Joining table with normalised exchange rates")
     val res = table
       .join(normalisedExchangeRates,(table("currency")  === normalisedExchangeRates("currency_code"))
@@ -35,7 +34,7 @@ class NormalisedExchangeRates(exchangeRates: Dataset[InputTypes.ExchangeRates], 
       .withColumn("amount_incl_vat", col("amount") * col("conversion"))// + lit(0.005))
       .withColumn("amount_excl_vat", (col("amount") * col("conversion"))/(lit(1.0) + (col("vat") / lit(100.0))) ) //+ lit(0.005)
       logger.info("Join DONE")
-    //res.filter("wlif_username ='1f3281f8d08e6da82736a9469df2c536cb1b937c4a12654bf48ecafe'").show(false)
+
     res
   }
 }

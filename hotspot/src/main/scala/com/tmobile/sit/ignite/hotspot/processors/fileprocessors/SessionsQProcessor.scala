@@ -30,23 +30,19 @@ class SessionsQProcessor(dataCDRs: DataFrame, processingDate: Timestamp)(implici
     import sparkSession.implicits._
     logger.info("preparing input data - technical columns, data types transormation and split into 15 minutes chunks")
     val toQuartersUDF = udf(TimeCalculations.toQuartersUnixTime)
-/*
-    val toProcess =
-      dataCDRs//.distinct()
-*/
+
     val inter = dataCDRs
       .withColumn("wlan_hotspot_ident_code", when($"hotspot_id".isNotNull, $"hotspot_id").otherwise(concat(lit("undefined_"), $"hotspot_owner_id")))
       .withColumn("wlan_provider_code", $"hotspot_owner_id")
       .withColumn("wlan_user_provider_code", $"user_provider_id")
       .withColumn("startTS", $"session_start_ts")
       .withColumn("eventTS", $"session_event_ts")
-      .withColumn("session_start_ts", from_unixtime($"session_start_ts" - lit(2 * 3600))) //-lit(2*3600)
-      .withColumn("session_event_ts", from_unixtime($"session_event_ts" - lit(2 * 3600))) //-lit(2*3600)
-
-    //inter.select(max("session_start_ts"), max("session_event_ts")).show(false)
+      .withColumn("session_start_ts", from_unixtime($"session_start_ts" - lit(getTimeZoneOffset * 3600))) //-lit(2*3600)
+      .withColumn("session_event_ts", from_unixtime($"session_event_ts" - lit(getTimeZoneOffset * 3600))) //-lit(2*3600)
 
 
-    inter //.filter((col("session_event_ts") >= lit(processingDate).cast(TimestampType)))
+
+    inter
       .withColumn("quarterSplit", toQuartersUDF($"startTS", $"eventTS", $"session_volume", $"session_duration", lit(processingDate).cast(TimestampType)))
       .withColumn("metrics", explode($"quarterSplit"))
       .drop("quarterSplit")

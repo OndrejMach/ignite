@@ -47,7 +47,8 @@ class Setup(configFile: String = "inflight.conf") extends Logger {
         sparkAppName = serviceConf.getString("config.sparkAppName"),
         filteredAirlineCodes = getArray(serviceConf.getString("config.filteredAirlineCodes")),
         airlineCodesForReport = getArray(serviceConf.getString("config.airlineCodesForReport")),
-        monthlyReportDate = getTimestamp(serviceConf.getString("config.monthlyReportDate"))
+        monthlyReportDate = getTimestamp(serviceConf.getString("config.monthlyReportDate")),
+        master = serviceConf.getString("config.master")
       ),
       input = InputFiles(
         path = serviceConf.getString("config.input.path"),

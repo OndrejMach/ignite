@@ -28,13 +28,7 @@ class FullOutputWriter(outputConf: OutputFiles, output: FullOutputs )(implicit s
       "wlif_date_time_opened", "wlif_num_users",
       "wlif_num_sessions", "wlif_session_time",
       "wlif_session_volume_out", "wlif_session_volume_in")
-    //println(s"55555555555555555 Writing: ${outputConf.path.get + outputConf.flightLegFile.get} ${output.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail : _*).columnsToUpperCase().count()}")
-    //output.flightLeg
-    //  .select(concat_ws(OutputStructure.flightLeg)).repartition(1)
-    //  .write.csv("/Users/ondrejmachacek/tmp/inflight/curak.csv")
-    //val cols = OutputStructure.flightLeg.map(_.toUpperCase)
-    //val flightLegData = dataFrame
-    //  .withColumn(cols.mkString("|"), concat_ws("|",cols.map(col(_)) :_* )).select(cols.mkString("|"))
+
 
     writeData(outputConf.path.get + outputConf.flightLegFile.get,
       output.flightLeg.select(OutputStructure.flightLeg.head, OutputStructure.flightLeg.tail : _*)

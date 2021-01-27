@@ -26,24 +26,21 @@ class StageFilesWriter(stageData: StageData)(implicit sparkSession: SparkSession
       .write
       .mode(SaveMode.Overwrite)
       .parquet(filename)
-    // handleTmp(tmpPath, filename)
   }
 
   private def writeParitionedByProcessingDate(data: DataFrame, filename: String) = {
     logger.info(s"Writing partitioned parquet to ${filename} data count: ${data.count()}")
     data
       .withColumn("date", lit(settings.appConfig.processing_date.get.toLocalDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"))))
-      .repartition(1)
+      .repartition(5)
       .write
       .mode(SaveMode.Overwrite)
       .partitionBy("date")
       .parquet(filename)
-    // handleTmp(tmpPath, filename)
   }
 
 
   def writeData() = {
-    import sparkSession.implicits._
 
     logger.info(s"Writing SessionD file to ${settings.stageConfig.session_d.get}")
     writeParitionedByProcessingDate(

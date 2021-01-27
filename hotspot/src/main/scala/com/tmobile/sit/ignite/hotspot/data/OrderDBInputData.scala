@@ -18,8 +18,6 @@ class OrderDBInputData(stageConfig: StageConfig, inputConfig: InputConfig)(impli
   val inputMPS = new TextReader(inputConfig.MPS_filename.get).read()
 
   val oldErrorCodes = //sparkSession.read.parquet(stageConfig.error_codes_filename.get).persist()
-
-
     CSVReader(schema = Some(OrderDBStructures.errorCodesStructure),
       timestampFormat = "yyyy-MM-dd HH:mm:ss",
       path = stageConfig.error_codes_filename.get,

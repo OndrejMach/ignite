@@ -41,6 +41,9 @@ class InputFilesProcessor(implicit sparkSession: SparkSession, settings: Setting
       logger.info("writing CDR data to stage")
       new CDRStageWriter(path = settings.stageConfig.wlan_cdr_file.get, data = cdrData).writeData()
       logger.info("writing OrderDB data to stage")
+
+      orderdDBData.wlanHotspot.groupBy("country_code").count().foreach(println(_))
+
       new OrderDBStageWriter(
         data = orderdDBData,
         filenames = OrderDBStageFilenames(

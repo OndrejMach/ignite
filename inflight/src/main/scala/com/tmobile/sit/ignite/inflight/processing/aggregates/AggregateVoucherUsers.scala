@@ -50,7 +50,7 @@ class AggregateVoucherUsers(interimData: AggregVchrRadiusInterimData) extends Lo
     voucherAggr
       .join(nonVoucherAggr, Seq("wlif_flight_id", "wlif_date_time_closed", "wlif_airline_code"), "right")
       .na
-      .fill(0, Seq("vchr_voucher_sessions", "vchr_voucher_users", "vchr_wlif_num_users", "vchr_wlif_num_sessions"))
+      .fill(0, Seq(/*"vchr_voucher_sessions" "vchr_voucher_users",*/ "vchr_wlif_num_users", "vchr_wlif_num_sessions"))
       .withColumn("flight_users", when(col("vchr_wlif_num_users").isNull && col("wlif_num_users") === lit(-1),
         col("voucher_users") + col("non_voucher_users"))
         .otherwise(col("wlif_num_users")))

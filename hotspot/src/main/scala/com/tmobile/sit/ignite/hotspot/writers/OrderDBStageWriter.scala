@@ -3,7 +3,9 @@ package com.tmobile.sit.ignite.hotspot.writers
 import com.tmobile.sit.common.writers.{CSVWriter, Writer}
 import com.tmobile.sit.ignite.hotspot.data.StageStructures
 import com.tmobile.sit.ignite.hotspot.processors.staging.OderdDBPRocessingOutputs
+import org.apache.spark.sql.functions.date_format
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+
 
 case class OrderDBStageFilenames(
                                   wlanHotspot: String ,
@@ -20,6 +22,8 @@ case class OrderDBStageFilenames(
 
 
 class OrderDBStageWriter(data: OderdDBPRocessingOutputs, filenames: OrderDBStageFilenames) (implicit sparkSession: SparkSession) extends Writer {
+  import sparkSession.implicits._
+
   override def writeData(): Unit = {
 
     def writeFilePartitioned(path: String, data: DataFrame, saveMode: SaveMode): Unit = {
@@ -55,7 +59,13 @@ class OrderDBStageWriter(data: OderdDBPRocessingOutputs, filenames: OrderDBStage
     )
     //writeFile( filenames.errorCodes,data.errorCodes.select(StageStructures.ERROR_CODES.head, StageStructures.ERROR_CODES.tail :_*), SaveMode.Overwrite)
     logger.info("Writing new Map Voucher")
-    writeFilePartitioned(filenames.mapVoucher, data.mapVoucher.select(StageStructures.MAP_VOUCHER.head,StageStructures.MAP_VOUCHER.tail :_*), SaveMode.Append)
+    writeFilePartitioned(filenames.mapVoucher,
+      data
+        .mapVoucher
+        .select(StageStructures.MAP_VOUCHER.head,StageStructures.MAP_VOUCHER.tail :_*)
+        .withColumn("wlan_request_date", date_format($"wlan_request_date","yyyy-MM-dd HH:mm:ss"))
+      ,
+      SaveMode.Append)
     logger.info("Writing new OrderDB")
     writeFilePartitioned(filenames.orderDb, data.orderDb.select(StageStructures.ORDER_DB.head, StageStructures.ORDER_DB.tail :_*), SaveMode.Append)
 
@@ -65,6 +75,5 @@ class OrderDBStageWriter(data: OderdDBPRocessingOutputs, filenames: OrderDBStage
       filename= filenames.wlanHotspot
     )
 
-   // CSVWriter(filenames.wlanHotspot, data.wlanHotspot.select(StageStructures.WLAN_HOTSPOT.head, StageStructures.WLAN_HOTSPOT.tail :_*),SaveMode.Overwrite)
   }
 }
