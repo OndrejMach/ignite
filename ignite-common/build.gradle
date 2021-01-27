@@ -58,7 +58,7 @@ dependencies {
     compile 'org.apache.spark:spark-launcher_2.11:2.4.5'
     compile 'org.apache.spark:spark-catalyst_2.11:2.4.5'
     compile 'org.apache.spark:spark-streaming_2.11:2.4.5'
-    compile 'org.apache.spark:spark-core_2.11:2.4.5'
+    compile 'org.apache.spark:spark-core_2.11:2.3.0'
 
     compile 'com.crealytics:spark-excel_2.11:0.13.1'
 

@@ -1,0 +1,3 @@
+/usr/bin/spark2-submit --num-executors 50 --executor-cores 8 --executor-memory 20G --driver-memory 20G --queue root.ETL
+--driver-java-options="-Dsettings.ipnrSpecial.value=$IPNR_SPECIAL -Dsettings.ipnr.value=$IPNR -Dsettings.aPartyProfile.value=$A_PARTY_PROFILE -Dsettings.ccProfile.value=$CC_PROFILE -Dsettings.maxBlockedHour.value=20 -Dsettings.hackedMSISDNSearchOffsetHours.value=2 -Dsettings.sparkMaster.value=$SPARK_MASTER -Dsettings.inputFolder.value=$OUTPUT_FOLDER_FWLOGS -Dsettings.hackedMSISDNsOutput.value=$HACKED_MSISDNS"
+--jars $OTHER_JARS --verbose --deploy-mode client --principal $YARN_PRINCIPAL --keytab $YARN_KEYTAB /home/extmachacekon/PBX/FraudDetection-1.jar HackedPBX $RUNMODE
