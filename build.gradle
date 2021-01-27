@@ -81,6 +81,7 @@ dependencies {
     //compile project(':inflight')
     compile project(':rcse')
     compile project(':rcs-eu')
+    compile project(':exchange-rates')
 
 }
 
