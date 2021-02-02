@@ -17,7 +17,7 @@ buildscript {
                 username NEXUS3_USERNAME
                 password NEXUS3_PASSWORD
             }
-            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+            url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
         }
     }
     dependencies {
@@ -42,14 +42,14 @@ allprojects {
                 username NEXUS3_USERNAME
                 password NEXUS3_PASSWORD
             }
-            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+            url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
         }
         maven {
             credentials {
                 username NEXUS3_USERNAME
                 password NEXUS3_PASSWORD
             }
-            url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+            url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/maven-releases/"
         }
     }
 }
@@ -62,14 +62,14 @@ repositories {
             username NEXUS3_USERNAME
             password NEXUS3_PASSWORD
         }
-        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/atlassian_public/"
+        url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
     }
     maven {
         credentials {
             username NEXUS3_USERNAME
             password NEXUS3_PASSWORD
         }
-        url "https://cdcp-wbench.wesp.telekom.net/nexus3/repository/maven-releases/"
+        url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/maven-releases/"
     }
 
 }
