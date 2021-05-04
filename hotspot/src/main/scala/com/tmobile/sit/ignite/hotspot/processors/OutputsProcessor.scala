@@ -110,10 +110,28 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
       delimiter = "~", quote = ""
     )
 
+    val ht = hotspot
+      .filter(col("valid_to") >= lit(com.tmobile.sit.ignite.hotspot.data.FUTURE).cast(TimestampType))
+      .groupBy("wlan_hotspot_ident_code")
+      .agg(max("valid_from").alias("valid_from")
+      )
+      .distinct()
+
+    logger.info(s"COUNT HOTSPOT: ${ht.count()}")
+
+    val columns = OutputStructures.HOTSPOT_VI_D.filter(_!= "wlan_hotspot_ident_code").map(i => last(i).alias(i))
+
+    val dht = hotspot
+      .filter(col("valid_to") >= lit(com.tmobile.sit.ignite.hotspot.data.FUTURE).cast(TimestampType))
+      .join(ht, Seq("wlan_hotspot_ident_code", "valid_from"), "inner")
+      .groupBy("wlan_hotspot_ident_code")
+      .agg(columns.head ,columns.tail :_* )
+      .distinct()
+
+
     logger.info("Writing output file for hotspot_vi_d")
     writeOutput(
-      data = hotspot.sort("wlan_hotspot_ident_code","valid_to" )
-        .filter(col("valid_to") >= lit(com.tmobile.sit.ignite.hotspot.data.FUTURE).cast(TimestampType))
+      data = dht
         .select(OutputStructures.HOTSPOT_VI_D.head, OutputStructures.HOTSPOT_VI_D.tail: _*),
       filename = settings.outputConfig.hotspot_vi_d.get,
       delimiter = "~", quote = ""

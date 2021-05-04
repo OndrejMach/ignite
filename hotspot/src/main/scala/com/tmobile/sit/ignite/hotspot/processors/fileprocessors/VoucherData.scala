@@ -4,6 +4,7 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.FailedTransactionsDataStructures
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.TimestampType
 
@@ -36,7 +37,10 @@ class VoucherData(wlanOrderDBExchangeRatesdata: DataFrame, oldVoucherData: DataF
       .select(FailedTransactionsDataStructures.COLUMNS_VOUCHER.head, FailedTransactionsDataStructures.COLUMNS_VOUCHER.tail: _*)
       .join(voucherData.select("wlan_voucher_id", FailedTransactionsDataStructures.JOIN_COLUMNS_VOUCHER: _*), Seq("natco", "voucher_type", "amount", "duration"), "left_outer")
       .filter(col("wlan_voucher_id").isNull)
-      .withColumn("wlan_voucher_id", monotonically_increasing_id() + lit(maxVoucherID))
+      .withColumn("row_nr", row_number.over(Window.orderBy("voucher_type")))
+      .withColumn("wlan_voucher_id", expr(s"$maxVoucherID + row_nr"))
+      .drop("row_nr")
+      //.withColumn("wlan_voucher_id", monotonically_increasing_id() + lit(maxVoucherID))
       .select("wlan_voucher_id", FailedTransactionsDataStructures.COLUMNS_VOUCHER: _*)
   }
 
