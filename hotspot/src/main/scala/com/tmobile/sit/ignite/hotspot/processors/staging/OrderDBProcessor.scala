@@ -1,10 +1,10 @@
 package com.tmobile.sit.ignite.hotspot.processors.staging
 
 import java.sql.Timestamp
-
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.{OrderDBInputData, OrderDBStage, OrderDBStructures, WlanHotspotTypes}
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{LongType, StringType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
@@ -115,8 +115,11 @@ class OrderDBProcessor(orderDBInputData: OrderDBInputData, maxDate: Timestamp, e
       .select("wlan_hotspot_ident_code")
       .sort()
       .distinct()
-      .withColumn("id", monotonically_increasing_id().cast(LongType))
-      .withColumn("id", $"id" + lit(maxId))
+      .withColumn("row_nr", row_number.over(Window.orderBy("wlan_hotspot_ident_code")))
+      .withColumn("id", expr(s"$maxId + row_nr"))
+      .drop("row_nr")
+
+
 
     logger.info("Joining data with new IDs wiht old wlan hotspot data")
     val newGuys = furtherOn

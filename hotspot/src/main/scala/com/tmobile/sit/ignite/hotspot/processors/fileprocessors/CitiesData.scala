@@ -1,9 +1,9 @@
 package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
-
 import com.tmobile.sit.common.Logger
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.TimestampType
 
@@ -35,7 +35,9 @@ class CitiesData(wlanAndOrderDBData: DataFrame, oldCitieData: DataFrame)(implici
       .distinct()
       .join(cityData, Seq("city_code"), "left_outer")
       .filter(col("city_id").isNull && col("city_code").isNotNull)
-      .withColumn("city_id", monotonically_increasing_id() + lit(maxCityId))
+      .withColumn("row_nr", row_number.over(Window.orderBy("city_code")))
+      .withColumn("city_id", expr(s"$maxCityId + row_nr"))
+      .drop("row_nr")
       .withColumn("city_desc", upper(col("city_code")))
       .withColumn("city_ldesc", lit("new"))
       .select("city_id", "city_code", "city_desc", "city_ldesc")

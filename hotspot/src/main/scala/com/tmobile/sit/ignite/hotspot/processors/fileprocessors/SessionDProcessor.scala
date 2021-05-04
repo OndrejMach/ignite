@@ -1,9 +1,9 @@
 package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
-
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.{FUTURE, StageStructures}
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, TimestampType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -141,8 +141,11 @@ class SessionDProcessor(cdrData: DataFrame, wlanHotspotStageData: DataFrame, pro
 
     logger.info("Preparing new wlanHostpot data from CDR aggregates")
     val provisioned = toProvision
-      .withColumn("wlan_hotspot_id", monotonically_increasing_id())
-      .withColumn("wlan_hotspot_id", $"wlan_hotspot_id" + lit(maxHotspotID))
+     // .withColumn("wlan_hotspot_id", monotonically_increasing_id())
+     // .withColumn("wlan_hotspot_id", $"wlan_hotspot_id" + lit(maxHotspotID))
+      .withColumn("row_nr", row_number.over(Window.orderBy("wlan_hotspot_ident_code")))
+      .withColumn("wlan_hotspot_id", expr(s"$maxHotspotID + row_nr"))
+      .drop("row_nr")
       .withColumn("wlan_hotspot_desc", lit("Hotspot not assigned"))
       .withColumn("country_code", when($"country_code".isNotNull,upper($"country_code")).otherwise(upper($"agg_country_code")))
       .withColumn("wlan_provider_code", $"agg_wlan_provider_code")
