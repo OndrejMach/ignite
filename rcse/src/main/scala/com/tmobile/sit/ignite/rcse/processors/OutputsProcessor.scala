@@ -4,8 +4,9 @@ import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsDataReader
 import com.tmobile.sit.ignite.rcse.writer.RCSEOutputs
 import org.apache.spark.sql.SparkSession
-
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types.{IntegerType, LongType}
+import org.apache.spark.sql.functions.{sum, lit}
 
 object TransformDataFrameColumns {
   implicit class TransformColumnNames(df : DataFrame) {
@@ -22,6 +23,23 @@ object TransformDataFrameColumns {
  * @param settings - paths where to read required stage files
  */
 class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) {
+  def initUserpostProcessing(data:DataFrame) = {
+    import sparkSession.implicits._
+    val unchanged = data
+      .filter($"RCSE_REG_USERS_ALL".cast(LongType) > 5)
+      .select("DATE_ID","NATCO_CODE","RCSE_INIT_CLIENT_ID","RCSE_INIT_TERMINAL_ID","RCSE_INIT_TERMINAL_SW_ID","RCSE_REG_USERS_NEW","RCSE_REG_USERS_ALL")
+    val toAggregate = data.filter($"RCSE_REG_USERS_ALL".cast(LongType) <= 5)
+    toAggregate
+      .groupBy("DATE_ID", "NATCO_CODE")
+      .agg(sum("RCSE_REG_USERS_NEW").alias("RCSE_REG_USERS_NEW"), sum("RCSE_REG_USERS_ALL").alias("RCSE_REG_USERS_ALL"))
+      .withColumn("RCSE_INIT_CLIENT_ID", lit("-999"))
+      .withColumn("RCSE_INIT_TERMINAL_ID", lit("-999"))
+      .withColumn("RCSE_INIT_TERMINAL_SW_ID", lit("-999"))
+      .select("DATE_ID","NATCO_CODE","RCSE_INIT_CLIENT_ID","RCSE_INIT_TERMINAL_ID","RCSE_INIT_TERMINAL_SW_ID","RCSE_REG_USERS_NEW","RCSE_REG_USERS_ALL")
+    unchanged.union(toAggregate)
+  }
+
+
   def getData:RCSEOutputs = {
     val lookups = new LookupsDataReader()
 
@@ -29,11 +47,11 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
 
     RCSEOutputs(
       terminal = lookups.terminal.columnsToUpperCase(),
-      terminalSW = lookups.terminalSW.columnsToUpperCase(),
+      terminalSW = lookups.terminalSW.columnsToUpperCase().select("RCSE_TERMINAL_SW_ID", "RCSE_TERMINAL_SW_DESC"),
       client = lookups.client.columnsToUpperCase(),
       activeUser = sparkSession.read.parquet(s"${settings.stage.activeUsers}/date=${settings.app.processingDate}").columnsToUpperCase(),
       initConf = sparkSession.read.parquet(s"${settings.stage.initConf}/date=${settings.app.processingDate}").columnsToUpperCase(),
-      initUser = sparkSession.read.parquet(s"${settings.stage.initUser}/date=${settings.app.processingDate}").columnsToUpperCase(),
+      initUser = initUserpostProcessing(sparkSession.read.parquet(s"${settings.stage.initUser}/date=${settings.app.processingDate}").columnsToUpperCase()),
       uau = sparkSession.read.parquet(s"${settings.stage.uauFile}/date=${settings.app.processingDate}").columnsToUpperCase()
     )
   }
