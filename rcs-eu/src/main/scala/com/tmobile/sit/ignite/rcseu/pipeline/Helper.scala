@@ -59,7 +59,10 @@ class Configurator() extends Config {
     val configFile = if(System.getProperty("os.name").startsWith("Windows")) {
       logger.info(s"Detected development configuration (${System.getProperty("os.name")})")
       "rcs-eu.windows.conf"
-    } else {
+    } else if (System.getProperty("os.name").startsWith("Mac OS")){
+      "rcs-eu.osx.conf"
+    }
+    else {
       logger.info(s"Detected production configuration (${System.getProperty("os.name")})")
       "rcs-eu.linux.conf"
     }

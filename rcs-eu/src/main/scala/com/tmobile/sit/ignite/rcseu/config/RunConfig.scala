@@ -33,12 +33,14 @@ class RunConfig(_args: Array[String]) {
   val cgID="2"
   val crID="4"
   val mkID="7"
+  val tpID="8"
 
   val natcoID = if (natco == "mt") mtID
   else if (natco == "st") stID
   else if (natco == "cr") crID
   else if (natco == "cg") cgID
   else if (natco == "mk") mkID
+  else if (natco == "tp") tpID
   else "natco ID is not correct"
 
   val mt="dt-magyar-telecom"
@@ -46,11 +48,13 @@ class RunConfig(_args: Array[String]) {
   val cg="dt-cosmote-greece"
   val cr="dt-telecom-romania"
   val mk="dt-makedonski-telecom"
+  val tp="tmobile-polska-poland"
 
   val natcoNetwork = if (natco == "mt") mt
   else if (natco == "st") st
   else if (natco == "cr") cr
   else if (natco == "cg") cg
   else if (natco == "mk") mk
+  else if (natco == "tp") tp
   else "natco network is not correct"
 }
