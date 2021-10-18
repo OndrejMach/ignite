@@ -10,7 +10,7 @@ package object rcse {
   def getSparkSession(master: String, dynamicAllocation: String) = SparkSession.builder()
     //.appName("Test FWLog Reader")
     .master(master)
-    .config("spark.executor.instances", "16")
+    .config("spark.executor.instances", "30")
     .config("spark.executor.memory", "16g")
     .config("spark.executor.cores", "2")
     .config("spark.driver.memory", "10g")
@@ -25,6 +25,4 @@ package object rcse {
     .config("spark.executor.heartbeatInterval","120s")
     //.config("spark.sql.autoBroadcastJoinThreshold", "-1")
     .getOrCreate()
-
-
 }

@@ -1,12 +1,13 @@
 package com.tmobile.sit.ignite.rcse.processors
 
+import com.tmobile.sit.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.inputs.LookupsDataReader
 import com.tmobile.sit.ignite.rcse.writer.RCSEOutputs
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, LongType}
-import org.apache.spark.sql.functions.{sum, lit}
+import org.apache.spark.sql.functions.{lit, sum}
 
 object TransformDataFrameColumns {
   implicit class TransformColumnNames(df : DataFrame) {
@@ -22,21 +23,22 @@ object TransformDataFrameColumns {
  * @param sparkSession
  * @param settings - paths where to read required stage files
  */
-class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) {
+class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) extends Logger{
   def initUserpostProcessing(data:DataFrame) = {
     import sparkSession.implicits._
+    logger.info("Running InitUser post processing")
     val unchanged = data
-      .filter($"RCSE_REG_USERS_ALL".cast(LongType) > 5)
+      .filter($"RCSE_REG_USERS_ALL".cast(LongType) > lit(5))
       .select("DATE_ID","NATCO_CODE","RCSE_INIT_CLIENT_ID","RCSE_INIT_TERMINAL_ID","RCSE_INIT_TERMINAL_SW_ID","RCSE_REG_USERS_NEW","RCSE_REG_USERS_ALL")
     val toAggregate = data.filter($"RCSE_REG_USERS_ALL".cast(LongType) <= 5)
-    toAggregate
+    val aggregated = toAggregate
       .groupBy("DATE_ID", "NATCO_CODE")
       .agg(sum("RCSE_REG_USERS_NEW").alias("RCSE_REG_USERS_NEW"), sum("RCSE_REG_USERS_ALL").alias("RCSE_REG_USERS_ALL"))
       .withColumn("RCSE_INIT_CLIENT_ID", lit("-999"))
       .withColumn("RCSE_INIT_TERMINAL_ID", lit("-999"))
       .withColumn("RCSE_INIT_TERMINAL_SW_ID", lit("-999"))
       .select("DATE_ID","NATCO_CODE","RCSE_INIT_CLIENT_ID","RCSE_INIT_TERMINAL_ID","RCSE_INIT_TERMINAL_SW_ID","RCSE_REG_USERS_NEW","RCSE_REG_USERS_ALL")
-    unchanged.union(toAggregate)
+    unchanged.union(aggregated)
   }
 
 

@@ -5,7 +5,7 @@ import com.tmobile.sit.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
-import org.apache.spark.sql.functions.{col, split}
+import org.apache.spark.sql.functions.{broadcast, col, split}
 
 object Application extends App with Logger {
 
@@ -34,11 +34,11 @@ object Application extends App with Logger {
   // Read sources
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
-    activity = activityFiles,
+    activity = activityFiles.repartition(20),
     provision = new CSVReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
+      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read().repartition(20),
     register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
+      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read().repartition(20)
   )
 
   logger.info("Input files loaded")
@@ -47,13 +47,14 @@ object Application extends App with Logger {
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
-    oldUserAgents = new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read(),
+    oldUserAgents = broadcast(new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read()),
 
     activity_archives = sparkSession.read
       .option("header", "true")
       .option("delimiter", "\\t")
       .schema(FileSchemas.activitySchema)
       .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*")
+      .repartition(20)
       //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
       //.distinct()
     ,
@@ -61,12 +62,15 @@ object Application extends App with Logger {
       .option("header", "true")
       .option("delimiter", "\t")
       .schema(FileSchemas.provisionSchema)
-      .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*"),
+      .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*")
+      .repartition(20)
+    ,
     register_requests_archives = sparkSession.read
       .option("header", "true")
       .option("delimiter", "\\t")
       .schema(FileSchemas.registerRequestsSchema)
       .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
+      .repartition(20)
   )
 
   logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")
