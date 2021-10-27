@@ -30,7 +30,9 @@ class OutputsProcessor(implicit sparkSession: SparkSession, settings: Settings) 
     val unchanged = data
       .filter($"RCSE_REG_USERS_ALL".cast(LongType) > lit(5))
       .select("DATE_ID","NATCO_CODE","RCSE_INIT_CLIENT_ID","RCSE_INIT_TERMINAL_ID","RCSE_INIT_TERMINAL_SW_ID","RCSE_REG_USERS_NEW","RCSE_REG_USERS_ALL")
-    val toAggregate = data.filter($"RCSE_REG_USERS_ALL".cast(LongType) <= 5)
+    val toAggregate = data.
+      filter(($"RCSE_REG_USERS_ALL".cast(LongType) <= 5) or $"RCSE_REG_USERS_ALL".isNull)
+      .na.fill(0, Seq("RCSE_REG_USERS_ALL", "RCSE_REG_USERS_NEW"))
     val aggregated = toAggregate
       .groupBy("DATE_ID", "NATCO_CODE")
       .agg(sum("RCSE_REG_USERS_NEW").alias("RCSE_REG_USERS_NEW"), sum("RCSE_REG_USERS_ALL").alias("RCSE_REG_USERS_ALL"))
