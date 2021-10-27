@@ -54,7 +54,7 @@ object Application extends App with Logger {
       .option("delimiter", "\\t")
       .schema(FileSchemas.activitySchema)
       .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*")
-      .repartition(20)
+      //.repartition(20)
       //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
       //.distinct()
     ,
@@ -63,18 +63,18 @@ object Application extends App with Logger {
       .option("delimiter", "\t")
       .schema(FileSchemas.provisionSchema)
       .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*")
-      .repartition(20)
+      //.repartition(20)
     ,
     register_requests_archives = sparkSession.read
       .option("header", "true")
       .option("delimiter", "\\t")
       .schema(FileSchemas.registerRequestsSchema)
       .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
-      .repartition(20)
+      //.repartition(20)
   )
 
   logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")
-
+  //persistentData.activity_archives.show(false)
   val stageProcessing = new Stage()
 
   val coreProcessing = new Core()

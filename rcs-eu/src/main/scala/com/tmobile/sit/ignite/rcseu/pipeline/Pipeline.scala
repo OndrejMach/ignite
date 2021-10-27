@@ -12,9 +12,9 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
   def run(): Unit = {
 
     // Read input files
-    val inputActivity = inputData.activity//.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
-    val inputProvision = inputData.provision
-    val inputRegisterRequests = inputData.register_requests
+    val inputActivity = inputData.activity.repartition(20)//.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
+    val inputProvision = inputData.provision.repartition(20)
+    val inputRegisterRequests = inputData.register_requests.repartition(20)
 
     if(runVar.debug) {
     logger.info("Inputs")
@@ -27,9 +27,10 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     //persistentData.activity_archives.show(false)
 
     // Read archive files, extract and add file date
-    val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives)
-    val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)
-    val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)
+    val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives).repartition(20)
+    val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives).repartition(20)
+    val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives).repartition(20)
+    archiveActivity.show(false)
 
     if(runVar.debug) {
     logger.info("Archives")
@@ -40,6 +41,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 
     // Get accumulators (archive + input)
     val accActivity = stage.accumulateActivity(inputActivity,archiveActivity)
+    accActivity.show(false)
     val accProvision = stage.accumulateProvision(inputProvision,archiveProvision)
     val accRegisterRequests =  stage.accumulateRegisterRequests(inputRegisterRequests,archiveRegisterRequests)
 
