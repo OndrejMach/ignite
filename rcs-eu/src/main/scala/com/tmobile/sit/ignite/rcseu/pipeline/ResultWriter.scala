@@ -2,8 +2,8 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.rcseu.data.{OutputData}
-import org.apache.spark.sql.SparkSession
+import com.tmobile.sit.ignite.rcseu.data.OutputData
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.tmobile.sit.ignite.rcseu.Application.runVar
 import com.tmobile.sit.ignite.rcseu.config.Settings
 
@@ -17,6 +17,17 @@ trait Writer extends Logger{
  * lookup files for the next iteration
  */
 class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) extends Writer {
+  private def writeWithFixedEmptyDFs(data:DataFrame,path:String): Unit = {
+    import sparkSession.implicits._
+    if (data.isEmpty){
+      val line = Seq(data.columns.mkString("\t"))
+      val df = line.toDF()
+      CSVWriter(df, path, delimiter = "\t", writeHeader = false, quote = "").writeData()
+    } else {
+      CSVWriter(data, path, delimiter = "\t", writeHeader = true).writeData()
+    }
+  }
+
 
   override def write(outputData: OutputData) =
   {
@@ -46,27 +57,27 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
       else {
         logger.info("Writing daily and monthly data")
       }
-      CSVWriter(outputData.ActiveDaily, outputPath + "activity_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ActiveMonthly, outputPath + "activity_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ServiceDaily, outputPath + "service_fact." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
+      writeWithFixedEmptyDFs(outputData.ActiveDaily, outputPath + "activity_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv")
+      writeWithFixedEmptyDFs(outputData.ActiveMonthly, outputPath + "activity_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv")
+      writeWithFixedEmptyDFs(outputData.ServiceDaily, outputPath + "service_fact." + runVar.natco + "." + runVar.dateforoutput + ".csv")
 
       if(!runVar.runMode.equals("update")) {
-        CSVWriter(outputData.ProvisionedDaily, outputPath + "provisioned_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
-        CSVWriter(outputData.RegisteredDaily, outputPath + "registered_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv", delimiter = "\t").writeData()
-        CSVWriter(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
-        CSVWriter(outputData.RegisteredMonthly, outputPath + "registered_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv", delimiter = "\t").writeData()
+        writeWithFixedEmptyDFs(outputData.ProvisionedDaily, outputPath + "provisioned_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv")
+        writeWithFixedEmptyDFs(outputData.RegisteredDaily, outputPath + "registered_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv")
+        writeWithFixedEmptyDFs(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv")
+        writeWithFixedEmptyDFs(outputData.RegisteredMonthly, outputPath + "registered_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv")
       }
       else if (runVar.runMode.equals("update") && runVar.date.endsWith("-12-31")) {
-        CSVWriter(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv", delimiter = "\t").writeData()
+        writeWithFixedEmptyDFs(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv")
       }
     }
 
     // if yearly processing
     if(runVar.processYearly) {
       logger.info("Writing yearly data")
-      CSVWriter(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.ProvisionedYearly, outputPath + "provisioned_yearly." + runVar.natco + "." + runVar.year + ".csv", delimiter = "\t").writeData()
-      CSVWriter(outputData.RegisteredYearly, outputPath + "registered_yearly." + runVar.natco + "." + runVar.year + ".csv", delimiter = "\t").writeData()
+      writeWithFixedEmptyDFs(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv")
+      writeWithFixedEmptyDFs(outputData.ProvisionedYearly, outputPath + "provisioned_yearly." + runVar.natco + "." + runVar.year + ".csv")
+      writeWithFixedEmptyDFs(outputData.RegisteredYearly, outputPath + "registered_yearly." + runVar.natco + "." + runVar.year + ".csv")
     }
   }
 }
