@@ -55,7 +55,6 @@ class Facts extends FactsProcessing {
     val grouped = onlyMaxDate.groupBy("msisdn").agg(max(lower(col("user_agent"))).alias("maxAgentLower"),max("FileDate"),max("msisdn"))
     //  val register_requests_max1 = grouped.withColumn("maxAgent",getMaxuserAgent(col("agent_list")))
     // val register_requests_max = register_requests_max1.withColumn("maxAgentLower",lower(col("maxAgent")))
-
     val register_requests_agg =
       grouped
         .groupBy((col("maxAgentLower"))).agg(countDistinct("max(msisdn)").as("msisdn_count"))
@@ -64,7 +63,6 @@ class Facts extends FactsProcessing {
         //.withColumnRenamed("maxAgentLower","UserAgent")
         .withColumnRenamed("msisdn_count","Registered_daily")
 
-
     val RRfinal = register_requests_agg
       .withColumn("ConKeyR1", lit(period_for_process))
       .withColumn("NatCo", lit(runVar.natcoID))
@@ -72,6 +70,8 @@ class Facts extends FactsProcessing {
         register_requests_agg("maxAgentLower") <=> lower(fullUserAgents("UserAgent")))
       .withColumn("ConKeyR1", concat_ws("|", col("ConKeyR1"), col("NatCo"), col("_UserAgentID")))
       .select("ConKeyR1", "Registered_daily")
+
+    RRfinal.show(false)
 
     RRfinal
       .withColumn("ConKeyR1", when(size(split(col("ConKeyR1"), "\\|")) === lit(2), concat(col("ConKeyR1"), lit("|")) )

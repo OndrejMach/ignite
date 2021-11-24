@@ -105,10 +105,9 @@ class Core extends ProcessingCore {
         registeredDaily = fact.getRegisteredDaily(filtered_daily_register, fullUserAgents, runVar.dayforkey)
         //logger.info("Registered daily count: " + registeredDaily.count())
 
-        logger.info("Processing monthly register requests")
+        logger.info(s"Processing monthly register requests")
         val filtered_monthly_register = acc_register_requests.filter(col("FileDate").contains(runVar.month))
         val registeredMonthly1 = fact.getRegisteredDaily(filtered_monthly_register, fullUserAgents, runVar.monthforkey)
-
         registeredMonthly =
           registeredMonthly1
           .withColumnRenamed("ConKeyR1", "ConKeyR2")
