@@ -34,11 +34,11 @@ object Application extends App with Logger {
   // Read sources
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
-    activity = activityFiles.repartition(20),
+    activity = activityFiles,
     provision = new CSVReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read().repartition(20),
+      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
     register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read().repartition(20)
+      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
   )
 
   logger.info("Input files loaded")
