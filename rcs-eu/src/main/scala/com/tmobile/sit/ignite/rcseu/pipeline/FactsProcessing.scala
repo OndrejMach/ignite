@@ -2,27 +2,26 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.rcseu.Application.runVar
+import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import org.apache.spark.sql.types.{DateType, IntegerType, TimestampType}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
-trait FactsProcessing extends Logger {
-  def getProvisionedDaily(provisionData: DataFrame, period_for_process: String): DataFrame /*aj tu som pridala period for process*/
-}
+//trait FactsProcessing extends Logger {
+//  def getProvisionedDaily(provisionData: DataFrame, period_for_process: String): DataFrame /*aj tu som pridala period for process*/
+//}
 
 //functions with "Daily" suffix, but in fact these are aggregating data based on the previous filtering
 //from ProcessingCore
 
-class Facts extends FactsProcessing {
+object FactsProcessing extends Logger {
   //aggregating unique number of provisioned users in the specific period_for_process and natco
 
-  def getProvisionedDaily(provision: DataFrame, period_for_process: String): DataFrame = {
+  def getProvisionedDaily(provision: DataFrame, period_for_process: String, runConfig: RunConfig): DataFrame = {
     val provisionedDaily = provision
       .withColumn("ConKeyP1", lit(period_for_process))
-      .withColumn("NatCo", lit(runVar.natcoID))
+      .withColumn("NatCo", lit(runConfig.natcoID))
       .withColumn("ConKeyP1", concat_ws("|", col("ConKeyP1"), col("NatCo")))
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count", "Provisioned_daily")
@@ -45,7 +44,8 @@ class Facts extends FactsProcessing {
   val getMaxuserAgent = udf(getMaxuserAgentDef)
   ///
 
-  def getRegisteredDaily(register_requests: DataFrame, fullUserAgents: DataFrame, period_for_process: String): DataFrame = {
+  def getRegisteredDaily(register_requests: DataFrame, fullUserAgents: DataFrame, period_for_process: String,
+                         runConfig: RunConfig): DataFrame = {
     //aggregating unique number of registered users in the specific period_for_process and natco
     // and for the specific user agent
     //then joining with user agent id from Dimension processing
@@ -65,7 +65,7 @@ class Facts extends FactsProcessing {
 
     val RRfinal = register_requests_agg
       .withColumn("ConKeyR1", lit(period_for_process))
-      .withColumn("NatCo", lit(runVar.natcoID))
+      .withColumn("NatCo", lit(runConfig.natcoID))
       .join(fullUserAgents,
         register_requests_agg("maxAgentLower") <=> lower(fullUserAgents("UserAgent")))
       .withColumn("ConKeyR1", concat_ws("|", col("ConKeyR1"), col("NatCo"), col("_UserAgentID")))
@@ -79,7 +79,8 @@ class Facts extends FactsProcessing {
 
   }
 
-  def getActiveDaily(activity: DataFrame, fullUserAgents: DataFrame, period_for_process: String, natcoNetwork: String): DataFrame = {
+  def getActiveDaily(activity: DataFrame, fullUserAgents: DataFrame, period_for_process: String, natcoNetwork: String,
+                     runConfig: RunConfig): DataFrame = {
     //aggregated according to the QlikSense script from Jarda
 
     ////// 1. ORIGINATED and TERMINATED
@@ -352,7 +353,7 @@ class Facts extends FactsProcessing {
 
     val keyTable = activity
       .withColumn("ConKeyA1", lit(period_for_process))
-      .withColumn("NatCo", lit(runVar.natcoID))
+      .withColumn("NatCo", lit(runConfig.natcoID))
       .withColumn("ConKeyA1", concat_ws("|", col("ConKeyA1"), col("NatCo")))
       .select("ConKeyA1", "user_agent").distinct()
 
@@ -378,7 +379,7 @@ class Facts extends FactsProcessing {
 
   }
 
-  def getServiceFactsDaily(activity: DataFrame): DataFrame = {
+  def getServiceFactsDaily(activity: DataFrame, runConfig: RunConfig): DataFrame = {
     //
     //aggregated according to the QlikSense script from Jarda
     //count = number of specific service used OnNet or Offnet within the specific date and natco
@@ -403,8 +404,7 @@ class Facts extends FactsProcessing {
     //activity.printSchema()
     //activity.show(false)
 
-    val sf1 = activity
-      .filter(col("creation_date").startsWith(runVar.date))
+    val sf1 = activity.filter(col("creation_date").startsWith(lit(runConfig.date.toString)))
      // .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
       //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
       //.filter(activity("creation_date").contains(runVar.date))
@@ -550,7 +550,8 @@ class Facts extends FactsProcessing {
 
     //Chat SENT-OnNet:
     val sf8 = sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> runVar.natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=>
+        200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> runConfig.natcoNetwork))
       .select("from_user", "user_agent", "creation_date", "messages_sent")
       .agg(sum("messages_sent").alias("count"))
       .withColumn("_NetworkingID", lit("1"))
@@ -559,7 +560,8 @@ class Facts extends FactsProcessing {
 
     //Chat SENT-OffNet:
     val sf9 = sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> runVar.natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && sf1("sip_code") <=>
+        200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> runConfig.natcoNetwork))
       .select("from_user", "user_agent", "creation_date", "messages_sent")
       .agg(sum("messages_sent").alias("count"))
       .withColumn("_NetworkingID", lit("2"))
@@ -569,7 +571,8 @@ class Facts extends FactsProcessing {
 
     //Chat RECEIVED-OnNet:
     val sf10 = sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+") && sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> runVar.natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+")
+        && sf1("sip_code") <=> 200 && sf1("from_network") <=> sf1("to_network") && (sf1("from_network") <=> runConfig.natcoNetwork))
       .select("from_user", "user_agent", "creation_date", "messages_received")
       .agg(sum("messages_received").alias("count"))
       .withColumn("_NetworkingID", lit("1"))
@@ -578,7 +581,8 @@ class Facts extends FactsProcessing {
 
     //Chat RECEIVED-OffNet:
     val sf11 = sf1
-      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+") && sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> runVar.natcoNetwork))
+      .filter(sf1("type") <=> "CHAT" && col("from_user").startsWith("+") && col("to_user").startsWith("+")
+        && sf1("sip_code") <=> 200 && not(sf1("from_network") <=> sf1("to_network")) && (sf1("from_network") <=> runConfig.natcoNetwork))
       .select("from_user", "user_agent", "creation_date", "messages_received")
       .agg(sum("messages_received").alias("count"))
       .withColumn("_NetworkingID", lit("2"))
@@ -600,11 +604,12 @@ class Facts extends FactsProcessing {
     //finalsf.filter("_NetworkingID=1 and _ServiceID=5").show(false)
 
     val finalsf1 = finalsf
-      .withColumn("date", lit(runVar.dayforkey))
-      .withColumn("month", lit(runVar.monthforkey))
+      .withColumn("date", lit(runConfig.dayforkey))
+      .withColumn("month", lit(runConfig.monthforkey))
       .withColumn("tkey", lit("t"))
-      .withColumn("natco", lit(runVar.natcoID))
-      .withColumn("DateKeyNatco", concat_ws("|", col("date"), col("month"), col("tkey"), col("natco")))
+      .withColumn("natco", lit(runConfig.natcoID))
+      .withColumn("DateKeyNatco", concat_ws("|", col("date"), col("month"),
+        col("tkey"), col("natco")))
       .withColumn("Count", col("count").cast(IntegerType))
 
       .drop("date", "month", "tkey", "natco")
