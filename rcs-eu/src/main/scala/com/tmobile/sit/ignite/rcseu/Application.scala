@@ -55,39 +55,46 @@ object Application extends App with Logger {
 
       val fileSuffix = runConfig.natco + "." + runConfig.year + ".csv"
 
-      resultWriter.writeWithFixedEmptyDFs(activeYearly, "activity_yearly." + fileSuffix)
-      resultWriter.writeWithFixedEmptyDFs(provisionedYearly, "provisioned_yearly." + fileSuffix)
-      resultWriter.writeWithFixedEmptyDFs(registeredYearly, "registered_yearly." + fileSuffix)
+      Map(
+        activeYearly -> "activity_yearly.",
+        provisionedYearly -> "provisioned_yearly.",
+        registeredYearly -> "registered_yearly."
+      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2 + fileSuffix))
     }
     case RunMode.UPDATE => {
       val (activeDaily, activeMonthly, serviceDaily) = processing.processDailyUpdate(accActivity, fullUserAgents)
-      resultWriter.writeWithFixedEmptyDFs(activeDaily, "activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(activeMonthly, "activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(serviceDaily, "service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
+
+      Map(
+        activeDaily -> ("activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        activeMonthly -> ("activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
+        serviceDaily -> ("service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
+      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2))
     }
     case RunMode.DAILY => {
       val (activeDaily, activeMonthly, serviceDaily) = processing.processDailyUpdate(accActivity, fullUserAgents)
       val (provisionedDaily, registeredDaily, provisionedMonthly, registeredMonthly) =
         processing.processFullDaily(accProvision, accRegisterRequests, fullUserAgents)
 
-      resultWriter.writeWithFixedEmptyDFs(activeDaily, "activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(activeMonthly, "activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(serviceDaily, "service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-
-      resultWriter.writeWithFixedEmptyDFs(provisionedDaily, "provisioned_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(registeredDaily, "registered_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(provisionedMonthly, "provisioned_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(registeredMonthly, "registered_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
+      Map(
+        activeDaily -> ("activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        activeMonthly -> ("activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
+        serviceDaily -> ("service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        provisionedDaily -> ("provisioned_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        registeredDaily -> ("registered_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        provisionedMonthly -> ("provisioned_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
+        registeredMonthly -> ("registered_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
+      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2))
     }
     case RunMode.EOY => {
       val (activeDaily, activeMonthly, serviceDaily) = processing.processDailyUpdate(accActivity, fullUserAgents)
       val activeYearly = processing.endOfYearProcessing(accActivity, fullUserAgents)
 
-      resultWriter.writeWithFixedEmptyDFs(activeDaily, "activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(activeMonthly, "activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
-      resultWriter.writeWithFixedEmptyDFs(serviceDaily, "service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-
-      resultWriter.writeWithFixedEmptyDFs(activeYearly, "activity_yearly." + runConfig.natco + "." + runConfig.year + ".csv")
+      Map(
+        activeDaily -> ("activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        activeMonthly -> ("activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
+        serviceDaily -> ("service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
+        activeYearly -> ("activity_yearly." + runConfig.natco + "." + runConfig.year + ".csv")
+      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2))
     }
   }
 
