@@ -5,14 +5,14 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
 
-trait DimensionProcessing extends Logger{
-  def getNewUserAgents(activityData: DataFrame, registerRequestsData: DataFrame): DataFrame
-}
+//trait DimensionProcessing extends Logger{
+//  def getNewUserAgents(activityData: DataFrame, registerRequestsData: DataFrame): DataFrame
+//}
 
-class Dimension extends DimensionProcessing {
+object DimensionProcessing extends Logger {
   // adding new user agents from today's activity and register requests data
 
-  def processUserAgentsSCD(oldUserAgents: DataFrame, newUserAgents: DataFrame): DataFrame = {
+   def processUserAgentsSCD(oldUserAgents: DataFrame, newUserAgents: DataFrame): DataFrame = {
 
     val max_id: Integer = oldUserAgents.select("_UserAgentID").orderBy(desc("_UserAgentID")).first().getInt(0)
 
@@ -33,7 +33,7 @@ class Dimension extends DimensionProcessing {
     broadcast(fullUserAgents)
   }
 
-  override def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {
+  def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {
     // splitting user_agent data into the relevant columns
     /*
     UserAgent	=	Unique user agent
