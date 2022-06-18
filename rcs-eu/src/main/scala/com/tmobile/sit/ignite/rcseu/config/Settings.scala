@@ -4,6 +4,7 @@ import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.config.{GenericSettings, ServiceConfig}
 
 case class Settings(inputPath: Option[String]
+                    , parquetPath: Option[String]
                     , outputPath: Option[String]
                     , lookupPath: Option[String]
                     , archivePath: Option[String]
@@ -12,6 +13,7 @@ case class Settings(inputPath: Option[String]
 
   def isAllDefined: Boolean = {
     this.inputPath.isDefined && this.inputPath.get.nonEmpty &&
+      this.parquetPath.isDefined && this.parquetPath.get.nonEmpty &&
       this.lookupPath.isDefined && this.lookupPath.get.nonEmpty &&
       this.outputPath.isDefined && this.outputPath.get.nonEmpty &&
       this.archivePath.isDefined && this.archivePath.get.nonEmpty &&
@@ -20,7 +22,7 @@ case class Settings(inputPath: Option[String]
 }
 
 object Settings extends Logger {
-  def getConfigFile(): String = {
+  def getConfigFile: String = {
     if (System.getProperty("os.name").startsWith("Windows")) {
       logger.info(s"Detected development configuration (${System.getProperty("os.name")})")
       "rcs-eu.windows.conf"
@@ -40,6 +42,7 @@ object Settings extends Logger {
     val settings = Settings(
       appName = Option(serviceConf.envOrElseConfig("configuration.appName.value"))
       , inputPath = Option(serviceConf.envOrElseConfig("configuration.inputPath.value"))
+      , parquetPath = Option(serviceConf.envOrElseConfig("configuration.parquet.value"))
       , lookupPath = Option(serviceConf.envOrElseConfig("configuration.lookupPath.value"))
       , outputPath = Option(serviceConf.envOrElseConfig("configuration.outputPath.value"))
       , archivePath = Option(serviceConf.envOrElseConfig("configuration.archivePath.value")
