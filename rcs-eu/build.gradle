@@ -10,4 +10,7 @@ dependencies {
 
     implementation 'com.tmobile.sit:spark_common:1.18'
 
+    testImplementation 'org.scalatest:scalatest_2.11:3.0.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'com.holdenkarau:spark-testing-base_2.11:2.3.0_0.11.0'
 }
