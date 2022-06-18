@@ -6,6 +6,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 
 class ProcessingCore(runConfig: RunConfig) extends Logger {
+  val factsProcessor = new FactsProcessing(runConfig)
 
   def launchYearlyProcessing( accumulatedActivity: DataFrame,
                               accumulatedProvisions: DataFrame,
@@ -15,12 +16,12 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
     logger.info("Processing yearly activity")
     val accActivityYearlyFiltered =
       accumulatedActivity.filter(col("creation_date").contains(runConfig.year))
-    val activeYearly1 = FactsProcessing.getActiveDaily(
+
+
+    val activeYearly1 = factsProcessor.getActiveDaily(
       accActivityYearlyFiltered,
       fullUserAgents,
-      runConfig.year,
-      runConfig.natcoNetwork,
-      runConfig
+      runConfig.year
     )
 
     val activeYearly = activeYearly1
@@ -45,10 +46,9 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
     logger.info("Processing yearly provisioned")
     //TODO: check with git:
     //    val filtered_yearly_provision = acc_provision//.filter(col("FileDate").contains(runVar.year))
-    val provisionedYearly1 = FactsProcessing.getProvisionedDaily(
+    val provisionedYearly1 = factsProcessor.getProvisionedDaily(
       accumulatedProvisions,
-      runConfig.year,
-      runConfig
+      runConfig.year
     )
 
     val provisionedYearly = provisionedYearly1
@@ -62,11 +62,10 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
     logger.info("Processing yearly register requests")
     // TODO: check with git:
     //    val filtered_yearly_register = acc_register_requests//.filter(col("FileDate").contains(runVar.year))
-    val registeredYearly1 = FactsProcessing.getRegisteredDaily(
+    val registeredYearly1 = factsProcessor.getRegisteredDaily(
       accumulatedRegisterRequests,
       fullUserAgents,
-      runConfig.year,
-      runConfig
+      runConfig.year
     )
     val registeredYearly = registeredYearly1
       .withColumnRenamed("ConKeyR1", "ConKeyR3")
@@ -83,24 +82,20 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
       col("creation_date").contains(runConfig.date.toString)
     )
 
-    val activeDaily = FactsProcessing.getActiveDaily(
+    val activeDaily = factsProcessor.getActiveDaily(
       accActivityDailyFiltered,
       fullUserAgents,
-      runConfig.dayforkey,
-      runConfig.natcoNetwork,
-      runConfig
+      runConfig.dayforkey
     )
     //logger.info("Active daily count: " + activeDaily.count())
 
     logger.info("Processing monthly activity")
     val accActivityMonthlyFiltered =
       accumulatedActivity.filter(col("creation_date").contains(runConfig.month))
-    val activeMonthly1 = FactsProcessing.getActiveDaily(
+    val activeMonthly1 = factsProcessor.getActiveDaily(
       accActivityMonthlyFiltered,
       fullUserAgents,
-      runConfig.monthforkey,
-      runConfig.natcoNetwork,
-      runConfig
+      runConfig.monthforkey
     )
 
     val activeMonthly = activeMonthly1
@@ -124,7 +119,7 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
 
     logger.info("Processing daily service fact")
     val serviceDaily =
-      FactsProcessing.getServiceFactsDaily(accumulatedActivity, runConfig)
+      factsProcessor.getServiceFactsDaily(accumulatedActivity)
 
     (activeDaily, activeMonthly, serviceDaily)
   }
@@ -137,13 +132,12 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
     logger.info("Processing daily provisioned")
     val accProvisionFilteredDaily = accumulatedProvision.filter(col("FileDate") === runConfig.date.toString)
     //val filtered_daily_provision = inputData.provision
-    val provisionedDaily = FactsProcessing.getProvisionedDaily(accProvisionFilteredDaily, runConfig.dayforkey, runConfig)
+    val provisionedDaily = factsProcessor.getProvisionedDaily(accProvisionFilteredDaily, runConfig.dayforkey)
     //logger.info("Provisioned daily count: " + provisionedDaily.count())
 
     logger.info("Processing monthly provisioned")
     val accProvisionFilteredMonthly = accumulatedProvision.filter(col("FileDate").contains(runConfig.month))
-    val provisionedMonthly1 = FactsProcessing.getProvisionedDaily(accProvisionFilteredMonthly,
-      runConfig.monthforkey, runConfig)
+    val provisionedMonthly1 = factsProcessor.getProvisionedDaily(accProvisionFilteredMonthly, runConfig.monthforkey)
     val provisionedMonthly = provisionedMonthly1
       .withColumnRenamed("ConKeyP1", "ConKeyP2")
       .withColumnRenamed("Provisioned_daily", "Provisioned_monthly")
@@ -155,14 +149,12 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
     logger.info("Processing daily register requests")
     val filtered_daily_register = accumulatedRegisterRequests.filter(col("FileDate") === runConfig.date.toString)
     //val filtered_daily_register = inputData.register_requests
-    val registeredDaily = FactsProcessing.getRegisteredDaily(filtered_daily_register, fullUserAgents,
-      runConfig.dayforkey, runConfig)
+    val registeredDaily = factsProcessor.getRegisteredDaily(filtered_daily_register, fullUserAgents, runConfig.dayforkey)
     //logger.info("Registered daily count: " + registeredDaily.count())
 
     logger.info(s"Processing monthly register requests")
     val filtered_monthly_register = accumulatedRegisterRequests.filter(col("FileDate").contains(runConfig.month))
-    val registeredMonthly1 = FactsProcessing.getRegisteredDaily(filtered_monthly_register, fullUserAgents,
-      runConfig.monthforkey, runConfig)
+    val registeredMonthly1 = factsProcessor.getRegisteredDaily(filtered_monthly_register, fullUserAgents, runConfig.monthforkey)
     val registeredMonthly =
       registeredMonthly1
         .withColumnRenamed("ConKeyR1", "ConKeyR2")
@@ -177,8 +169,7 @@ class ProcessingCore(runConfig: RunConfig) extends Logger {
     logger.info("Running special case for end-of-year update. Overwriting yearly activity data.")
     logger.info("Processing yearly activity")
     val filtered_yearly_active = accumulatedActivity.filter(col("creation_date").contains(runConfig.year))
-    val activeYearly1 = FactsProcessing.getActiveDaily(filtered_yearly_active, fullUserAgents, runConfig.year,
-      runConfig.natcoNetwork, runConfig)
+    val activeYearly1 = factsProcessor.getActiveDaily(filtered_yearly_active, fullUserAgents, runConfig.year)
 
     val activeYearly = activeYearly1.withColumnRenamed("ConKeyA1", "ConKeyA3")
       .withColumnRenamed("Active_daily_succ_origterm", "Active_yearly_succ_origterm")
