@@ -5,6 +5,7 @@ import com.tmobile.sit.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcseu.config.{RunConfig, Settings}
 import com.tmobile.sit.ignite.rcseu.data.{InputDataProvider, PersistentDataProvider}
 import com.tmobile.sit.ignite.rcseu.pipeline._
+import org.apache.spark.sql.SparkSession
 
 
 object RunMode extends Enumeration {
@@ -17,30 +18,30 @@ object Application extends App with Logger {
   require(args.length == 3, "Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <runFor:yearly|daily|update>")
 
   // Get the run variables based on input arguments
-  val settings: Settings = Settings.loadFile(Settings.getConfigFile())
+  val settings: Settings = Settings.loadFile(Settings.getConfigFile)
   val runConfig = RunConfig.fromArgs(args)
 
   logger.info(s"Date: ${runConfig.date}, month:${runConfig.month}, year:${runConfig.year}, natco:${runConfig.natco}, " +
       s"natcoNetwork: ${runConfig.natcoNetwork}, runMode:${runConfig.runMode} ")
 
   // Get settings and create spark session
-  implicit val sparkSession = getSparkSession(settings.appName.get)
+  implicit val sparkSession: SparkSession = getSparkSession(settings.appName.get)
   val inputDataProvider = new InputDataProvider(settings, runConfig)
   val persitentDataProvider = new PersistentDataProvider(settings, runConfig)
 
   logger.info("Input files loaded")
 
-  val archiveActivity = Stage.preprocessAccumulator(persitentDataProvider.getActivityArchives())
-  val archiveProvision = Stage.preprocessAccumulator(persitentDataProvider.getProvisionArchives())
-  val archiveRegisterRequests = Stage.preprocessAccumulator(persitentDataProvider.getRegisterRequestArchives())
+  val archiveActivity = Stage.preprocessAccumulator(persitentDataProvider.getActivityArchives)
+  val archiveProvision = Stage.preprocessAccumulator(persitentDataProvider.getProvisionArchives)
+  val archiveRegisterRequests = Stage.preprocessAccumulator(persitentDataProvider.getRegisterRequestArchives)
 
-  val accActivity = Stage.accumulateActivity(inputDataProvider.getActivityDf(), archiveActivity, runConfig)
-  val accProvision = Stage.accumulateProvision(inputDataProvider.getProvisionFiles(), archiveProvision, runConfig)
-  val accRegisterRequests = Stage.accumulateRegisterRequests(inputDataProvider.getRegisterRequests(),
+  val accActivity = Stage.accumulateActivity(inputDataProvider.getActivityDf, archiveActivity, runConfig)
+  val accProvision = Stage.accumulateProvision(inputDataProvider.getProvisionFiles, archiveProvision, runConfig)
+  val accRegisterRequests = Stage.accumulateRegisterRequests(inputDataProvider.getRegisterRequests,
     archiveRegisterRequests, runConfig)
 
-  val newUserAgents = DimensionProcessing.getNewUserAgents(inputDataProvider.getActivityDf(), inputDataProvider.getRegisterRequests())
-  val fullUserAgents = DimensionProcessing.processUserAgentsSCD(persitentDataProvider.getOldUserAgents(), newUserAgents)
+  val newUserAgents = DimensionProcessing.getNewUserAgents(inputDataProvider.getActivityDf, inputDataProvider.getRegisterRequests)
+  val fullUserAgents = DimensionProcessing.processUserAgentsSCD(persitentDataProvider.getOldUserAgents, newUserAgents)
 
   val processing = new ProcessingCore(runConfig)
 
