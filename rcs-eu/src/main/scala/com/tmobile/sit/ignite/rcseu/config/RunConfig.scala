@@ -1,79 +1,68 @@
 package com.tmobile.sit.ignite.rcseu.config
-
-import com.tmobile.sit.ignite.rcseu.RunMode
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions.col
-
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-case class RunConfig(date: LocalDate, natco: String, runFor: String,
-                     year: String, monthNum: String, dayNum: String,
-                     debug: Boolean = false) {
+// variables needed in FactsProcesing and ProcessingCore for filtering
+class RunConfig(_args: Array[String]) {
+  val args = _args
 
-  val processYearly: Boolean = if (runFor.equals("yearly")) true
-  else false
+  val date = args(0)
+  val natco = args(1)
+  val runMode = args(2)
 
-  val month: String = year + "-" + monthNum
-  val monthforkey: String = year + "\\" + monthNum
-  val dayforkey: String = dayNum + "-" + monthNum + "-" + year
 
-  val dateforoutput: String = year + monthNum + dayNum
-  val monthforoutput: String = year + monthNum
+  val dateformat = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+  val tomorrowDate=dateformat.plusDays(1).toString()
 
-  val natcoID: String = RunConfig.natcoIdMap.getOrElse(natco, "natco ID is not correct")
-  val natcoNetwork: String = RunConfig.natcoNetworkMap.getOrElse(natco, "natco network is not correct")
-  val tomorrowDate: String = date.plusDays(1).toString
+  val debug = false;
 
-  val archiveFilter: Column = // if yearly reprocessing or update on 31st of January
-    if (runFor.equals("yearly") || (runFor.equals("update") && date.toString.endsWith("-12-31"))) {
-    org.apache.spark.sql.functions.year(col("date")) === year.toInt
-  } else {
-    (org.apache.spark.sql.functions.year(col("date")) === year.toInt) &&
-      (org.apache.spark.sql.functions.month(col("date")) === monthNum.toInt)
-  }
+  val processYearly = if(runMode.equals("yearly")) {true} else {false}
 
-  val runMode = if (processYearly) {
-    RunMode.YEARLY
-  } else {
-    if (runFor.equals("update")) {
-      RunMode.UPDATE
-    } else if (date.format(DateTimeFormatter.ISO_DATE).endsWith("-12-31")) {
-      RunMode.EOY
-    } else RunMode.DAILY
-  }
-}
+  val date_split = date.split('-')
+  val (year, monthNum, dayNum) = (date_split(0), date_split(1),date_split(2))
+  val month = year + "-" + monthNum
 
-object RunConfig {
-  val natcoIdMap = Map(
-    "mt" -> "1",
-    "cg" -> "2",
-    "st" -> "3",
-    "cr" -> "4",
-    "tc" -> "6",
-    "mk" -> "7",
-    "tp" -> "8"
-  )
+  val monthforkey = year + "\\" +monthNum
+  val dayforkey =  dayNum +"-"+ monthNum +"-"+ year
 
-  val natcoNetworkMap = Map(
-    "st" -> "dt-slovak-telecom",
-    "mt" -> "dt-magyar-telecom",
-    "cg" -> "dt-cosmote-greece",
-    "cr" -> "dt-telecom-romania",
-    "mk" -> "dt-makedonski-telecom",
-    "tp" -> "tmobile-polska-poland",
-    "tc" -> "dt-tmobile-czech-republic"
-  )
+  val dateforoutput = year+monthNum+dayNum
+  val monthforoutput = year+monthNum
 
-  def fromArgs(args: Array[String]): RunConfig = {
-    val dateArg = args(0)
-    val natco = args(1)
-    val runFor = args(2)
+  val mtID="1"
+  val stID="3"
+  val cgID="2"
+  val crID="4"
+  val mkID="7"
+  val tpID="8"
+  val tcID="6"
+  val tdID="9"
 
-    val date = LocalDate.parse(dateArg, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-    val date_split = dateArg.split('-')
-    val (year, monthNum, dayNum) = (date_split(0), date_split(1), date_split(2))
+  val natcoID = if (natco == "mt") mtID
+  else if (natco == "st") stID
+  else if (natco == "cr") crID
+  else if (natco == "cg") cgID
+  else if (natco == "mk") mkID
+  else if (natco == "tp") tpID
+  else if (natco == "tc") tcID
+  else if (natco == "td") tdID
+  else "natco ID is not correct"
 
-    RunConfig(date, natco, runFor, year, monthNum, dayNum)
-  }
+  val mt="dt-magyar-telecom"
+  val st="dt-slovak-telecom"
+  val cg="dt-cosmote-greece"
+  val cr="dt-telecom-romania"
+  val mk="dt-makedonski-telecom"
+  val tp="tmobile-polska-poland"
+  val tc="dt-tmobile-czech-republic"
+  val td = "Telekom Deutschland"
+
+  val natcoNetwork = if (natco == "mt") mt
+  else if (natco == "st") st
+  else if (natco == "cr") cr
+  else if (natco == "cg") cg
+  else if (natco == "mk") mk
+  else if (natco == "tp") tp
+  else if (natco == "tc") tc
+  else if (natco == "td") td
+  else "natco network is not correct"
 }

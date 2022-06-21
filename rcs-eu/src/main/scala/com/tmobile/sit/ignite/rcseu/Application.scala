@@ -1,104 +1,90 @@
 package com.tmobile.sit.ignite.rcseu
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.writers.CSVWriter
-import com.tmobile.sit.ignite.rcseu.config.{RunConfig, Settings}
-import com.tmobile.sit.ignite.rcseu.data.{InputDataProvider, PersistentDataProvider}
-import com.tmobile.sit.ignite.rcseu.pipeline._
-import org.apache.spark.sql.SparkSession
-
-
-object RunMode extends Enumeration {
-  type RunMode = Value
-
-  val YEARLY, DAILY, UPDATE, EOY = Value
-}
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
+import com.tmobile.sit.ignite.rcseu.config.RunConfig
+import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
+import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
+import org.apache.spark.sql.functions.{broadcast, col, split}
 
 object Application extends App with Logger {
-  require(args.length == 3, "Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <runFor:yearly|daily|update>")
+
+  // First of all check arguments
+  if (args.length != 3) {
+    logger.error("Wrong arguments. Usage: ... <date:yyyy-mm-dd> <natco:mt|cg|st|cr|mk> <runFor:yearly|daily|update>")
+    System.exit(0)
+  }
 
   // Get the run variables based on input arguments
-  val settings: Settings = Settings.loadFile(Settings.getConfigFile)
-  val runConfig = RunConfig.fromArgs(args)
+  val runVar = new RunConfig(args)
 
-  logger.info(s"Date: ${runConfig.date}, month:${runConfig.month}, year:${runConfig.year}, natco:${runConfig.natco}, " +
-      s"natcoNetwork: ${runConfig.natcoNetwork}, runMode:${runConfig.runMode} ")
+  logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco:${runVar.natco}, " +
+    s"natcoNetwork: ${runVar.natcoNetwork}, runMode:${runVar.runMode} ")
 
   // Get settings and create spark session
-  implicit val sparkSession: SparkSession = getSparkSession(settings.appName.get)
-  val inputDataProvider = new InputDataProvider(settings, runConfig)
-  val persitentDataProvider = new PersistentDataProvider(settings, runConfig)
+  val settings = new Configurator().getSettings()
+  implicit val sparkSession = getSparkSession(settings.appName.get)
+
+  // Instantiate helper and resolve source file paths
+  val h = new Helper()
+  val sourceFilePath = h.resolvePath(settings)
+  val activityFiles = h.resolveActivity(sourceFilePath)
+  val fileMask = h.getArchiveFileMask()
+
+  // Read sources
+  val inputReaders = InputData(
+    // Special treatment to resolve activity in case the runMode is 'update'
+    activity = activityFiles,
+    provision = new CSVReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.csv*",
+      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
+    register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv*",
+      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
+  )
 
   logger.info("Input files loaded")
 
-  val archiveActivity = Stage.preprocessAccumulator(persitentDataProvider.getActivityArchives)
-  val archiveProvision = Stage.preprocessAccumulator(persitentDataProvider.getProvisionArchives)
-  val archiveRegisterRequests = Stage.preprocessAccumulator(persitentDataProvider.getRegisterRequestArchives)
+  // read whole year only if doing yearly processing
+  logger.info(s"Reading archive files for: ${fileMask}")
 
-  val accActivity = Stage.accumulateActivity(inputDataProvider.getActivityDf, archiveActivity, runConfig)
-  val accProvision = Stage.accumulateProvision(inputDataProvider.getProvisionFiles, archiveProvision, runConfig)
-  val accRegisterRequests = Stage.accumulateRegisterRequests(inputDataProvider.getRegisterRequests,
-    archiveRegisterRequests, runConfig)
+  val persistentData = PersistentData(
+    oldUserAgents = broadcast(new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read()),
 
-  val newUserAgents = DimensionProcessing.getNewUserAgents(inputDataProvider.getActivityDf, inputDataProvider.getRegisterRequests)
-  val fullUserAgents = DimensionProcessing.processUserAgentsSCD(persitentDataProvider.getOldUserAgents, newUserAgents)
+    activity_archives = sparkSession.read
+      .option("header", "true")
+      .option("delimiter", "\\t")
+      .schema(FileSchemas.activitySchema)
+      .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*")
+      //.repartition(20)
+      //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      //.distinct()
+    ,
+    provision_archives = sparkSession.read
+      .option("header", "true")
+      .option("delimiter", "\t")
+      .schema(FileSchemas.provisionSchema)
+      .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*")
+      //.repartition(20)
+    ,
+    register_requests_archives = sparkSession.read
+      .option("header", "true")
+      .option("delimiter", "\\t")
+      .schema(FileSchemas.registerRequestsSchema)
+      .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
+      //.repartition(20)
+  )
 
-  val processing = new ProcessingCore(runConfig)
+  logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")
+  //persistentData.activity_archives.show(false)
+  val stageProcessing = new Stage()
 
-  val outputPath = settings.outputPath.get
-  val resultWriter = new ResultWriter(settings, outputPath)
+  val coreProcessing = new Core()
 
-  // yearly processing only
-  runConfig.runMode match {
-    case RunMode.YEARLY => {
-      val (activeYearly, provisionedYearly, registeredYearly) =
-        processing.launchYearlyProcessing(accActivity, accProvision, accRegisterRequests, fullUserAgents)
+  val resultWriter = new ResultWriter(settings)
 
-      val fileSuffix = runConfig.natco + "." + runConfig.year + ".csv"
+  logger.info("Running pipeline")
 
-      Map(
-        activeYearly -> "activity_yearly.",
-        provisionedYearly -> "provisioned_yearly.",
-        registeredYearly -> "registered_yearly."
-      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2 + fileSuffix))
-    }
-    case RunMode.UPDATE => {
-      val (activeDaily, activeMonthly, serviceDaily) = processing.processDailyUpdate(accActivity, fullUserAgents)
+  val pipeline = new Pipeline(inputReaders, persistentData, stageProcessing, coreProcessing, resultWriter)
 
-      Map(
-        activeDaily -> ("activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        activeMonthly -> ("activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
-        serviceDaily -> ("service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv")
-      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2))
-    }
-    case RunMode.DAILY => {
-      val (activeDaily, activeMonthly, serviceDaily) = processing.processDailyUpdate(accActivity, fullUserAgents)
-      val (provisionedDaily, registeredDaily, provisionedMonthly, registeredMonthly) =
-        processing.processFullDaily(accProvision, accRegisterRequests, fullUserAgents)
+  pipeline.run()
 
-      Map(
-        activeDaily -> ("activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        activeMonthly -> ("activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
-        serviceDaily -> ("service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        provisionedDaily -> ("provisioned_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        registeredDaily -> ("registered_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        provisionedMonthly -> ("provisioned_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
-        registeredMonthly -> ("registered_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv")
-      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2))
-    }
-    case RunMode.EOY => {
-      val (activeDaily, activeMonthly, serviceDaily) = processing.processDailyUpdate(accActivity, fullUserAgents)
-      val activeYearly = processing.endOfYearProcessing(accActivity, fullUserAgents)
-
-      Map(
-        activeDaily -> ("activity_daily." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        activeMonthly -> ("activity_monthly." + runConfig.natco + "." + runConfig.monthforoutput + ".csv"),
-        serviceDaily -> ("service_fact." + runConfig.natco + "." + runConfig.dateforoutput + ".csv"),
-        activeYearly -> ("activity_yearly." + runConfig.natco + "." + runConfig.year + ".csv")
-      ).foreach(x => resultWriter.writeWithFixedEmptyDFs(x._1, x._2))
-    }
-  }
-
-  val persistencePath = settings.lookupPath.get
-  CSVWriter(fullUserAgents, persistencePath + "User_agents.csv", delimiter = "\t").writeData()
 }
