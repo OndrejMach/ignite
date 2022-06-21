@@ -3,8 +3,8 @@ package com.tmobile.sit.ignite.hotspot.processors
 
 import java.time.format.DateTimeFormatter
 
-import com.tmobile.sit.common.readers.CSVReader
-import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.writers.CSVWriter
 import com.tmobile.sit.ignite.common.implicits.TransformDataFrameColumns.TransformColumnNames
 import com.tmobile.sit.ignite.hotspot.config.Settings
 import com.tmobile.sit.ignite.hotspot.data.{ErrorCodes, OutputStructures, StagedataStructs}

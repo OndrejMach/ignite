@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.common.processing
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.common.data.{CommonTypes}
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.functions._

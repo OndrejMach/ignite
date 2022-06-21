@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcseu.data.OutputData
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.tmobile.sit.ignite.rcseu.Application.runVar

@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.FailedLoginsStructure.FailedLogin
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DateType

@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.hotspot.data
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
 import com.tmobile.sit.ignite.hotspot.config.Settings
 import com.tmobile.sit.ignite.hotspot.data.FailedLoginsStructure.FailedLogin
 import com.tmobile.sit.ignite.hotspot.readers.TextReader

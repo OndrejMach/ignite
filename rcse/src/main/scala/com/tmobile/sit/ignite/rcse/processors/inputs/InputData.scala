@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcse.processors.inputs
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 
 /**
  * Abstract class containing vals with partition paths. partitioning for all the stage files is the same.

@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcse.processors.conf
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.inputs.{ConfToStageInputs, LookupsData, LookupsDataReader}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{broadcast, col, first, lit, max, when}

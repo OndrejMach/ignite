@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.deviceatlas.pipeline
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.deviceatlas.config.Settings
 import com.tmobile.sit.ignite.deviceatlas.data.{InputData, LookupData, OutputData}
 import org.apache.spark.sql.SparkSession

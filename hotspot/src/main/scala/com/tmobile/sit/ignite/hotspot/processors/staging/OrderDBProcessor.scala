@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.hotspot.processors.staging
 
 import java.sql.Timestamp
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.hotspot.data.{OrderDBInputData, OrderDBStage, OrderDBStructures, WlanHotspotTypes}
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.expressions.Window

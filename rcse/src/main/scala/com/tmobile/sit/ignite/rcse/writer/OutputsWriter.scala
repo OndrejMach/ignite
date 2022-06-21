@@ -2,8 +2,8 @@ package com.tmobile.sit.ignite.rcse.writer
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.writers.CSVWriter
 import com.tmobile.sit.ignite.rcse.config.Settings
 import org.apache.spark.sql.{DataFrame, SparkSession}
 

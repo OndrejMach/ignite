@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.hotspot.processors.udfs.TimeCalculations
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{LongType, TimestampType}

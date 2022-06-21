@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcse.processors
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Settings
 import com.tmobile.sit.ignite.rcse.processors.inputs.ActiveUsersInputs
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}

@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.deviceatlas.debug
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
 import com.tmobile.sit.ignite.common.readers.TacStageReader
 import com.tmobile.sit.ignite.deviceatlas.config.Setup
 import com.tmobile.sit.ignite.deviceatlas.data.FileStructures

@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.exchangerates.processing
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.common.readers.ExchangeRatesStageReader
 import com.tmobile.sit.ignite.exchangerates.config.Settings
 import org.apache.spark.sql.functions._

@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcse
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.config.Setup
 import com.tmobile.sit.ignite.rcse.stages._
 

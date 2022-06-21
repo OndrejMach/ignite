@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.deviceatlas
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.deviceatlas.config.Setup
 import com.tmobile.sit.ignite.deviceatlas.data.{InputData, LookupData}
 import com.tmobile.sit.ignite.deviceatlas.pipeline.{CoreProcessing,Pipeline, ResultWriter}

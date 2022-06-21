@@ -4,8 +4,8 @@ import java.sql.Date
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.config.ServiceConfig
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.config.ServiceConfig
 
 /**
  *

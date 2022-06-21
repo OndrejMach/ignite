@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.data
 
-import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
 import com.tmobile.sit.ignite.hotspot.config.{InputConfig, StageConfig}
 import com.tmobile.sit.ignite.hotspot.readers.TextReader
 import org.apache.spark.sql.SparkSession

@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.hotspot.processors.fileprocessors
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.functions.{last, lit, when}
 import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.{DataFrame, SparkSession}

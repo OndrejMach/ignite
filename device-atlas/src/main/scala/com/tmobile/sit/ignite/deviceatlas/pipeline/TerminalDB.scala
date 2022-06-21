@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.deviceatlas.pipeline
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.writers.CSVWriter
 import com.tmobile.sit.ignite.deviceatlas.data.{InputData, LookupData}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._

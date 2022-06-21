@@ -7,6 +7,6 @@ sourceCompatibility = 1.8
 
 
 dependencies {
-    implementation 'com.tmobile.sit:spark_common:1.18'
+    //implementation 'com.tmobile.sit:spark_common:1.18'
     compile project(":ignite-common")
 }

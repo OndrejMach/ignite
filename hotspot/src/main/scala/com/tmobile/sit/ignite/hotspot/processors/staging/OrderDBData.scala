@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.hotspot.processors.staging
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.Reader
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.Reader
 import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures
 import com.tmobile.sit.ignite.hotspot.data.OrderDBStructures.{ErrorCode, OrderDBInput}
 import org.apache.spark.sql.functions.{col, desc, lit}

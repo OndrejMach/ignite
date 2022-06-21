@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcse.processors.terminald
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.functions.max
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.{DataFrame, SparkSession}

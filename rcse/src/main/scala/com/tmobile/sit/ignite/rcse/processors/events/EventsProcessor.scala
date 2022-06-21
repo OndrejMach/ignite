@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcse.processors.events
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.Lookups
 import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import com.tmobile.sit.ignite.rcse.processors.inputs.{EventsInputData, LookupsData, LookupsDataReader}

@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.exchangerates.config
 
 import java.sql.Timestamp
 
-import com.tmobile.sit.common.config.GenericSettings
+import com.tmobile.sit.ignite.common.common.config.GenericSettings
 
 /**
  * Wrapper classes for configuration parameters.

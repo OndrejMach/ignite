@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window

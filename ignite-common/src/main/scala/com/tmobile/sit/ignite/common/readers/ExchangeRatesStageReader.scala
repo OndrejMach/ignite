@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.common.readers
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.tmobile.sit.common.readers.Reader
+import com.tmobile.sit.ignite.common.common.readers.Reader
 import org.apache.spark.sql.functions.{lit, max, col, current_date}
 
 

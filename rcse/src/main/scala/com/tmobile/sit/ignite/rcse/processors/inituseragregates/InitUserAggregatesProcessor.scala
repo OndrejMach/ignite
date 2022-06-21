@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcse.processors.inituseragregates
 import java.sql.Date
 import java.time.LocalDate
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.inputs.{InitUserInputs, LookupsData, LookupsDataReader}
 import com.tmobile.sit.ignite.rcse.processors.udfs.UDFs
 import com.tmobile.sit.ignite.rcse.structures.InitUsers

@@ -3,8 +3,8 @@ package com.tmobile.sit.ignite.exchangerates.processing
 import java.sql.{Date, Timestamp}
 import java.time.LocalDateTime
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.Reader
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.Reader
 import org.apache.spark.sql.functions.{col, lit, round, when}
 import org.apache.spark.sql.types.{DateType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}

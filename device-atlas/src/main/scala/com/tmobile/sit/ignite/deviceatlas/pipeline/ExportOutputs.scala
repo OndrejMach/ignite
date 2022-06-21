@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.deviceatlas.pipeline
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.expr
 

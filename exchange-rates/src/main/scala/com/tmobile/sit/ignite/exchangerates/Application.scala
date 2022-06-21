@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.exchangerates
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.exchangerates.config.Setup
 import com.tmobile.sit.ignite.exchangerates.processing.ExchangeRatesProcessor
 

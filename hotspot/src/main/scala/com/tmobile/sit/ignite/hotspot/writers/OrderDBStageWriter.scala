@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.writers
 
-import com.tmobile.sit.common.writers.{CSVWriter, Writer}
+import com.tmobile.sit.ignite.common.common.writers.{CSVWriter, Writer}
 import com.tmobile.sit.ignite.hotspot.data.StageStructures
 import com.tmobile.sit.ignite.hotspot.processors.staging.OderdDBPRocessingOutputs
 import org.apache.spark.sql.functions.date_format

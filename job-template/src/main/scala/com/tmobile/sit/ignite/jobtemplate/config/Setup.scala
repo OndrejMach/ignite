@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.jobtemplate.config
 
-import com.tmobile.sit.common.config.ServiceConfig
+import com.tmobile.sit.ignite.common.common.config.ServiceConfig
 
 
 class Setup(configFile: String = "job_template.conf")  {

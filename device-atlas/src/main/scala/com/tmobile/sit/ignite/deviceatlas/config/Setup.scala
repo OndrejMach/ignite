@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.deviceatlas.config
 
-import com.tmobile.sit.common.config.ServiceConfig
+import com.tmobile.sit.ignite.common.common.config.ServiceConfig
 
 class Setup(configFile: String = "device-atlas-dev.conf")  {
 

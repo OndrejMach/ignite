@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcse.writer
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.sql.functions.lit
 

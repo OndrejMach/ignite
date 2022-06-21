@@ -4,8 +4,8 @@ import java.sql.Timestamp
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, LocalDateTime}
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.config.ServiceConfig
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.config.ServiceConfig
 
 /**
  * this class helps to read parameters from the configuration file and stores them to the wrapper case classes. Path to configuration file may be provided as a parameter.

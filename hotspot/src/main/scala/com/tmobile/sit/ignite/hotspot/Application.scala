@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.hotspot.config.Setup
 import com.tmobile.sit.ignite.hotspot.processors._
 

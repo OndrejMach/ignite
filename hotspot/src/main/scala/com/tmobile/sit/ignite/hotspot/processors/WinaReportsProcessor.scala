@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.processors
 
-import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.common.common.writers.CSVWriter
 import com.tmobile.sit.ignite.hotspot.config.Settings
 import com.tmobile.sit.ignite.hotspot.data.WinaReportsInputData
 import com.tmobile.sit.ignite.hotspot.processors.fileprocessors.WinaExportsProcessor

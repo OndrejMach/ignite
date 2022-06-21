@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.jobtemplate.pipeline
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 

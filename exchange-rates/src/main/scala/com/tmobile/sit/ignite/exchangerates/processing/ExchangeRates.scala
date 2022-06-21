@@ -4,7 +4,7 @@ import java.sql.Date
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 
 /**
  * reading input file for exchange rates. It has a header which does not follow the format of the body lines, that's why it must be read as text and then stored in a case class.

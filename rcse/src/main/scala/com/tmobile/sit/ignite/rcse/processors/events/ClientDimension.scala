@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcse.processors.events
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{desc, first, lit, max, sha2, when,concat}
 import org.apache.spark.sql.types.IntegerType

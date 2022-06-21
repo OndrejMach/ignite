@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcseu.Application.runVar
 import org.apache.spark.sql.types.{DateType, IntegerType, TimestampType}
 import org.apache.spark.sql.DataFrame

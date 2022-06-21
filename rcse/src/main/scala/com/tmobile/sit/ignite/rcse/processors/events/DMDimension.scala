@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcse.processors.events
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.processors.datastructures.EventsStage
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.types.DateType

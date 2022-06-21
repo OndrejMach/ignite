@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.deviceatlas.writers
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.functions.{col, date_format}
 

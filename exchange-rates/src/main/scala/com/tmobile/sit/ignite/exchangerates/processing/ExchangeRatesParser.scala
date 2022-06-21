@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 

@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.jobtemplate.pipeline
 
-import com.tmobile.sit.common.writers.CSVWriter
+import com.tmobile.sit.ignite.common.common.writers.CSVWriter
 import com.tmobile.sit.ignite.jobtemplate.config.Settings
 import org.apache.spark.sql.SparkSession
 

@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.hotspot.writers
 
-import com.tmobile.sit.common.writers.Writer
+import com.tmobile.sit.ignite.common.common.writers.Writer
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
 /**

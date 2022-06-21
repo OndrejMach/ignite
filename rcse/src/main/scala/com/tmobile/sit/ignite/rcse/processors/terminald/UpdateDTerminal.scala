@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcse.processors.terminald
 import java.sql.Date
 import java.time.LocalDate
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcse.structures.Terminal
 import com.tmobile.sit.ignite.rcse.processors.events.c
 import org.apache.spark.sql.functions.{first, lit, sha2, when, max, concat}

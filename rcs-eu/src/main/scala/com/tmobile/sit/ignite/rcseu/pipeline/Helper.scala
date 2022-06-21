@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
 import com.tmobile.sit.ignite.rcseu.Application.{fileMask, runVar}
 import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
 import com.tmobile.sit.ignite.rcseu.data.FileSchemas

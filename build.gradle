@@ -12,6 +12,7 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        /*
         maven {
             credentials {
                 username NEXUS3_USERNAME
@@ -19,6 +20,8 @@ buildscript {
             }
             url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
         }
+
+         */
     }
     dependencies {
         classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
@@ -37,6 +40,8 @@ sourceCompatibility = 1.8
 allprojects {
     repositories {
         mavenLocal()
+        mavenCentral()
+        /*
         maven {
             credentials {
                 username NEXUS3_USERNAME
@@ -51,12 +56,15 @@ allprojects {
             }
             url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/maven-releases/"
         }
+
+         */
     }
 }
 
 repositories {
     mavenLocal()
-
+    mavenCentral()
+    /*
     maven {
         credentials {
             username NEXUS3_USERNAME
@@ -71,6 +79,8 @@ repositories {
         }
         url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/maven-releases/"
     }
+
+     */
 
 }
 

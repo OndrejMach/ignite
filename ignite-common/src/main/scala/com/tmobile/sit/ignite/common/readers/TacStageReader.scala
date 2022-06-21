@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.common.readers
 
-import com.tmobile.sit.common.readers.Reader
+import com.tmobile.sit.ignite.common.common.readers.Reader
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class TacStageReader(path: String)(implicit sparkSession: SparkSession) extends Reader {

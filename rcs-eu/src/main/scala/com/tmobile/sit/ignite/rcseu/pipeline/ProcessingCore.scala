@@ -1,6 +1,6 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
-import com.tmobile.sit.common.Logger
+import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcseu.data.{InputData, OutputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.functions.col
 import com.tmobile.sit.ignite.rcseu.Application.runVar

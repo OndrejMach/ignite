@@ -2,8 +2,8 @@ package com.tmobile.sit.ignite.rcse.config
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.config.GenericSettings
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.config.GenericSettings
 
 /**
  * Wrapper classes for holding application parameters and their values. Also implements couple of methods for printing and validating of the

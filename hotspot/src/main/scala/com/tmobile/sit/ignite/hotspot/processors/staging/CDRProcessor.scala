@@ -2,8 +2,8 @@ package com.tmobile.sit.ignite.hotspot.processors.staging
 
 import java.sql.Date
 
-import com.tmobile.sit.common.Logger
-import com.tmobile.sit.common.readers.Reader
+import com.tmobile.sit.ignite.common.common.Logger
+import com.tmobile.sit.ignite.common.common.readers.Reader
 import com.tmobile.sit.ignite.hotspot.data.CDRStructures
 import com.tmobile.sit.ignite.hotspot.processors.udfs.DirtyStuff
 import org.apache.spark.sql.functions.{dayofmonth, from_unixtime, lit, month, to_date, udf, when, year, trim, length}
