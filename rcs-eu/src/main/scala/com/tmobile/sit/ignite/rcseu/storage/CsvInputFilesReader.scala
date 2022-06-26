@@ -1,4 +1,4 @@
-package com.tmobile.sit.ignite.rcseu.storage;
+package com.tmobile.sit.ignite.rcseu.storage
 
 import com.tmobile.sit.common.Logger
 import com.tmobile.sit.common.readers.CSVReader
@@ -9,9 +9,12 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class CsvInputFilesReader(settings: Settings)(implicit val spark: SparkSession) extends Logger {
 
-  val sourceFilePath = settings.archivePath.get
+  val sourceFilePath: String = settings.inputPath.get
 
   private def checkPatternExists(pattern: String): Boolean = {
+
+    println(s"Checking for pattern $pattern")
+
     val conf = spark.sparkContext.hadoopConfiguration
     val fs = org.apache.hadoop.fs.FileSystem.get(conf)
     val hdfsPath = new org.apache.hadoop.fs.Path(pattern)
@@ -47,7 +50,7 @@ class CsvInputFilesReader(settings: Settings)(implicit val spark: SparkSession) 
       .read().withColumn("natco", lit(natco)).withColumn("date", to_date(lit(date), dateFormatPattern))
   }
 
-  def getOldUserAgents(): DataFrame =
+  def getOldUserAgents: DataFrame =
     new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read()
 
 }
