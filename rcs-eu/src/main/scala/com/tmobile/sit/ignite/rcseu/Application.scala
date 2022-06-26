@@ -27,7 +27,7 @@ object Application extends App with Logger {
   // Get settings and create spark session
   implicit val sparkSession: SparkSession = getSparkSession(settings.appName.get)
   val inputDataProvider = new InputDataProvider(settings, runConfig)
-  val persitentDataProvider = new PersistentDataProvider(settings, runConfig)
+  val persitentDataProvider = new PersistentDataProvider(settings, runConfig, runConfig.natco)
 
   logger.info("Input files loaded")
 

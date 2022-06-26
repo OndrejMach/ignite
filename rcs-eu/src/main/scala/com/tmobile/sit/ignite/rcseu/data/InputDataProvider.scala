@@ -16,31 +16,26 @@ class InputDataProvider(settings: Settings, runConfig: RunConfig)(implicit val s
     if(runConfig.runMode.equals(RunMode.UPDATE)) {
       logger.info("runMode: update")
       logger.info(s"Reading activity data for ${dateStr} and ${tomorrowStr}")
-      val dateData = sparkSession.read
+      val dateData = sparkSession.read.option("basePath", s"$parquetFilePath/activity")
         .parquet(parquetFilePath + s"activity/natco=${runConfig.natco}/date=${dateStr}")
-        .withColumn("date", lit(dateStr)).withColumn("natco", lit(runConfig.natco))
-      val tomorrowData = sparkSession.read
+      val tomorrowData = sparkSession.read.option("basePath", s"$parquetFilePath/activity")
         .parquet(parquetFilePath + s"activity/natco=${runConfig.natco}/date=${tomorrowStr}")
-        .withColumn("date", lit(dateStr)).withColumn("natco", lit(runConfig.natco))
       dateData union tomorrowData
     }
     else {
       logger.info(s"runMode: ${runConfig.runMode}, reading daily activity")
-      sparkSession.read
+      sparkSession.read.option("basePath", s"$parquetFilePath/activity")
         .parquet(parquetFilePath + s"activity/natco=${runConfig.natco}/date=${dateStr}")
-        .withColumn("date", lit(dateStr)).withColumn("natco", lit(runConfig.natco))
     }
   }
 
   def getProvisionFiles: DataFrame = {
-    sparkSession.read
+    sparkSession.read.option("basePath", s"$parquetFilePath/provision")
       .parquet(parquetFilePath + s"provision/natco=${runConfig.natco}/date=${dateStr}")
-      .withColumn("date", lit(dateStr)).withColumn("natco", lit(runConfig.natco))
   }
 
   def getRegisterRequests: DataFrame = {
-    sparkSession.read
+    sparkSession.read.option("basePath", s"$parquetFilePath/register_requests")
       .parquet(parquetFilePath + s"register_requests/natco=${runConfig.natco}/date=${dateStr}")
-      .withColumn("date", lit(dateStr)).withColumn("natco", lit(runConfig.natco))
   }
 }
