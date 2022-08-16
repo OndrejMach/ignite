@@ -81,7 +81,7 @@ class CSVWriter(data: DataFrame,
   def writeData() : Unit = {
     logger.info(s"Writing data to ${path} " )
     data
-      .repartition(1)
+      .coalesce(1)
       .write
       .mode(SaveMode.Overwrite)
       .option("header", if (writeHeader) "true" else "false")

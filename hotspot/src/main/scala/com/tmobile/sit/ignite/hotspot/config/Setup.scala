@@ -61,8 +61,6 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
       ),
       outputConfig = OutputConfig(
         output_folder = serviceConf.getString("config.output.output_folder"),
-        wina_report = serviceConf.getString("config.output.wina_report"),
-        wina_report_tmd = serviceConf.getString("config.output.wina_report_tmd"),
         sessio_d = serviceConf.getString("config.output.sessio_d"),
         orderDB_h = serviceConf.getString("config.output.orderDB_h"),
         session_q = serviceConf.getString("config.output.session_q"),
@@ -79,7 +77,6 @@ class Setup(configFile: String = "hotspot.conf") extends Logger {
       appConfig = AppConfig(
         processing_date = Some(getProcessingDate(serviceConf.getString("config.processing_date"))),
         DES_encoder_path = serviceConf.getString("config.3DES_encoder_path"), //3DES_encoder_path
-        wina_reports_day = serviceConf.getString("config.wina_reports_day"),
         input_date = Some(getProcessingDate(serviceConf.getString("config.input_date"))),
         application_name = serviceConf.getString("config.application_name"),
         master = serviceConf.getString("config.master")

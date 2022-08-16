@@ -41,13 +41,12 @@ case class StageConfig(stage_folder: Option[String],
 case class AppConfig(
                       processing_date: Option[Timestamp],
                       DES_encoder_path: Option[String],
-                      wina_reports_day: Option[String],
                       input_date: Option[Timestamp],
                       application_name: Option[String],
                       master: Option[String]
                     ) extends GenericSettings {
   override def isAllDefined = {
-    processing_date.isDefined && DES_encoder_path.isDefined && wina_reports_day.isDefined && input_date.isDefined
+    processing_date.isDefined && DES_encoder_path.isDefined && input_date.isDefined
   }
 }
 
@@ -60,8 +59,6 @@ case class InputConfig(
 
 case class OutputConfig(
                          output_folder: Option[String],
-                         wina_report_tmd: Option[String],
-                         wina_report: Option[String],
                          sessio_d: Option[String],
                          orderDB_h: Option[String],
                          session_q: Option[String],
