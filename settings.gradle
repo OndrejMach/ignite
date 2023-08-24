@@ -1,8 +1,6 @@
 rootProject.name = 'ignite'
 include 'ignite-common'
-include 'device-atlas'
 include 'hotspot'
-include 'rcse'
 //include 'job-template'
 include 'rcs-eu'
 include 'exchange-rates'

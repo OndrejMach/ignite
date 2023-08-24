@@ -11,8 +11,10 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class TextReader(path: String)(implicit sparkSession: SparkSession) extends Reader{
 
-  override def read(): DataFrame =
-    sparkSession
+  override def read(): DataFrame = {
+    val df = sparkSession
       .read
       .text(path)
+    df
+  }
 }

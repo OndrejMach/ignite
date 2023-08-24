@@ -88,7 +88,6 @@ dependencies {
     compile subprojects
     compile project(':ignite-common')
     compile project(':hotspot')
-    compile project(':rcse')
     compile project(':rcs-eu')
     compile project(':exchange-rates')
 

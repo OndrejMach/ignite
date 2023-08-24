@@ -22,6 +22,7 @@ class Dimension extends DimensionProcessing {
       .withColumn("row_nr", row_number.over(Window.orderBy("UserAgent")))
       .withColumn("_UserAgentID", expr(s"$max_id + row_nr"))
       .drop("row_nr")
+      .distinct()
 
     logger.info(s"Detected ${fullUserAgents1.count} new user agents.")
 
@@ -30,7 +31,7 @@ class Dimension extends DimensionProcessing {
         .union(oldUserAgents)
         .cache()
 
-    broadcast(fullUserAgents)
+    broadcast(fullUserAgents.distinct())
   }
 
   override def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {
@@ -94,7 +95,7 @@ class Dimension extends DimensionProcessing {
       .withColumnRenamed("colly1", "Client_vs")
       .withColumn("Client_vs", concat_ws(" ",col("Client_vs"),col("col3")))
       .select("UserAgent","OEM","Device","Client","FW","Client_vs")
-    dfUA23
+    dfUA23.distinct()
   }
 
 }

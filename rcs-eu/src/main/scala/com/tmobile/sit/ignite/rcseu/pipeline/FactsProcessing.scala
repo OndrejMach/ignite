@@ -27,7 +27,7 @@ class Facts extends FactsProcessing {
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count", "Provisioned_daily")
 
-    provisionedDaily
+    provisionedDaily.distinct()
   }
 
   //definition of getMaxUserAgent function, will be used in register_requests and activity data
@@ -76,6 +76,7 @@ class Facts extends FactsProcessing {
     RRfinal
       .withColumn("ConKeyR1", when(size(split(col("ConKeyR1"), "\\|")) === lit(2), concat(col("ConKeyR1"), lit("|")) )
         .otherwise(col("ConKeyR1")))
+      .distinct()
 
   }
 
@@ -375,6 +376,7 @@ class Facts extends FactsProcessing {
       .na.fill(0,Seq("Active_daily_succ_origterm","Active_daily_succ_orig","Active_daily_unsucc_orig","Active_daily_unsucc_origterm"))
       .withColumn("ConKeyA1", when(size(split(col("ConKeyA1"), "\\|")) === lit(2), concat(col("ConKeyA1"), lit("|")) )
         .otherwise(col("ConKeyA1")))
+      .distinct()
 
   }
 
@@ -461,59 +463,6 @@ class Facts extends FactsProcessing {
       .withColumn("_ServiceID", lit("6"))
       .groupBy("_NetworkingID", "_ServiceID")
       .count
-
-    /*
-
-    val sf_get = sf1
-      .withColumnRenamed("call_id", "call_id1")
-      .filter(sf1("type") === "FT_GET")
-      .select("call_id1", "user_agent", "creation_date")
-
-    val sf_post = sf1
-      .filter(sf1("type") === "FT_POST" && (sf1("from_network") <=> sf1("to_network")))
-      .select("call_id", "to_network")
-
-
-    val sf4 = sf_get
-      .join(sf_post.select("call_id").distinct(), (sf_get("call_id1") <=> sf_post("call_id")))
-      .withColumnRenamed("from_user", "uau")
-      .withColumn("_NetworkingID", lit("1"))
-      .withColumn("_ServiceID", lit("6"))
-      //.select("uau","user_agent","creation_date")
-      .groupBy("_NetworkingID", "_ServiceID")
-      .count
-    */
-    //Files RECEIVED-OffNet:
-    /*
-    sf1.printSchema()
-    val sf_get1 = sf1
-      .withColumnRenamed("call_id", "call_id1")
-      .filter(sf1("type") === lit("FT_GET") and col("from_user").startsWith("+"))
-      //.select("call_id1", "user_agent", "creation_date", "from_user","from_network", "to_network", "sip_code")
-      //.distinct()
-
-
-    val sf_post1 = sf1
-      .filter(sf1("type") === lit("FT_POST") && col("from_user").startsWith("+") && not(sf1("from_network") <=> sf1("to_network")))
-      .select("call_id", "to_network" )
-      //.distinct()
-
-
-    val sf5_join = sf_get1
-      .join(sf_post1.select("call_id").distinct(), sf_get1("call_id1") <=> sf_post1("call_id"))
-
-    //sf5_join.sort("from_user", "creation_date").repartition(1).write.option("header","true").csv("/Users/ondrejmachacek/tmp/rcseu/analysis/ft_join")
-
-
-    val sf5 = sf5_join
-      .withColumnRenamed("from_user", "uau")
-      .withColumn("_NetworkingID", lit("2"))
-      .withColumn("_ServiceID", lit("6"))
-      //.select("uau","user_agent","creation_date")
-      .groupBy("_NetworkingID", "_ServiceID")
-      .count
-    */
-
 
     val sf5 = sf1.filter(col("type") === "FT_GET")
       .drop("to_network")
@@ -609,6 +558,6 @@ class Facts extends FactsProcessing {
 
       .drop("date", "month", "tkey", "natco")
 
-    finalsf1
+    finalsf1.distinct()
   }
 }
