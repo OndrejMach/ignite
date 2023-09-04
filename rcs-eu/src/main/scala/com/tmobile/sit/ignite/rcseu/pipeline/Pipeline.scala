@@ -17,7 +17,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     val inputRegisterRequests = inputData.register_requests
 
     if(runVar.debug) {
-    logger.info("Inputs")
+    logger.info("Inputs - showing the following: inputActivity, inputProvision, inputRegisterRequests")
     inputActivity.agg(count("*").as("no_records")).show(3)
     inputProvision.agg(count("*").as("no_records")).show(3)
     inputRegisterRequests.agg(count("*").as("no_records")).show(3)
