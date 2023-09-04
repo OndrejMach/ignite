@@ -5,5 +5,4 @@ build
 spark-warehouse
 out
 src/main/test_data/*
-gradle
 /rcse/cpp/a.out
