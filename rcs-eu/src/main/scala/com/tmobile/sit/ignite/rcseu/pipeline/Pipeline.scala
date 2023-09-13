@@ -4,7 +4,7 @@ import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.functions.{col, count, desc, split}
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
-import com.tmobile.sit.ignite.rcseu.Application.runVar
+import com.tmobile.sit.ignite.rcseu.ParquetApplication.runVar
 
 
 class Pipeline(inputData: InputData, persistentData: PersistentData, stage: StageProcessing,
@@ -30,7 +30,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives)//.repartition(20)
     val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)//.repartition(20)
     val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)//.repartition(20)
-    archiveActivity.show(false)
+//    archiveActivity.show(false)
 
     if(runVar.debug) {
     logger.info("Archives")
@@ -41,7 +41,7 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 
     // Get accumulators (archive + input)
     val accActivity = stage.accumulateActivity(inputActivity,archiveActivity)
-    accActivity.show(false)
+//    accActivity.show(false)
     val accProvision = stage.accumulateProvision(inputProvision,archiveProvision)
     val accRegisterRequests =  stage.accumulateRegisterRequests(inputRegisterRequests,archiveRegisterRequests)
 

@@ -29,9 +29,10 @@ class Dimension extends DimensionProcessing {
     val fullUserAgents =
       fullUserAgents1
         .union(oldUserAgents)
-        .cache()
+        .distinct()
 
-    broadcast(fullUserAgents.distinct())
+//    broadcast(fullUserAgents.distinct())
+    fullUserAgents.cache()
   }
 
   override def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {

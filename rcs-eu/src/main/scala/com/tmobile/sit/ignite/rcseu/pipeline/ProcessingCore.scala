@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcseu.data.{InputData, OutputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.functions.col
-import com.tmobile.sit.ignite.rcseu.Application.runVar
+import com.tmobile.sit.ignite.rcseu.ParquetApplication.runVar
 import org.apache.spark.sql.DataFrame
 
 trait ProcessingCore extends Logger{
@@ -59,7 +59,7 @@ class Core extends ProcessingCore {
 
       activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, runVar.dayforkey, runVar.natcoNetwork)
       //logger.info("Active daily count: " + activeDaily.count())
-
+//      activeDaily.show()
       logger.info("Processing monthly activity")
       val filtered_monthly_active = acc_activity.filter(col("creation_date").contains(runVar.month))
       val activeMonthly1 = fact.getActiveDaily(filtered_monthly_active, fullUserAgents, runVar.monthforkey, runVar.natcoNetwork)
