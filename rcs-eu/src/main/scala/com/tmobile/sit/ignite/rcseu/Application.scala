@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.readers.ParquetReader
 import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
@@ -27,7 +27,11 @@ object Application extends App with Logger {
 
   // Instantiate helper and resolve source file paths
   val h = new Helper()
+  val inputFilePath = h.resolveInputPath(settings)
   val sourceFilePath = h.resolvePath(settings)
+
+  h.resolveCSVFiles(inputFilePath, sourceFilePath)
+
   val activityFiles = h.resolveActivity(sourceFilePath)
   val fileMask = h.getArchiveFileMask()
 
@@ -35,10 +39,10 @@ object Application extends App with Logger {
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
-    provision = new CSVReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
-    register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
+    provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
+      schema = Some(FileSchemas.provisionSchema)).read(),
+    register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
+      schema = Some(FileSchemas.registerRequestsSchema)).read()
   )
 
   logger.info("Input files loaded")
@@ -47,30 +51,27 @@ object Application extends App with Logger {
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
-    oldUserAgents = broadcast(new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read()),
+    oldUserAgents = new ParquetReader(settings.lookupPath.get + "User_agents.parquet").read(),
 
     activity_archives = sparkSession.read
-      .option("header", "true")
-      .option("delimiter", "\\t")
       .schema(FileSchemas.activitySchema)
-      .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*")
-      //.repartition(20)
-      //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
-      //.distinct()
+      .option("mergeSchema", "True")
+      .parquet(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.parquet*")
+    //.repartition(20)
+    //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+    //.distinct()
     ,
     provision_archives = sparkSession.read
-      .option("header", "true")
-      .option("delimiter", "\t")
       .schema(FileSchemas.provisionSchema)
-      .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*")
-      //.repartition(20)
+      .option("mergeSchema", "True")
+      .parquet(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.parquet*")
+    //.repartition(20)
     ,
     register_requests_archives = sparkSession.read
-      .option("header", "true")
-      .option("delimiter", "\\t")
       .schema(FileSchemas.registerRequestsSchema)
-      .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
-      //.repartition(20)
+      .option("mergeSchema", "True")
+      .parquet(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.parquet*")
+    //.repartition(20)
   )
 
   logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")

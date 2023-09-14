@@ -5,7 +5,7 @@ import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.common.common.writers.ParquetWriter
 import com.tmobile.sit.ignite.rcseu.data.OutputData
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.tmobile.sit.ignite.rcseu.ParquetApplication.runVar
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import com.tmobile.sit.ignite.rcseu.config.Settings
 
 trait Writer extends Logger{
@@ -26,10 +26,10 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
       print("EMPTY")
       val line = Seq(data.columns.mkString("\t"))
       val df = line.toDF()
-      ParquetWriter(df, path, delimiter = "\t", writeHeader = false, quote = "").writeData()
+      ParquetWriter(df, path).writeData()
 //      CSVWriter(df, path, delimiter = "\t", writeHeader = false, quote = "").writeData()
     } else {
-    ParquetWriter(data, path, delimiter = "\t", writeHeader = true).writeData()
+    ParquetWriter(data, path).writeData()
 //      CSVWriter(data, path, delimiter = "\t", writeHeader = true).writeData()
     }
   }
@@ -53,7 +53,7 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
     }*/
 
     // Always write user_agents
-    ParquetWriter(outputData.UserAgents, persistencePath+"User_agents.parquet", delimiter = "\t").writeData()
+    ParquetWriter(outputData.UserAgents, persistencePath+"User_agents.parquet").writeData()
 //    CSVWriter(outputData.UserAgents, persistencePath+"User_agents.csv", delimiter = "\t").writeData()
 
     // If daily processing or daily update

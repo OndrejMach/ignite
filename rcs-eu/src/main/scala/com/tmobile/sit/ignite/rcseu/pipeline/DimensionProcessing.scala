@@ -22,7 +22,7 @@ class Dimension extends DimensionProcessing {
       .withColumn("row_nr", row_number.over(Window.orderBy("UserAgent")))
       .withColumn("_UserAgentID", expr(s"$max_id + row_nr"))
       .drop("row_nr")
-      .distinct()
+//      .distinct()
 
     logger.info(s"Detected ${fullUserAgents1.count} new user agents.")
 
@@ -50,11 +50,11 @@ class Dimension extends DimensionProcessing {
 
    val activityandregistered = activity
       .select("user_agent")
-      .distinct()
+//      .distinct()
       .union(
         registerRequests
           .select("user_agent")
-          .distinct()
+//          .distinct()
       )
      .distinct()
      .sort("user_agent")

@@ -4,7 +4,7 @@ import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.functions.{col, count, desc, split}
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
-import com.tmobile.sit.ignite.rcseu.ParquetApplication.runVar
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 
 
 class Pipeline(inputData: InputData, persistentData: PersistentData, stage: StageProcessing,

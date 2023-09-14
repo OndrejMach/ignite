@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.rcseu.data.{InputData, OutputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.functions.col
-import com.tmobile.sit.ignite.rcseu.ParquetApplication.runVar
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import org.apache.spark.sql.DataFrame
 
 trait ProcessingCore extends Logger{

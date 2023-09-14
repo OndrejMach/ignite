@@ -28,22 +28,21 @@ object ParquetApplication extends App with Logger {
 
   // Instantiate helper and resolve source file paths
   val h = new ParquetHelper()
+  val inputFilePath = h.resolveInputPath(settings)
   val sourceFilePath = h.resolvePath(settings)
+  h.resolveCSVFiles(inputFilePath, sourceFilePath)
   val activityFiles = h.resolveActivity(sourceFilePath)
   val fileMask = h.getArchiveFileMask()
 
   println(activityFiles.count())
 
-  // Read sources
-//  schema = Some(FileSchemas.provisionSchema)
-//  schema = Some(FileSchemas.registerRequestsSchema)
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
     provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
-      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
+      schema = Some(FileSchemas.provisionSchema)).read(),
     register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
-      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
+        schema = Some(FileSchemas.registerRequestsSchema)).read()
   )
 
   logger.info("Input files loaded")
@@ -52,7 +51,8 @@ object ParquetApplication extends App with Logger {
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
-    oldUserAgents = broadcast(new ParquetReader(settings.lookupPath.get + "User_agents.parquet", header = true, delimiter = "\t").read()),
+    oldUserAgents = new ParquetReader(settings.lookupPath.get + "User_agents.parquet").read(),
+//    oldUserAgents = broadcast(new ParquetReader(settings.lookupPath.get + "User_agents.parquet", header = true, delimiter = "\t").read()),
 
     activity_archives = sparkSession.read
       .schema(FileSchemas.activitySchema)

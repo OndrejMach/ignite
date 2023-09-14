@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import org.apache.spark.sql.functions._
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.rcseu.ParquetApplication.runVar
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import org.apache.spark.sql.functions.{col, lit, split, reverse}
 import org.apache.spark.sql.DataFrame
 
