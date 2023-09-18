@@ -48,11 +48,9 @@ class ParquetWriter(data: DataFrame,
 
 object ParquetWriter {
   def apply(data: DataFrame,
-             path: String, mergeToSingleFile: Boolean = true,
-            encoding: String = "UTF-8",
-            quoteMode: String = "MINIMAL",
-            timestampFormat: String = "MM/dd/yyyy HH:mm:ss.SSSZZ",
-            dateFormat: String = "yyyy-MM-dd", nullValue: String = "", quoteAll: String = "false", emptyValue: String = null)
+            path: String,
+            mergeToSingleFile: Boolean = true,
+            emptyValue: String = null)
            (implicit sparkSession: SparkSession): ParquetWriter =
 
     new ParquetWriter(data,path,mergeToSingleFile, emptyValue)(sparkSession)
