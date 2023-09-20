@@ -4,6 +4,7 @@ import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 import scala.util.Try
@@ -27,20 +28,39 @@ class ParquetWriter(data: DataFrame,
   def writeData() : Unit = {
     logger.info(s"Writing data to ${path} " )
     data
-      .coalesce(1)
+//      .repartition(col("date"))
+//      .coalesce(1)
       .write
+      .partitionBy("natco", "date")
       .option("emptyValue", emptyValue)
-      .parquet(path+"_tmp")
+      .parquet(path)
+//      .parquet(path+"_tmp")
     if (mergeToSingleFile) merge(path+"_tmp", path)
   }
 
-  def writeParquetData(): Unit = {
+  def writeParquetData(writeMode: String, partitionBy: Boolean): Unit = {
     logger.info(s"Writing parquet data to ${path} ")
-    data
-      .write
-      .mode("overwrite")
-      .option("emptyValue", emptyValue)
-      .parquet(path)
+    if (partitionBy){
+      data
+        .repartition(20)
+        .write
+        .partitionBy("natco", "date")
+        .mode(writeMode)
+        .option("partitionOverwriteMode", "dynamic")
+        .option("emptyValue", emptyValue)
+        .parquet(path)
+    }
+    else
+      {
+        data
+          .repartition(20)
+          .write
+          .mode(writeMode)
+          .option("partitionOverwriteMode", "dynamic")
+          .option("emptyValue", emptyValue)
+          .parquet(path)
+      }
+
   }
 }
 

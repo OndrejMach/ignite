@@ -6,6 +6,7 @@ import com.tmobile.sit.ignite.common.common.writers.ParquetWriter
 import com.tmobile.sit.ignite.rcseu.Application.{fileMask, runVar}
 import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
 import com.tmobile.sit.ignite.rcseu.data.FileSchemas
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait Config extends Logger{
@@ -40,12 +41,15 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
       sparkSession.read
         .schema(FileSchemas.activitySchema)
         .option("mergeSchema", "True")
-        .parquet(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
-          sourceFilePath + s"activity_${runVar.tomorrowDate}*${runVar.natco}.parquet*")
+        .parquet(sourceFilePath + s"activity/natco=${runVar.natco}/date=${runVar.date}",
+          sourceFilePath + s"activity/natco=${runVar.natco}/date=${runVar.date}")
+//        .parquet(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
+//          sourceFilePath + s"activity_${runVar.tomorrowDate}*${runVar.natco}.parquet*")
     }
     else {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")
-      new ParquetReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
+      new ParquetReader(sourceFilePath + s"activity/natco=${runVar.natco}/date=${runVar.date}",
+//      new ParquetReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
         schema = Some(FileSchemas.activitySchema)).read()
     }
   }
@@ -54,23 +58,32 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
     logger.info(s"Reading activity csv data for ${runVar.date}")
     val activityData = new CSVReader(inputFilePath + s"activity_${runVar.date}*${runVar.natco}.csv*",
       schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read()
+      .withColumn("date", lit(runVar.date))
+      .withColumn("natco", lit(runVar.natco))
 
     logger.info(s"Writing activity parquet data for ${runVar.date}")
-    ParquetWriter(activityData, sourceFilePath + s"activity_${runVar.date}_${runVar.natco}.parquet").writeParquetData()
+    ParquetWriter(activityData, sourceFilePath + s"activity/").writeParquetData(writeMode = "overWrite", partitionBy = true)
+//    ParquetWriter(activityData, sourceFilePath + s"activity_${runVar.date}_${runVar.natco}.parquet").writeParquetData()
 
     logger.info(s"Reading provision csv data for ${runVar.date}")
     val provisionData = new CSVReader(inputFilePath + s"provision_${runVar.date}*${runVar.natco}.csv*",
       schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read()
+      .withColumn("date", lit(runVar.date))
+      .withColumn("natco", lit(runVar.natco))
 
     logger.info(s"Writing provision parquet data for ${runVar.date}")
-    ParquetWriter(provisionData, sourceFilePath + s"provision_${runVar.date}_${runVar.natco}.parquet").writeParquetData()
+    ParquetWriter(provisionData, sourceFilePath + s"provision/").writeParquetData(writeMode = "overWrite", partitionBy = true)
+//    ParquetWriter(provisionData, sourceFilePath + s"provision_${runVar.date}_${runVar.natco}.parquet").writeParquetData()
 
     logger.info(s"Reading register requests csv data for ${runVar.date}")
     val registerRequestsData = new CSVReader(inputFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv*",
       schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
+      .withColumn("date", lit(runVar.date))
+      .withColumn("natco", lit(runVar.natco))
 
     logger.info(s"Writing register requests parquet data for ${runVar.date}")
-    ParquetWriter(registerRequestsData, sourceFilePath + s"register_requests_${runVar.date}_${runVar.natco}.parquet").writeParquetData()
+    ParquetWriter(registerRequestsData, sourceFilePath + s"register_requests/").writeParquetData(writeMode = "overWrite", partitionBy = true)
+//    ParquetWriter(registerRequestsData, sourceFilePath + s"register_requests_${runVar.date}_${runVar.natco}.parquet").writeParquetData()
   }
 
 

@@ -39,9 +39,11 @@ object Application extends App with Logger {
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
-    provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
+    provision = new ParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/date=${runVar.date}",
+//    provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.provisionSchema)).read(),
-    register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
+    register_requests = new ParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/date=${runVar.date}",
+//    register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.registerRequestsSchema)).read()
   )
 
@@ -56,7 +58,8 @@ object Application extends App with Logger {
     activity_archives = sparkSession.read
       .schema(FileSchemas.activitySchema)
       .option("mergeSchema", "True")
-      .parquet(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.parquet*")
+      .parquet(settings.archivePath.get + s"activity/natco=${runVar.natco}/date=${runVar.date}")
+//      .parquet(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.parquet*")
     //.repartition(20)
     //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
     //.distinct()
@@ -64,13 +67,13 @@ object Application extends App with Logger {
     provision_archives = sparkSession.read
       .schema(FileSchemas.provisionSchema)
       .option("mergeSchema", "True")
-      .parquet(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.parquet*")
+      .parquet(settings.archivePath.get + s"provision/natco=${runVar.natco}/date=${runVar.date}")
     //.repartition(20)
     ,
     register_requests_archives = sparkSession.read
       .schema(FileSchemas.registerRequestsSchema)
       .option("mergeSchema", "True")
-      .parquet(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.parquet*")
+      .parquet(settings.archivePath.get + s"register_requests/natco=${runVar.natco}/date=${runVar.date}")
     //.repartition(20)
   )
 
