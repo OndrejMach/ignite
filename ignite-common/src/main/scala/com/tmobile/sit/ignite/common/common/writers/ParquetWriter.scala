@@ -31,20 +31,20 @@ class ParquetWriter(data: DataFrame,
 //      .repartition(col("date"))
 //      .coalesce(1)
       .write
-      .partitionBy("natco", "date")
+      .partitionBy("natco", "year", "month", "day")
       .option("emptyValue", emptyValue)
       .parquet(path)
 //      .parquet(path+"_tmp")
     if (mergeToSingleFile) merge(path+"_tmp", path)
   }
 
-  def writeParquetData(writeMode: String, partitionBy: Boolean): Unit = {
+  def writeParquetData(writeMode: String, partitionBy: Boolean, partitionCols:Seq[String]): Unit = {
     logger.info(s"Writing parquet data to ${path} ")
     if (partitionBy){
       data
-        .repartition(20)
+        .repartition(5)
         .write
-        .partitionBy("natco", "date")
+        .partitionBy(partitionCols:_*)
         .mode(writeMode)
         .option("partitionOverwriteMode", "dynamic")
         .option("emptyValue", emptyValue)

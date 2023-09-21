@@ -13,6 +13,7 @@ class RunConfig(_args: Array[String]) {
 
   val dateformat = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
   val tomorrowDate=dateformat.plusDays(1).toString()
+  val tomorrowDay=date.split('-')(2)
 
   val debug = false;
 

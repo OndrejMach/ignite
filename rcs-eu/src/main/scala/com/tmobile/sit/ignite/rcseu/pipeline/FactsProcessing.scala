@@ -26,7 +26,7 @@ class Facts extends FactsProcessing {
       .withColumn("ConKeyP1", concat_ws("|", col("ConKeyP1"), col("NatCo")))
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count", "Provisioned_daily")
-    provisionedDaily
+    provisionedDaily.distinct()
   }
 
   //definition of getMaxUserAgent function, will be used in register_requests and activity data
@@ -89,6 +89,7 @@ class Facts extends FactsProcessing {
     // successfully originated for CHAT
     val df1 = activity
       .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
+      .distinct()
     //.filter(col("creation_date").startsWith(runVar.date))
     // .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
     //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
@@ -373,6 +374,7 @@ class Facts extends FactsProcessing {
       .na.fill(0,Seq("Active_daily_succ_origterm","Active_daily_succ_orig","Active_daily_unsucc_orig","Active_daily_unsucc_origterm"))
       .withColumn("ConKeyA1", when(size(split(col("ConKeyA1"), "\\|")) === lit(2), concat(col("ConKeyA1"), lit("|")) )
         .otherwise(col("ConKeyA1")))
+      .distinct()
   }
 
   def getServiceFactsDaily(activity: DataFrame): DataFrame = {
@@ -397,6 +399,7 @@ class Facts extends FactsProcessing {
     Chat received-OffNet: sum(messages_received) WHERE type=CHAT AND sip_code=200 AND from_network!=to_network
 
      */
+
 
     val sf1 = activity
       .filter(col("creation_date").startsWith(runVar.date))
@@ -537,7 +540,7 @@ class Facts extends FactsProcessing {
       .withColumn("DateKeyNatco", concat_ws("|", col("date"), col("month"), col("tkey"), col("natco")))
       .withColumn("Count", col("count").cast(IntegerType))
       .drop("date", "month", "tkey", "natco")
-    finalsf1
-//    finalsf1.distinct()
+//    finalsf1
+    finalsf1.distinct()
   }
 }

@@ -4,6 +4,7 @@ import com.tmobile.sit.ignite.common.common.Logger
 import org.apache.spark.sql.functions.{col, count, desc, split}
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.concat_ws
 import com.tmobile.sit.ignite.rcseu.Application.runVar
 
 
@@ -27,10 +28,18 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
     //persistentData.activity_archives.show(false)
 
     // Read archive files, extract and add file date
-    val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives)//.repartition(20)
-    val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)//.repartition(20)
-    val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)//.repartition(20)
-//    archiveActivity.show(false)
+//    val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives)//.repartition(20)
+//    val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)//.repartition(20)
+//    val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)//.repartition(20)
+val archiveActivity = persistentData.activity_archives
+  .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+  .drop("natco", "year", "month", "day")
+    val archiveProvision = persistentData.provision_archives
+      .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+      .drop("natco", "year", "month", "day")
+    val archiveRegisterRequests = persistentData.register_requests_archives
+      .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+      .drop("natco", "year", "month", "day")
 
     if(runVar.debug) {
     logger.info("Archives")

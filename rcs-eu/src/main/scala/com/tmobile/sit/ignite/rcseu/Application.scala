@@ -18,7 +18,7 @@ object Application extends App with Logger {
   // Get the run variables based on input arguments
   val runVar = new RunConfig(args)
 
-  logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco:${runVar.natco}, " +
+  logger.info(s"Date: ${runVar.date}, month:${runVar.monthNum}, year:${runVar.year}, natco:${runVar.natco}, " +
     s"natcoNetwork: ${runVar.natcoNetwork}, runMode:${runVar.runMode} ")
 
   // Get settings and create spark session
@@ -39,10 +39,10 @@ object Application extends App with Logger {
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
-    provision = new ParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/date=${runVar.date}",
+    provision = new ParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
 //    provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.provisionSchema)).read(),
-    register_requests = new ParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/date=${runVar.date}",
+    register_requests = new ParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
 //    register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.registerRequestsSchema)).read()
   )
@@ -50,6 +50,17 @@ object Application extends App with Logger {
   logger.info("Input files loaded")
 
   // read whole year only if doing yearly processing
+
+  var filePath = ""
+
+  if (runVar.runMode.equals("yearly") ||
+    (runVar.runMode.equals("update") && runVar.date.endsWith("-12-31"))) {
+    filePath = s"/natco=${runVar.natco}/year=${runVar.year}/"
+  }
+  else {
+    filePath = s"/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/"
+  }
+
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
@@ -58,7 +69,8 @@ object Application extends App with Logger {
     activity_archives = sparkSession.read
       .schema(FileSchemas.activitySchema)
       .option("mergeSchema", "True")
-      .parquet(settings.archivePath.get + s"activity/natco=${runVar.natco}/date=${runVar.date}")
+      .option("basePath", settings.archivePath.get + s"activity/")
+      .parquet(settings.archivePath.get + "activity" + filePath)
 //      .parquet(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.parquet*")
     //.repartition(20)
     //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
@@ -67,17 +79,19 @@ object Application extends App with Logger {
     provision_archives = sparkSession.read
       .schema(FileSchemas.provisionSchema)
       .option("mergeSchema", "True")
-      .parquet(settings.archivePath.get + s"provision/natco=${runVar.natco}/date=${runVar.date}")
+      .option("basePath", settings.archivePath.get + s"provision/")
+      .parquet(settings.archivePath.get + "provision" + filePath)
     //.repartition(20)
     ,
     register_requests_archives = sparkSession.read
       .schema(FileSchemas.registerRequestsSchema)
       .option("mergeSchema", "True")
-      .parquet(settings.archivePath.get + s"register_requests/natco=${runVar.natco}/date=${runVar.date}")
+      .option("basePath", settings.archivePath.get + s"register_requests")
+      .parquet(settings.archivePath.get + "register_requests" + filePath)
     //.repartition(20)
   )
 
-  logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")
+  logger.info(s"Archive files loaded for file_mask=[${filePath}*]")
   //persistentData.activity_archives.show(false)
   val stageProcessing = new Stage()
 

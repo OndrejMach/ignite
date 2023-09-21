@@ -22,10 +22,10 @@ class Stage extends StageProcessing {
 
     val dailyFile = daily_activity
       //.withColumn("FileDate", lit(runVar.date))
-      .withColumn("FilePath", input_file_name)
-      .withColumn("FileName", reverse(split(col("FilePath"),"\\/")).getItem(0))
-      .withColumn("FileDate", split(split(col("FileName"),"\\_").getItem(1),"\\.").getItem(0))
-      .drop("FilePath", "FileName")
+//      .withColumn("FilePath", input_file_name)
+//      .withColumn("FileName", reverse(split(col("FilePath"),"\\/")).getItem(0))
+//      .withColumn("FileDate", split(split(col("FileName"),"\\_").getItem(1),"\\.").getItem(0))
+//      .drop("FilePath", "FileName")
       //.drop("bytes_sent","bytes_received","contribution_id","duration","src_ip","sip_reason")
 
     //dailyFile
