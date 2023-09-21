@@ -40,9 +40,11 @@ object Application extends App with Logger {
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
     provision = new ParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+      sourceFilePath + s"provision/",
 //    provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.provisionSchema)).read(),
     register_requests = new ParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+      sourceFilePath + s"register_requests/",
 //    register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.registerRequestsSchema)).read()
   )
@@ -64,7 +66,7 @@ object Application extends App with Logger {
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
-    oldUserAgents = new ParquetReader(settings.lookupPath.get + "User_agents.parquet").read(),
+    oldUserAgents = new ParquetReader(settings.lookupPath.get + "User_agents.parquet", settings.lookupPath.get + "User_agents.parquet").read(),
 
     activity_archives = sparkSession.read
       .schema(FileSchemas.activitySchema)

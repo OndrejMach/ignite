@@ -148,7 +148,7 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
     }
     // Always write user_agents
     ParquetWriter(outputData.UserAgents, persistencePath + "User_agents_tmp.parquet").writeParquetData(writeMode = "overwrite", partitionBy = false, null)
-    val newUserAgents = new ParquetReader(persistencePath + "User_agents_tmp.parquet").read()
+    val newUserAgents = new ParquetReader(persistencePath + "User_agents_tmp.parquet", persistencePath + "User_agents_tmp.parquet").read()
     ParquetWriter(newUserAgents, persistencePath + "User_agents.parquet").writeParquetData(writeMode = "overwrite", partitionBy = false, null)
 
     val hadoopConfig = new Configuration()

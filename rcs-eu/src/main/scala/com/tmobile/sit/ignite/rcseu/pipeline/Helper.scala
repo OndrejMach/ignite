@@ -49,6 +49,7 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
     else {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")
       new ParquetReader(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+        sourceFilePath + s"activity/",
 //      new ParquetReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
         schema = Some(FileSchemas.activitySchema)).read()
     }

@@ -13,9 +13,15 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
   def run(): Unit = {
 
     // Read input files
-    val inputActivity = inputData.activity//.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
+    val inputActivity = inputData.activity
+      .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+      .drop("natco", "year", "month", "day")//.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
     val inputProvision = inputData.provision
+      .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+      .drop("natco", "year", "month", "day")
     val inputRegisterRequests = inputData.register_requests
+      .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+      .drop("natco", "year", "month", "day")
 
     if(runVar.debug) {
     logger.info("Inputs")
@@ -31,9 +37,11 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 //    val archiveActivity = stage.preprocessAccumulator(persistentData.activity_archives)//.repartition(20)
 //    val archiveProvision = stage.preprocessAccumulator(persistentData.provision_archives)//.repartition(20)
 //    val archiveRegisterRequests = stage.preprocessAccumulator(persistentData.register_requests_archives)//.repartition(20)
-val archiveActivity = persistentData.activity_archives
-  .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
-  .drop("natco", "year", "month", "day")
+
+
+    val archiveActivity = persistentData.activity_archives
+      .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+      .drop("natco", "year", "month", "day")
     val archiveProvision = persistentData.provision_archives
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")
