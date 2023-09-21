@@ -56,7 +56,7 @@ class Stage extends StageProcessing {
   override def accumulateProvision(daily_provision: DataFrame, archive_provision:DataFrame): DataFrame = {
    logger.info("Preprocessing Provision Accumulator")
     val dailyFileProvision = daily_provision
-      .withColumn("FileDate", lit(runVar.date))
+//      .withColumn("FileDate", lit(runVar.date))
       .select("msisdn", "FileDate")
 
     logger.info(s"Daily file count: ${dailyFileProvision.count()}")
@@ -69,14 +69,13 @@ class Stage extends StageProcessing {
       .union(dailyFileProvision)
       .orderBy("FileDate")
     //logger.info(s"New provision accumulator count: ${dailyFileProvision1.count()}")
-
     dailyFileProvision1
   }
 
   override def accumulateRegisterRequests(daily_register_requests: DataFrame, archive_register_requests:DataFrame): DataFrame = {
     logger.info("Preprocessing Register Requests Accumulator")
     val dailyFileRegister = daily_register_requests
-      .withColumn("FileDate", lit(runVar.date))
+//      .withColumn("FileDate", lit(runVar.date))
       .select("msisdn", "user_agent", "FileDate")
 
     logger.info(s"Daily file count: ${dailyFileRegister.count()}")

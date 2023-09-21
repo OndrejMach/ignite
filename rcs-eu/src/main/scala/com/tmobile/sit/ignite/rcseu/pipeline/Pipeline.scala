@@ -1,10 +1,9 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.ignite.common.common.Logger
-import org.apache.spark.sql.functions.{col, count, desc, split}
+import org.apache.spark.sql.functions.{col, concat_ws, count, desc, format_string, split}
 import com.tmobile.sit.ignite.rcseu.data.{InputData, PersistentData, PreprocessedData}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.concat_ws
 import com.tmobile.sit.ignite.rcseu.Application.runVar
 
 
@@ -14,12 +13,18 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 
     // Read input files
     val inputActivity = inputData.activity
+      .withColumn("month", format_string("%02d", col("month")))
+      .withColumn("day", format_string("%02d", col("day")))
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")//.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0)).distinct()
     val inputProvision = inputData.provision
+      .withColumn("month", format_string("%02d", col("month")))
+      .withColumn("day", format_string("%02d", col("day")))
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")
     val inputRegisterRequests = inputData.register_requests
+      .withColumn("month", format_string("%02d", col("month")))
+      .withColumn("day", format_string("%02d", col("day")))
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")
 
@@ -40,12 +45,18 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 
 
     val archiveActivity = persistentData.activity_archives
+      .withColumn("month", format_string("%02d", col("month")))
+      .withColumn("day", format_string("%02d", col("day")))
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")
     val archiveProvision = persistentData.provision_archives
+      .withColumn("month", format_string("%02d", col("month")))
+      .withColumn("day", format_string("%02d", col("day")))
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")
     val archiveRegisterRequests = persistentData.register_requests_archives
+      .withColumn("month", format_string("%02d", col("month")))
+      .withColumn("day", format_string("%02d", col("day")))
       .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
       .drop("natco", "year", "month", "day")
 
@@ -58,7 +69,6 @@ class Pipeline(inputData: InputData, persistentData: PersistentData, stage: Stag
 
     // Get accumulators (archive + input)
     val accActivity = stage.accumulateActivity(inputActivity,archiveActivity)
-//    accActivity.show(false)
     val accProvision = stage.accumulateProvision(inputProvision,archiveProvision)
     val accRegisterRequests =  stage.accumulateRegisterRequests(inputRegisterRequests,archiveRegisterRequests)
 
