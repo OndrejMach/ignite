@@ -30,7 +30,7 @@ object Application extends App with Logger {
   val inputFilePath = h.resolveInputPath(settings)
   val sourceFilePath = h.resolvePath(settings)
 
-  h.resolveCSVFiles(inputFilePath, sourceFilePath)
+//  h.resolveCSVFiles(inputFilePath, sourceFilePath)
 
   val activityFiles = h.resolveActivity(sourceFilePath)
   val fileMask = h.getArchiveFileMask()

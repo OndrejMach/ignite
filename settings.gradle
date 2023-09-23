@@ -4,3 +4,5 @@ include 'hotspot'
 //include 'job-template'
 include 'rcs-eu'
 include 'exchange-rates'
+include 'rcs-eu-to-parquet'
+
