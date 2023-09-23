@@ -1,12 +1,14 @@
 group 'ignite'
-version '1.0'
+version '1.0-SNAPSHOT'
+
 apply plugin: 'scala'
+
 
 sourceCompatibility = 1.8
 
 
 dependencies {
-    implementation project(":ignite-common")
-    implementation project(":rcs-eu")
+    compile project(":ignite-common")
+    compile project(":rcs-eu")
     //implementation 'com.tmobile.sit:spark_common:1.18'
 }
