@@ -42,6 +42,7 @@ dependencies {
     implementation project(':ignite-common')
     implementation project(':hotspot')
     implementation project(':rcs-eu')
+    implementation project(':rcs-eu-to-parquet')
     implementation project(':exchange-rates')
 }
 
