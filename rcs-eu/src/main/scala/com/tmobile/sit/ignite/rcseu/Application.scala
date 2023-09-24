@@ -5,7 +5,6 @@ import com.tmobile.sit.ignite.common.common.readers.ParquetReader
 import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
-import org.apache.spark.sql.functions.{broadcast, col, split}
 
 object Application extends App with Logger {
 
@@ -29,9 +28,6 @@ object Application extends App with Logger {
   val h = new Helper()
   val inputFilePath = h.resolveInputPath(settings)
   val sourceFilePath = h.resolvePath(settings)
-
-//  h.resolveCSVFiles(inputFilePath, sourceFilePath)
-
   val activityFiles = h.resolveActivity(sourceFilePath)
   val fileMask = h.getArchiveFileMask()
 
@@ -41,11 +37,9 @@ object Application extends App with Logger {
     activity = activityFiles,
     provision = new ParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
       sourceFilePath + s"provision/",
-//    provision = new ParquetReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.provisionSchema)).read(),
     register_requests = new ParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
       sourceFilePath + s"register_requests/",
-//    register_requests = new ParquetReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.parquet*",
       schema = Some(FileSchemas.registerRequestsSchema)).read()
   )
 
@@ -73,7 +67,6 @@ object Application extends App with Logger {
       .option("mergeSchema", "True")
       .option("basePath", settings.archivePath.get + s"activity/")
       .parquet(settings.archivePath.get + "activity" + filePath)
-//      .parquet(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.parquet*")
     //.repartition(20)
     //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
     //.distinct()
