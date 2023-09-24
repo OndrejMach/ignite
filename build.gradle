@@ -1,94 +1,48 @@
-group 'ignite'
-//version '1.0-SNAPSHOT'
-//Specify here the SW version of your package
-def majorVersion = "1.0"
-
-
-version=majorVersion+'_'+ new Date().format('yyyyMMdd')
-
-
 buildscript {
     repositories {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
-        /*
-        maven {
-            credentials {
-                username NEXUS3_USERNAME
-                password NEXUS3_PASSWORD
-            }
-            url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
-        }
-
-         */
     }
     dependencies {
         classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
     }
 }
 
-apply plugin: 'scala'
-apply plugin: 'com.github.johnrengelman.shadow'
+plugins{
+    id 'scala'
+    id 'maven-publish'
+    id("com.github.johnrengelman.shadow") version "5.2.0"
+}
+
+group 'ignite'
+//version '1.0-SNAPSHOT'
+//Specify here the SW version of your package
+def majorVersion = "1.0"
 
 shadowJar {
     zip64 true
 }
 
-sourceCompatibility = 1.8
-
 allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        /*
-        maven {
-            credentials {
-                username NEXUS3_USERNAME
-                password NEXUS3_PASSWORD
-            }
-            url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
-        }
-        maven {
-            credentials {
-                username NEXUS3_USERNAME
-                password NEXUS3_PASSWORD
-            }
-            url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/maven-releases/"
-        }
-
-         */
     }
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
-    /*
-    maven {
-        credentials {
-            username NEXUS3_USERNAME
-            password NEXUS3_PASSWORD
-        }
-        url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/atlassian_public/"
-    }
-    maven {
-        credentials {
-            username NEXUS3_USERNAME
-            password NEXUS3_PASSWORD
-        }
-        url "https://cdcp-wbench.workbench.telekom.de/nexus3/repository/maven-releases/"
-    }
-
-     */
-
 }
 
 dependencies {
-    compile subprojects
-    compile project(':ignite-common')
-    compile project(':hotspot')
-    compile project(':rcs-eu')
-    compile project(':exchange-rates')
 
+    implementation subprojects
+    implementation project(':ignite-common')
+    implementation project(':hotspot')
+    implementation project(':rcs-eu')
+    implementation project(':exchange-rates')
 }
+
+
