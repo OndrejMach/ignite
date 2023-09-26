@@ -1,12 +1,11 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.{CSVReader, ParquetReader}
-import com.tmobile.sit.ignite.common.common.writers.ParquetWriter
-import com.tmobile.sit.ignite.rcseu.Application.{fileMask, runVar}
+import com.tmobile.sit.ignite.common.common.readers.RCSEUParquetReader
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
 import com.tmobile.sit.ignite.rcseu.data.FileSchemas
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.{col, concat_ws, format_string}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait Config extends Logger{
@@ -39,18 +38,21 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
       logger.info(s"Reading activity data for ${runVar.date} and ${runVar.tomorrowDate}")
       sparkSession.read
         .schema(FileSchemas.activitySchema)
+        .option("basePath", sourceFilePath + s"activity/")
         .option("mergeSchema", "True")
         .parquet(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
           sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.tomorrowDay}")
-//        .parquet(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
-//          sourceFilePath + s"activity_${runVar.tomorrowDate}*${runVar.natco}.parquet*")
+        .withColumn("month", format_string("%02d", col("month")))
+        .withColumn("day", format_string("%02d", col("day")))
+        .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+        .drop("natco", "year", "month", "day")
     }
     else {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")
-      new ParquetReader(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+      new RCSEUParquetReader(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
         sourceFilePath + s"activity/",
-//      new ParquetReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.parquet*",
-        schema = Some(FileSchemas.activitySchema)).read()
+        schema = Some(FileSchemas.activitySchema),
+        addFileDate = true).read()
     }
   }
 

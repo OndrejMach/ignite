@@ -1,6 +1,7 @@
 package com.tmobile.sit.ignite.common.common.readers
 
 import com.tmobile.sit.ignite.common.common.Logger
+import org.apache.spark.sql.functions.{col, concat_ws, format_string}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import org.apache.spark.sql.types.StructType
 
@@ -45,10 +46,11 @@ private[readers] abstract class ParquetGenericReader extends Logger {
  * @param schema          using spark types you can define Typed schema - it's highly recommended to us this parameter. By default schema is inferred.
  * @param sparkSession    implicit SparkSession used for reading.
  */
-class ParquetReader(path: String,
-                    basePath: String,
-                    badRecordsPath: Option[String] = None,
-                    schema: Option[StructType] = None
+class RCSEUParquetReader(path: String,
+                         basePath: String,
+                         badRecordsPath: Option[String] = None,
+                         schema: Option[StructType] = None,
+                         addFileDate: Boolean = false
                    ) (implicit sparkSession: SparkSession) extends ParquetGenericReader with Reader {
 
   private def getParquetData(path: String): DataFrame = {
@@ -57,7 +59,16 @@ class ParquetReader(path: String,
       basePath,
       badRecordsPath
     )
-    reader.parquet(path)
+    if (addFileDate){
+      reader.parquet(path)
+        .withColumn("month", format_string("%02d", col("month")))
+        .withColumn("day", format_string("%02d", col("day")))
+        .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+        .drop("natco", "year", "month", "day")
+    }
+    else{
+      reader.parquet(path)
+    }
 
   }
 
@@ -98,9 +109,9 @@ object ParquetReader {
             basePath: String,
             badRecordsPath: Option[String] = None,
             schema: Option[StructType] = None
-           )(implicit sparkSession: SparkSession): ParquetReader =
+           )(implicit sparkSession: SparkSession): RCSEUParquetReader =
 
-    new ParquetReader(path, basePath, badRecordsPath, schema)(sparkSession)
+    new RCSEUParquetReader(path, basePath, badRecordsPath, schema)(sparkSession)
 }
 
 /**

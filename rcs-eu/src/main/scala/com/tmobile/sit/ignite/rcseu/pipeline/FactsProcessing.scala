@@ -27,23 +27,10 @@ class Facts extends FactsProcessing {
       .dropDuplicates("msisdn")
       .groupBy("ConKeyP1").count().withColumnRenamed("count", "Provisioned_daily")
     provisionedDaily
-//    provisionedDaily.distinct()
   }
 
   //definition of getMaxUserAgent function, will be used in register_requests and activity data
   // for finding the max user_agent value
-//  def getMaxuserAgentDef = (agents: Seq[String]) => {
-//    def encode(i: String) = {
-//      val split = i.toUpperCase.split("/").reverse
-//      split.head.toCharArray.filter(_.isDigit).mkString("").toLong
-//    }
-//    //TODO: validate this change. Maybe just do simple max string?
-//    //agents.sortWith((i,j) => encode(i)>encode(j)).head
-//    agents.sorted.reverse.head
-//  }
-//
-//  val getMaxuserAgent = udf(getMaxuserAgentDef)
-  ///
 
   def getRegisteredDaily(register_requests: DataFrame, fullUserAgents: DataFrame, period_for_process: String): DataFrame = {
     //aggregating unique number of registered users in the specific period_for_process and natco
@@ -53,14 +40,9 @@ class Facts extends FactsProcessing {
     val maxDate = register_requests.groupBy("msisdn").agg(max("FileDate").alias("FileDate"))
     val onlyMaxDate = register_requests.join(maxDate, Seq("msisdn", "FileDate"), "inner")
     val grouped = onlyMaxDate.groupBy("msisdn").agg(max(lower(col("user_agent"))).alias("maxAgentLower"),max("FileDate"),max("msisdn"))
-    //  val register_requests_max1 = grouped.withColumn("maxAgent",getMaxuserAgent(col("agent_list")))
-    // val register_requests_max = register_requests_max1.withColumn("maxAgentLower",lower(col("maxAgent")))
     val register_requests_agg =
     grouped
       .groupBy((col("maxAgentLower"))).agg(countDistinct("max(msisdn)").as("msisdn_count"))
-      //.filter($"maxAgent".isin(testUserAgent:_*))
-      //.orderBy(desc("maxAgent"))
-      //.withColumnRenamed("maxAgentLower","UserAgent")
       .withColumnRenamed("msisdn_count","Registered_daily")
 
     val RRfinal = register_requests_agg
@@ -90,15 +72,6 @@ class Facts extends FactsProcessing {
     // successfully originated for CHAT
     val df1 = activity
       .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
-//      .distinct()
-    //.filter(col("creation_date").startsWith(runVar.date))
-    // .withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
-    //.filter(from_unixtime(col("creation_date")).cast(DateType) === lit(date))
-    //.filter(activity("creation_date").contains(runVar.date))
-    //  .distinct()
-    //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
-    //.distinct()
-    // .na.fill("NULL",Seq("user_agent"))
 
     val df2 = df1
       .filter(df1("sip_code") <=> 200 and col("from_user").startsWith("+") and (df1("from_network") <=> natcoNetwork))
@@ -149,14 +122,10 @@ class Facts extends FactsProcessing {
     val onlyMaxDateA = result1.join(maxDateA, Seq("uau", "creation_date"), "inner")
     val groupedA = onlyMaxDateA.groupBy("uau").agg(collect_set("user_agent").alias("agent_list"))
     val register_requests_maxA = groupedA.withColumn("user_agent", array_max(col("agent_list"))).drop("agent_list")
-//    val register_requests_maxA = groupedA.withColumn("user_agent", getMaxuserAgent(col("agent_list"))).drop("agent_list")
 
     //filter null user_agents
     val result2 = result
-      //.filter(result("user_agent") <=> "NULL")
       .filter("user_agent is null")
-      //.groupBy("uau")
-      //.agg(max("user_agent").alias("user_agent"))
       .drop("creation_date")
 
 
@@ -178,7 +147,6 @@ class Facts extends FactsProcessing {
     //UNsuccessfully originated for CHAT (UNsuccessfully originated FILES data are not present in the input data)
     val resultU = df1
       .select("from_user", "user_agent", "creation_date")
-      //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
       .filter(col("from_user").startsWith("+") && (col("from_network").contains(natcoNetwork) or col("from_network").contains("dt.jibecloud.net")) && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
       .withColumnRenamed("from_user", "uau_UNS")
       .withColumnRenamed("user_agent", "user_agent_UNS")
@@ -212,7 +180,6 @@ class Facts extends FactsProcessing {
 
 
     val dfx2 = resultU3.join(dfx1, resultU3("uau_UNS") <=> dfx1("uau_temp"), "left_anti")
-    // .withColumnRenamed("uau_temp","uau")
 
     //final count of UNsuccessful users
     val resultU4 = dfx2
@@ -295,7 +262,6 @@ class Facts extends FactsProcessing {
     ////////////////////////////////////////////////////////////úúú
     //b.) UNSUCCESSFULY
     val resultUO = df1
-      //.filter($"from_user".startsWith("+") && $"from_network".startsWith("dt-slovak-telecom") && not($"sip_code".contains("200") || $"type".contains("FT_POST") || $"type".contains("FT_GET")))yyy
       .filter(col("from_user").startsWith("+") && (col("from_network").contains(natcoNetwork) or col("from_network").contains("dt.jibecloud.net")) && not(col("type").contains("FT_POST")) && not(col("type").contains("FT_GET")) && ((col("sip_code") =!= "200") || (col("sip_code").isNull)))
       .select("from_user", "user_agent", "creation_date")
       .withColumnRenamed("from_user", "uau_UNS")
@@ -375,7 +341,6 @@ class Facts extends FactsProcessing {
       .na.fill(0,Seq("Active_daily_succ_origterm","Active_daily_succ_orig","Active_daily_unsucc_orig","Active_daily_unsucc_origterm"))
       .withColumn("ConKeyA1", when(size(split(col("ConKeyA1"), "\\|")) === lit(2), concat(col("ConKeyA1"), lit("|")) )
         .otherwise(col("ConKeyA1")))
-//      .distinct()
   }
 
   def getServiceFactsDaily(activity: DataFrame): DataFrame = {
@@ -416,19 +381,15 @@ class Facts extends FactsProcessing {
 
 
     val sf2 = sf2_int
-      //.select("from_user","user_agent","creation_date")
       .groupBy("_NetworkingID", "_ServiceID")
       .count()
 
-
-    //.agg(max("_NetworkingID").alias("_NetworkingID"),max("user_agent_UNS").alias("user_agent_UNS"))
 
     //Files SENT-OffNet:
     val sf3 = sf1
       .withColumn("_NetworkingID", lit("2"))
       .withColumn("_ServiceID", lit("5"))
       .filter((sf1("type") === "FT_POST") && (not(sf1("from_network") <=> sf1("to_network"))))
-      //.select("from_user","user_agent","creation_date")
       .groupBy("_NetworkingID", "_ServiceID")
       .count
     //Files RECEIVED-OnNet:
@@ -531,7 +492,6 @@ class Facts extends FactsProcessing {
       .union(sf11)
       .filter(col("count").isNotNull)
 
-    //finalsf.filter("_NetworkingID=1 and _ServiceID=5").show(false)
 
     val finalsf1 = finalsf
       .withColumn("date", lit(runVar.dayforkey))
@@ -541,7 +501,7 @@ class Facts extends FactsProcessing {
       .withColumn("DateKeyNatco", concat_ws("|", col("date"), col("month"), col("tkey"), col("natco")))
       .withColumn("Count", col("count").cast(IntegerType))
       .drop("date", "month", "tkey", "natco")
-//    finalsf1
+
     finalsf1.distinct()
   }
 }

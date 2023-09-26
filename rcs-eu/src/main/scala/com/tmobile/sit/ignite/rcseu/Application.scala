@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.ParquetReader
+import com.tmobile.sit.ignite.common.common.readers.RCSEUParquetReader
 import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
@@ -35,12 +35,15 @@ object Application extends App with Logger {
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
-    provision = new ParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+    provision = new RCSEUParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
       sourceFilePath + s"provision/",
-      schema = Some(FileSchemas.provisionSchema)).read(),
-    register_requests = new ParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+      schema = Some(FileSchemas.provisionSchema),
+      addFileDate = true).read(),
+    register_requests = new RCSEUParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
       sourceFilePath + s"register_requests/",
-      schema = Some(FileSchemas.registerRequestsSchema)).read()
+      schema = Some(FileSchemas.registerRequestsSchema),
+      addFileDate = true
+    ).read()
   )
 
   logger.info("Input files loaded")
@@ -60,34 +63,14 @@ object Application extends App with Logger {
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
-    oldUserAgents = new ParquetReader(settings.lookupPath.get + "User_agents.parquet", settings.lookupPath.get + "User_agents.parquet").read(),
-
-    activity_archives = sparkSession.read
-      .schema(FileSchemas.activitySchema)
-      .option("mergeSchema", "True")
-      .option("basePath", settings.archivePath.get + s"activity/")
-      .parquet(settings.archivePath.get + "activity" + filePath)
-    //.repartition(20)
-    //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
-    //.distinct()
-    ,
-    provision_archives = sparkSession.read
-      .schema(FileSchemas.provisionSchema)
-      .option("mergeSchema", "True")
-      .option("basePath", settings.archivePath.get + s"provision/")
-      .parquet(settings.archivePath.get + "provision" + filePath)
-    //.repartition(20)
-    ,
-    register_requests_archives = sparkSession.read
-      .schema(FileSchemas.registerRequestsSchema)
-      .option("mergeSchema", "True")
-      .option("basePath", settings.archivePath.get + s"register_requests")
-      .parquet(settings.archivePath.get + "register_requests" + filePath)
-    //.repartition(20)
+    oldUserAgents = new RCSEUParquetReader(settings.lookupPath.get + "User_agents.parquet", settings.lookupPath.get + "User_agents.parquet").read(),
+    activity_archives = new RCSEUParquetReader(settings.archivePath.get + "activity" + filePath, settings.archivePath.get + s"activity/", addFileDate = true).read(),
+    provision_archives = new RCSEUParquetReader(settings.archivePath.get + "provision" + filePath, settings.archivePath.get + s"provision/", addFileDate = true).read(),
+    register_requests_archives = new RCSEUParquetReader(settings.archivePath.get + "register_requests" + filePath, settings.archivePath.get + s"register_requests", addFileDate = true).read()
   )
 
   logger.info(s"Archive files loaded for file_mask=[${filePath}*]")
-  //persistentData.activity_archives.show(false)
+
   val stageProcessing = new Stage()
 
   val coreProcessing = new Core()
