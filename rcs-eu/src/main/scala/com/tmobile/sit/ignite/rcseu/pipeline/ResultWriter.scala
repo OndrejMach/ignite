@@ -2,7 +2,6 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.common.common.readers.RCSEUParquetReader
-import com.tmobile.sit.ignite.rcseu.Application.settings
 import org.apache.spark.sql.functions.lit
 import com.tmobile.sit.ignite.common.common.writers.RCSEUParquetWriter
 import com.tmobile.sit.ignite.rcseu.data.OutputData
@@ -12,7 +11,6 @@ import com.tmobile.sit.ignite.rcseu.config.Settings
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.IOUtils
 
 trait Writer extends Logger{
   def write(output: OutputData): Unit
@@ -28,7 +26,6 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
     import sparkSession.implicits._
     data.cache()
     if (data.isEmpty){
-      print("EMPTY")
       val line = Seq(data.columns.mkString("\t"))
       val df = line.toDF()
       RCSEUParquetWriter(df, path).writeParquetData(writeMode = writeMode, partitionCols = partitionCols)
