@@ -1,10 +1,7 @@
 package com.tmobile.sit.ignite.common.common.writers
 
 import com.tmobile.sit.ignite.common.common.Logger
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-
-import scala.util.Try
-
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * Parquet Writer class. An instance is able to write Parquet files according to the class parameters. It implements method writaData which writes

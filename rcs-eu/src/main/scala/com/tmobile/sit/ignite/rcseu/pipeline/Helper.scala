@@ -1,7 +1,7 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.RCSEUParquetReader
+import com.tmobile.sit.ignite.common.common.readers.{RCSEUParquetReader, RCSEUParquetMultiFileReader}
 import com.tmobile.sit.ignite.rcseu.Application.runVar
 import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
 import com.tmobile.sit.ignite.rcseu.data.FileSchemas
@@ -36,16 +36,19 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
     if (runVar.runMode.equals("update")) {
       logger.info("runMode: update")
       logger.info(s"Reading activity data for ${runVar.date} and ${runVar.tomorrowDate}")
-      sparkSession.read
-        .schema(FileSchemas.activitySchema)
-        .option("basePath", sourceFilePath + s"activity/")
-        .option("mergeSchema", "True")
-        .parquet(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
-          sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.tomorrowDay}")
-        .withColumn("month", format_string("%02d", col("month")))
-        .withColumn("day", format_string("%02d", col("day")))
-        .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
-        .drop("natco", "year", "month", "day")
+      new RCSEUParquetMultiFileReader(paths = Seq(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+        sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.tomorrowDay}"),
+        basePath = sourceFilePath + s"activity/", schema = Some(FileSchemas.activitySchema), addFileDate = true).read()
+//      sparkSession.read
+//        .schema(FileSchemas.activitySchema)
+//        .option("basePath", sourceFilePath + s"activity/")
+//        .option("mergeSchema", "True")
+//        .parquet(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+//          sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.tomorrowDay}")
+//        .withColumn("month", format_string("%02d", col("month")))
+//        .withColumn("day", format_string("%02d", col("day")))
+//        .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+//        .drop("natco", "year", "month", "day")
     }
     else {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")

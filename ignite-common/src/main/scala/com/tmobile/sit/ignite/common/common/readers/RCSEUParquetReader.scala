@@ -53,7 +53,7 @@ class RCSEUParquetReader(path: String,
                          addFileDate: Boolean = false
                    ) (implicit sparkSession: SparkSession) extends ParquetGenericReader with Reader {
 
-  private def getParquetData(path: String): DataFrame = {
+  def getParquetData(path: String): DataFrame = {
     logger.info(s"Reading Parquet from path $path")
     val reader = getParquetReader(
       basePath,
@@ -76,35 +76,9 @@ class RCSEUParquetReader(path: String,
 }
 
 /**
- * A little enhanced Parquet reader capable of reading multiple Parquet files from a single path. Result is a single dataframe (union-ed data from each Parquet).
- * Parquet files must have the same structure.
- *
- * @param path            path to the file
- * @param fileList        list of filenames to be read from the path
- * @param badRecordsPath  path to the folder where invalid records will be stored - not used when None - default.
- * @param schema          using spark types you can define Typed schema - it's highly recommended to us this parameter. By default schema is inferred.
- * @param sparkSession    implicit SparkSession used for reading.
- */
-class ParquetMultifileReader(path: String, basePath: String, fileList: Seq[String],
-                             badRecordsPath: Option[String] = None,
-                             schema: Option[StructType] = None
-                            )
-                            (implicit sparkSession: SparkSession) extends ParquetGenericReader with Reader {
-  private def getParquetData(path: String): DataFrame = {
-    logger.info(s"Reading Parquet from path $path")
-    val reader = getParquetReader(basePath, badRecordsPath, schema
-    )
-    reader.parquet(fileList.map(path + "/" + _): _*)
-  }
-
-  override def read(): DataFrame = getParquetData(path)
-}
-
-/**
  * Companion object for the simple Parquet reader
  */
-
-object ParquetReader {
+object RCSEUParquetReader {
   def apply(path: String,
             basePath: String,
             badRecordsPath: Option[String] = None,
@@ -114,20 +88,54 @@ object ParquetReader {
     new RCSEUParquetReader(path, basePath, badRecordsPath, schema)(sparkSession)
 }
 
+
 /**
- * Companion object for the multifile Parquet reader
+ * Basic Parquet reader reading multiple files, returning dataframe.
+ *
+ * @param paths            paths to the files
+ * @param badRecordsPath  path to the folder where invalid records will be stored - not used when None - default.
+ * @param schema          using spark types you can define Typed schema - it's highly recommended to us this parameter. By default schema is inferred.
+ * @param sparkSession    implicit SparkSession used for reading.
  */
-object ParquetMultifileReader {
-  def apply(path: String,
+class RCSEUParquetMultiFileReader(paths: Seq[String],
+                         basePath: String,
+                         badRecordsPath: Option[String] = None,
+                         schema: Option[StructType] = None,
+                         addFileDate: Boolean = false
+                        ) (implicit sparkSession: SparkSession) extends ParquetGenericReader with Reader {
+
+  def getParquetData(paths: Seq[String]): DataFrame = {
+    logger.info(s"Reading Parquet from path $paths")
+    val reader = getParquetReader(
+      basePath,
+      badRecordsPath
+    )
+    if (addFileDate){
+      reader.parquet(paths: _*)
+        .withColumn("month", format_string("%02d", col("month")))
+        .withColumn("day", format_string("%02d", col("day")))
+        .withColumn("FileDate", concat_ws("-", col("year"), col("month"), col("day")))
+        .drop("natco", "year", "month", "day")
+    }
+    else{
+      reader.parquet(paths: _*)
+    }
+
+  }
+
+  override def read(): DataFrame = getParquetData(paths)
+}
+
+/**
+ * Companion object for the simple Parquet reader
+ */
+object RCSEUParquetMultiFileReader {
+  def apply(paths: Seq[String],
             basePath: String,
-            fileList: Seq[String],
             badRecordsPath: Option[String] = None,
             schema: Option[StructType] = None
-           )
-           (implicit sparkSession: SparkSession): ParquetMultifileReader =
+           )(implicit sparkSession: SparkSession): RCSEUParquetMultiFileReader =
 
-    new ParquetMultifileReader(
-      path, basePath, fileList,
-      badRecordsPath, schema
-    )(sparkSession)
+    new RCSEUParquetMultiFileReader(paths, basePath, badRecordsPath, schema)(sparkSession)
 }
+

@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseutoparquet.data
 
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.{CSVReader, ParquetReader}
+import com.tmobile.sit.ignite.common.common.readers.CSVReader
 import com.tmobile.sit.ignite.common.common.writers.RCSEUParquetWriter
 import com.tmobile.sit.ignite.rcseutoparquet.Application.runVar
 import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
