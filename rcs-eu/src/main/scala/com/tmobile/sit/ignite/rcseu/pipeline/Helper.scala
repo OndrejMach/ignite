@@ -45,7 +45,6 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")
       new RCSEUParquetReader(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
         sourceFilePath + s"activity/",
-        schema = Some(FileSchemas.activitySchema),
         addFileDate = true).read()
     }
   }

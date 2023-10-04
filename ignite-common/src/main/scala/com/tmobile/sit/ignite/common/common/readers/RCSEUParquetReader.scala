@@ -18,23 +18,26 @@ import org.apache.spark.sql.types.StructType
  * Abstract class to extract common characteristics of Parquet file rearing in spark. Any new Parquet reader alternative should inherit from this one.
  */
 private[readers] abstract class ParquetGenericReader extends Logger {
-  def getParquetReader(basePath: String, badRecordsPath: Option[String] = None,
-                       schema: Option[StructType] = None)(implicit sparkSession: SparkSession): DataFrameReader = {
+  def getParquetReader(basePath: String, badRecordsPath: Option[String] = None)(implicit sparkSession: SparkSession): DataFrameReader = {
     val reader = sparkSession
       .read
+      .option("basePath", basePath)
+      .option("mergeSchema", "True")
 
     val invalidHandling = if (badRecordsPath.isDefined) {
       logger.info(s"Bad records to be stored in ${badRecordsPath.get}")
-      reader.option("basePath", basePath).option("badRecordsPath", badRecordsPath.get)
+      reader.option("badRecordsPath", badRecordsPath.get)
     }
-    else reader.option("basePath", basePath).option("mode", "DROPMALFORMED").option("mergeSchema", "True")
+    else reader.option("mode", "DROPMALFORMED")
 
-    if (schema.isDefined) {
-      invalidHandling.schema(schema.get).option("basePath", basePath).option("mergeSchema", "True")
-    } else {
-      logger.warn("Schema file not defined, trying to infer one")
-      invalidHandling.option("basePath", basePath).option("inferschema", "true").option("mergeSchema", "True")
-    }
+    invalidHandling
+
+//    if (schema.isDefined) {
+//      invalidHandling.schema(schema.get).option("basePath", basePath).option("mergeSchema", "True")
+//    } else {
+//      logger.warn("Schema file not defined, trying to infer one")
+//      invalidHandling.option("basePath", basePath).option("inferschema", "true").option("mergeSchema", "True")
+//    }
   }
 }
 
@@ -43,17 +46,15 @@ private[readers] abstract class ParquetGenericReader extends Logger {
  *
  * @param path            path to the file
  * @param badRecordsPath  path to the folder where invalid records will be stored - not used when None - default.
- * @param schema          using spark types you can define Typed schema - it's highly recommended to us this parameter. By default schema is inferred.
  * @param sparkSession    implicit SparkSession used for reading.
  */
 class RCSEUParquetReader(path: String,
                          basePath: String,
                          badRecordsPath: Option[String] = None,
-                         schema: Option[StructType] = None,
                          addFileDate: Boolean = false
                    ) (implicit sparkSession: SparkSession) extends ParquetGenericReader with Reader {
 
-  def getParquetData(path: String): DataFrame = {
+  def getParquetData(): DataFrame = {
     logger.info(s"Reading Parquet from path $path")
     val reader = getParquetReader(
       basePath,
@@ -72,7 +73,7 @@ class RCSEUParquetReader(path: String,
 
   }
 
-  override def read(): DataFrame = getParquetData(path)
+  override def read(): DataFrame = getParquetData()
 }
 
 /**
@@ -81,11 +82,10 @@ class RCSEUParquetReader(path: String,
 object RCSEUParquetReader {
   def apply(path: String,
             basePath: String,
-            badRecordsPath: Option[String] = None,
-            schema: Option[StructType] = None
+            badRecordsPath: Option[String] = None
            )(implicit sparkSession: SparkSession): RCSEUParquetReader =
 
-    new RCSEUParquetReader(path, basePath, badRecordsPath, schema)(sparkSession)
+    new RCSEUParquetReader(path, basePath, badRecordsPath)(sparkSession)
 }
 
 
@@ -104,7 +104,7 @@ class RCSEUParquetMultiFileReader(paths: Seq[String],
                          addFileDate: Boolean = false
                         ) (implicit sparkSession: SparkSession) extends ParquetGenericReader with Reader {
 
-  def getParquetData(paths: Seq[String]): DataFrame = {
+  def getParquetData(): DataFrame = {
     logger.info(s"Reading Parquet from path $paths")
     val reader = getParquetReader(
       basePath,
@@ -123,7 +123,7 @@ class RCSEUParquetMultiFileReader(paths: Seq[String],
 
   }
 
-  override def read(): DataFrame = getParquetData(paths)
+  override def read(): DataFrame = getParquetData()
 }
 
 /**

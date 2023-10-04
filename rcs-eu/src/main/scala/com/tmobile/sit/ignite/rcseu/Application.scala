@@ -37,11 +37,10 @@ object Application extends App with Logger {
     activity = activityFiles,
     provision = new RCSEUParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
       sourceFilePath + s"provision/",
-      schema = Some(FileSchemas.provisionSchema),
-      addFileDate = true).read(),
+      addFileDate = true
+    ).read(),
     register_requests = new RCSEUParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
       sourceFilePath + s"register_requests/",
-      schema = Some(FileSchemas.registerRequestsSchema),
       addFileDate = true
     ).read()
   )

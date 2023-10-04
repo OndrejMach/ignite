@@ -3,7 +3,7 @@ package com.tmobile.sit.ignite.rcseu.pipeline
 import com.tmobile.sit.ignite.common.common.Logger
 import com.tmobile.sit.ignite.common.common.readers.RCSEUParquetReader
 import org.apache.spark.sql.functions.lit
-import com.tmobile.sit.ignite.common.common.writers.RCSEUParquetWriter
+import com.tmobile.sit.ignite.common.common.writers.{RCSEUParquetWriter, RCSEUCSVWriter}
 import com.tmobile.sit.ignite.rcseu.data.OutputData
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.tmobile.sit.ignite.rcseu.Application.runVar
@@ -22,38 +22,18 @@ trait Writer extends Logger{
  * lookup files for the next iteration
  */
 class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) extends Writer {
-  private def writeWithFixedEmptyDFs(data:DataFrame,path:String, writeMode:String, partitionCols:Seq[String]): Unit = {
+  private def writeWithFixedEmptyDFs(data:DataFrame,path:String): Unit = {
     import sparkSession.implicits._
     data.cache()
     if (data.isEmpty){
       val line = Seq(data.columns.mkString("\t"))
       val df = line.toDF()
-      RCSEUParquetWriter(df, path).writeParquetData(writeMode = writeMode, partitionCols = partitionCols)
+      RCSEUCSVWriter(df, path, delimiter = "\t", writeHeader = false, quote = "").writeData()
     } else {
-      RCSEUParquetWriter(data, path).writeParquetData(writeMode = writeMode, partitionCols = partitionCols)
+      RCSEUCSVWriter(data, path, delimiter = "\t", writeHeader = true).writeData()
     }
   }
 
-  def addDailyPartitioning(data: DataFrame): DataFrame = {
-    data
-      .withColumn("natco", lit(runVar.natco))
-      .withColumn("year", lit(runVar.year))
-      .withColumn("month", lit(runVar.monthNum))
-      .withColumn("day", lit(runVar.dayNum))
-  }
-
-  def addMontlyPartitioning(data: DataFrame): DataFrame = {
-    data
-      .withColumn("natco", lit(runVar.natco))
-      .withColumn("year", lit(runVar.year))
-      .withColumn("month", lit(runVar.monthNum))
-  }
-
-  def addYearlyPartitioning(data: DataFrame): DataFrame = {
-    data
-      .withColumn("natco", lit(runVar.natco))
-      .withColumn("year", lit(runVar.year))
-  }
 
   override def write(outputData: OutputData) =
   {
@@ -63,34 +43,36 @@ class ResultWriter(settings: Settings) (implicit sparkSession: SparkSession) ext
     val outputPath = settings.outputPath.get
 
     // If daily processing or daily update
-    if(!runVar.processYearly) {
-      if(runVar.runMode.equals("update")) {
+
+    // If daily processing or daily update
+    if (!runVar.processYearly) {
+      if (runVar.runMode.equals("update")) {
         logger.info(s"Updating data for ${runVar.date} by including data from ${runVar.tomorrowDate}")
       }
       else {
         logger.info("Writing daily and monthly data")
       }
-      writeWithFixedEmptyDFs(addDailyPartitioning(outputData.ActiveDaily), outputPath + "activity_daily/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month", "day"))
-      writeWithFixedEmptyDFs(addMontlyPartitioning(outputData.ActiveMonthly), outputPath + "activity_monthly/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month"))
-      writeWithFixedEmptyDFs(addDailyPartitioning(outputData.ServiceDaily), outputPath + "service_fact/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month", "day"))
+      writeWithFixedEmptyDFs(outputData.ActiveDaily, outputPath + "activity_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv")
+      writeWithFixedEmptyDFs(outputData.ActiveMonthly, outputPath + "activity_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv")
+      writeWithFixedEmptyDFs(outputData.ServiceDaily, outputPath + "service_fact." + runVar.natco + "." + runVar.dateforoutput + ".csv")
 
-      if(!runVar.runMode.equals("update")) {
-        writeWithFixedEmptyDFs(addDailyPartitioning(outputData.ProvisionedDaily), outputPath + "provisioned_daily/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month", "day"))
-        writeWithFixedEmptyDFs(addDailyPartitioning(outputData.RegisteredDaily), outputPath + "registered_daily/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month", "day"))
-        writeWithFixedEmptyDFs(addMontlyPartitioning(outputData.ProvisionedMonthly), outputPath + "provisioned_monthly/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month"))
-        writeWithFixedEmptyDFs(addMontlyPartitioning(outputData.RegisteredMonthly), outputPath + "registered_monthly/", writeMode = "overwrite", partitionCols = Seq("natco", "year", "month"))
+      if (!runVar.runMode.equals("update")) {
+        writeWithFixedEmptyDFs(outputData.ProvisionedDaily, outputPath + "provisioned_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv")
+        writeWithFixedEmptyDFs(outputData.RegisteredDaily, outputPath + "registered_daily." + runVar.natco + "." + runVar.dateforoutput + ".csv")
+        writeWithFixedEmptyDFs(outputData.ProvisionedMonthly, outputPath + "provisioned_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv")
+        writeWithFixedEmptyDFs(outputData.RegisteredMonthly, outputPath + "registered_monthly." + runVar.natco + "." + runVar.monthforoutput + ".csv")
       }
       else if (runVar.runMode.equals("update") && runVar.date.endsWith("-12-31")) {
-        writeWithFixedEmptyDFs(addYearlyPartitioning(outputData.ActiveYearly), outputPath + "activity_yearly/", writeMode = "overwrite", partitionCols = Seq("natco", "year"))
+        writeWithFixedEmptyDFs(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv")
       }
     }
 
     // if yearly processing
-    if(runVar.processYearly) {
+    if (runVar.processYearly) {
       logger.info("Writing yearly data")
-      writeWithFixedEmptyDFs(addYearlyPartitioning(outputData.ActiveYearly), outputPath + "activity_yearly/", writeMode = "overwrite", Seq("natco", "year"))
-      writeWithFixedEmptyDFs(addYearlyPartitioning(outputData.ProvisionedYearly), outputPath + "provisioned_yearly/", writeMode = "overwrite", Seq("natco", "year"))
-      writeWithFixedEmptyDFs(addYearlyPartitioning(outputData.RegisteredYearly), outputPath + "registered_yearly/", writeMode = "overwrite", Seq("natco", "year"))
+      writeWithFixedEmptyDFs(outputData.ActiveYearly, outputPath + "activity_yearly." + runVar.natco + "." + runVar.year + ".csv")
+      writeWithFixedEmptyDFs(outputData.ProvisionedYearly, outputPath + "provisioned_yearly." + runVar.natco + "." + runVar.year + ".csv")
+      writeWithFixedEmptyDFs(outputData.RegisteredYearly, outputPath + "registered_yearly." + runVar.natco + "." + runVar.year + ".csv")
     }
     // Always write user_agents
     RCSEUParquetWriter(outputData.UserAgents, persistencePath + "User_agents_tmp.parquet").writeParquetData(writeMode = "overwrite", null)
