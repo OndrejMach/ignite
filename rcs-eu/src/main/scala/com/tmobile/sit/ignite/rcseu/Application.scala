@@ -1,11 +1,10 @@
 package com.tmobile.sit.ignite.rcseu
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.CSVReader
+import com.tmobile.sit.ignite.common.common.readers.RCSEUParquetReader
 import com.tmobile.sit.ignite.rcseu.config.RunConfig
 import com.tmobile.sit.ignite.rcseu.data.{FileSchemas, InputData, PersistentData}
 import com.tmobile.sit.ignite.rcseu.pipeline.{Configurator, Core, Helper, Pipeline, ResultWriter, Stage}
-import org.apache.spark.sql.functions.{broadcast, col, split}
 
 object Application extends App with Logger {
 
@@ -18,7 +17,7 @@ object Application extends App with Logger {
   // Get the run variables based on input arguments
   val runVar = new RunConfig(args)
 
-  logger.info(s"Date: ${runVar.date}, month:${runVar.month}, year:${runVar.year}, natco:${runVar.natco}, " +
+  logger.info(s"Date: ${runVar.date}, month:${runVar.monthNum}, year:${runVar.year}, natco:${runVar.natco}, " +
     s"natcoNetwork: ${runVar.natcoNetwork}, runMode:${runVar.runMode} ")
 
   // Get settings and create spark session
@@ -27,6 +26,7 @@ object Application extends App with Logger {
 
   // Instantiate helper and resolve source file paths
   val h = new Helper()
+  val inputFilePath = h.resolveInputPath(settings)
   val sourceFilePath = h.resolvePath(settings)
   val activityFiles = h.resolveActivity(sourceFilePath)
   val fileMask = h.getArchiveFileMask()
@@ -35,46 +35,41 @@ object Application extends App with Logger {
   val inputReaders = InputData(
     // Special treatment to resolve activity in case the runMode is 'update'
     activity = activityFiles,
-    provision = new CSVReader(sourceFilePath + s"provision_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.provisionSchema), header = true, delimiter = "\t").read(),
-    register_requests = new CSVReader(sourceFilePath + s"register_requests_${runVar.date}*${runVar.natco}.csv*",
-      schema = Some(FileSchemas.registerRequestsSchema), header = true, delimiter = "\t").read()
+    provision = new RCSEUParquetReader(sourceFilePath + s"provision/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+      sourceFilePath + s"provision/",
+      addFileDate = true
+    ).read(),
+    register_requests = new RCSEUParquetReader(sourceFilePath + s"register_requests/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+      sourceFilePath + s"register_requests/",
+      addFileDate = true
+    ).read()
   )
 
   logger.info("Input files loaded")
 
   // read whole year only if doing yearly processing
+
+  var filePath = ""
+
+  if (runVar.runMode.equals("yearly") ||
+    (runVar.runMode.equals("update") && runVar.date.endsWith("-12-31"))) {
+    filePath = s"/natco=${runVar.natco}/year=${runVar.year}/"
+  }
+  else {
+    filePath = s"/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/"
+  }
+
   logger.info(s"Reading archive files for: ${fileMask}")
 
   val persistentData = PersistentData(
-    oldUserAgents = broadcast(new CSVReader(settings.lookupPath.get + "User_agents.csv", header = true, delimiter = "\t").read()),
-
-    activity_archives = sparkSession.read
-      .option("header", "true")
-      .option("delimiter", "\\t")
-      .schema(FileSchemas.activitySchema)
-      .csv(settings.archivePath.get + s"activity*${fileMask}*${runVar.natco}.csv*")
-      //.repartition(20)
-      //.withColumn("creation_date", split(col("creation_date"), "\\.").getItem(0))
-      //.distinct()
-    ,
-    provision_archives = sparkSession.read
-      .option("header", "true")
-      .option("delimiter", "\t")
-      .schema(FileSchemas.provisionSchema)
-      .csv(settings.archivePath.get + s"provision*${fileMask}*${runVar.natco}.csv*")
-      //.repartition(20)
-    ,
-    register_requests_archives = sparkSession.read
-      .option("header", "true")
-      .option("delimiter", "\\t")
-      .schema(FileSchemas.registerRequestsSchema)
-      .csv(settings.archivePath.get + s"register_requests*${fileMask}*${runVar.natco}*.csv*")
-      //.repartition(20)
+    oldUserAgents = new RCSEUParquetReader(settings.lookupPath.get + "User_agents.parquet", settings.lookupPath.get + "User_agents.parquet").read(),
+    activity_archives = new RCSEUParquetReader(settings.archivePath.get + "activity" + filePath, settings.archivePath.get + s"activity/", addFileDate = true).read(),
+    provision_archives = new RCSEUParquetReader(settings.archivePath.get + "provision" + filePath, settings.archivePath.get + s"provision/", addFileDate = true).read(),
+    register_requests_archives = new RCSEUParquetReader(settings.archivePath.get + "register_requests" + filePath, settings.archivePath.get + s"register_requests", addFileDate = true).read()
   )
 
-  logger.info(s"Archive files loaded for file_mask=[${fileMask}*]")
-  //persistentData.activity_archives.show(false)
+  logger.info(s"Archive files loaded for file_mask=[${filePath}*]")
+
   val stageProcessing = new Stage()
 
   val coreProcessing = new Core()

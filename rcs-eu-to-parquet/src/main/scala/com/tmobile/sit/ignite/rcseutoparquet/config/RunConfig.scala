@@ -1,6 +1,4 @@
-package com.tmobile.sit.ignite.rcseu.config
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+package com.tmobile.sit.ignite.rcseutoparquet.config
 
 // variables needed in FactsProcesing and ProcessingCore for filtering
 class RunConfig(_args: Array[String]) {
@@ -8,26 +6,10 @@ class RunConfig(_args: Array[String]) {
 
   val date = args(0)
   val natco = args(1)
-  val runMode = args(2)
-
-
-  val dateformat = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-  val tomorrowDate=dateformat.plusDays(1).toString()
-  val tomorrowDay=tomorrowDate.split('-')(2)
-
-  val debug = false;
-
-  val processYearly = if(runMode.equals("yearly")) {true} else {false}
 
   val date_split = date.split('-')
   val (year, monthNum, dayNum) = (date_split(0), date_split(1),date_split(2))
   val month = year + "-" + monthNum
-
-  val monthforkey = year + "\\" +monthNum
-  val dayforkey =  dayNum +"-"+ monthNum +"-"+ year
-
-  val dateforoutput = year+monthNum+dayNum
-  val monthforoutput = year+monthNum
 
   val mtID="1"
   val stID="3"

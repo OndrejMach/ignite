@@ -22,16 +22,15 @@ class Dimension extends DimensionProcessing {
       .withColumn("row_nr", row_number.over(Window.orderBy("UserAgent")))
       .withColumn("_UserAgentID", expr(s"$max_id + row_nr"))
       .drop("row_nr")
-      .distinct()
 
     logger.info(s"Detected ${fullUserAgents1.count} new user agents.")
 
     val fullUserAgents =
       fullUserAgents1
         .union(oldUserAgents)
-        .cache()
+        .distinct()
 
-    broadcast(fullUserAgents.distinct())
+    fullUserAgents.cache()
   }
 
   override def getNewUserAgents(activity: DataFrame, registerRequests: DataFrame): DataFrame = {
@@ -49,11 +48,9 @@ class Dimension extends DimensionProcessing {
 
    val activityandregistered = activity
       .select("user_agent")
-      .distinct()
       .union(
         registerRequests
           .select("user_agent")
-          .distinct()
       )
      .distinct()
      .sort("user_agent")
@@ -87,7 +84,6 @@ class Dimension extends DimensionProcessing {
     }.drop("coll1")
 
     val dfUA23=dfUA22
-      //.withColumn("_UserAgentID", null)
       .withColumnRenamed("coll0", "OEM")
       .withColumnRenamed("letters", "FW")
       .withColumnRenamed("colly0", "Client")

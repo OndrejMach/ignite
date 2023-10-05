@@ -2,7 +2,7 @@ package com.tmobile.sit.ignite
 
 import org.apache.spark.sql.SparkSession
 
-package object rcseu {
+package object rcseutoparquet {
   def getSparkSession(sparkAppName: String): SparkSession = {
     SparkSession.builder()
       //.appName("rcs-eu")

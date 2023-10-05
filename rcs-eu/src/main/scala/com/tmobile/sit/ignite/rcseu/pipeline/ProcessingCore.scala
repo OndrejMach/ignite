@@ -58,7 +58,6 @@ class Core extends ProcessingCore {
       val filtered_daily_active = acc_activity.filter(col("creation_date").contains(runVar.date))
 
       activeDaily = fact.getActiveDaily(filtered_daily_active, fullUserAgents, runVar.dayforkey, runVar.natcoNetwork)
-      //logger.info("Active daily count: " + activeDaily.count())
 
       logger.info("Processing monthly activity")
       val filtered_monthly_active = acc_activity.filter(col("creation_date").contains(runVar.month))
@@ -69,13 +68,11 @@ class Core extends ProcessingCore {
         .withColumnRenamed("Active_daily_succ_orig", "Active_monthly_succ_orig")
         .withColumnRenamed("Active_daily_unsucc_origterm", "Active_monthly_unsucc_origterm")
         .withColumnRenamed("Active_daily_unsucc_orig", "Active_monthly_unsucc_orig")
-      //logger.info("Active monthly count: " + activeMonthly.count())
 
       //*********************************************Service Fact*********************************************//
 
       logger.info("Processing daily service fact")
       serviceDaily = fact.getServiceFactsDaily(acc_activity)
-      //logger.info("Service facts daily count: " + serviceDaily.count())
 
       // Don't run provision and register requests processing when updating activity and service_fact data
       if(!runVar.runMode.equals("update")) {
@@ -83,9 +80,7 @@ class Core extends ProcessingCore {
         // TODO: can we optimize this to read only the daily file?
         logger.info("Processing daily provisioned")
         val filtered_daily_provision = acc_provision.filter(col("FileDate") === runVar.date)
-        //val filtered_daily_provision = inputData.provision
         provisionedDaily = fact.getProvisionedDaily(filtered_daily_provision, runVar.dayforkey)
-        //logger.info("Provisioned daily count: " + provisionedDaily.count())
 
         logger.info("Processing monthly provisioned")
         val filtered_monthly_provision = acc_provision.filter(col("FileDate").contains(runVar.month))

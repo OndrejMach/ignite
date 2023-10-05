@@ -1,10 +1,11 @@
 package com.tmobile.sit.ignite.rcseu.pipeline
 
 import com.tmobile.sit.ignite.common.common.Logger
-import com.tmobile.sit.ignite.common.common.readers.CSVReader
-import com.tmobile.sit.ignite.rcseu.Application.{fileMask, runVar}
+import com.tmobile.sit.ignite.common.common.readers.{RCSEUParquetReader, RCSEUParquetMultiFileReader}
+import com.tmobile.sit.ignite.rcseu.Application.runVar
 import com.tmobile.sit.ignite.rcseu.config.{Settings, Setup}
 import com.tmobile.sit.ignite.rcseu.data.FileSchemas
+import org.apache.spark.sql.functions.{col, concat_ws, format_string}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait Config extends Logger{
@@ -12,6 +13,7 @@ trait Config extends Logger{
 }
 trait Help extends Logger{
   def resolvePath(settings:Settings):String
+  def resolveInputPath(settings:Settings):String
   def getArchiveFileMask():String
   def resolveActivity(sourceFilePath: String):DataFrame
 }
@@ -30,20 +32,20 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
     }
   }
 
-  override def resolveActivity(sourceFilePath: String):DataFrame = {
-    if(runVar.runMode.equals("update")) {
+  override def resolveActivity(sourceFilePath: String): DataFrame = {
+    if (runVar.runMode.equals("update")) {
       logger.info("runMode: update")
       logger.info(s"Reading activity data for ${runVar.date} and ${runVar.tomorrowDate}")
-      sparkSession.read
-        .option("header", "true")
-        .option("delimiter","\\t")
-        .schema(FileSchemas.activitySchema)
-        .csv(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv*",
-             sourceFilePath + s"activity_${runVar.tomorrowDate}*${runVar.natco}.csv*")}
+      new RCSEUParquetMultiFileReader(paths = Seq(
+        sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+        sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.tomorrowDay}"),
+        basePath = sourceFilePath + s"activity/", schema = Some(FileSchemas.activitySchema), addFileDate = true).read()
+    }
     else {
       logger.info(s"runMode: ${runVar.runMode}, reading daily activity")
-      new CSVReader(sourceFilePath + s"activity_${runVar.date}*${runVar.natco}.csv*",
-        schema = Some(FileSchemas.activitySchema), header = true, delimiter = "\t").read()
+      new RCSEUParquetReader(sourceFilePath + s"activity/natco=${runVar.natco}/year=${runVar.year}/month=${runVar.monthNum}/day=${runVar.dayNum}",
+        sourceFilePath + s"activity/",
+        addFileDate = true).read()
     }
   }
 
@@ -51,6 +53,11 @@ class Helper() (implicit sparkSession: SparkSession) extends Help {
   override def resolvePath(settings:Settings):String = {
     // always reading daily data from the archive folder
     settings.archivePath.get
+  }
+
+  override def resolveInputPath(settings: Settings): String = {
+    // always reading daily data from the archive folder
+    settings.inputPath.get
   }
 }
 
